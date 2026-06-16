@@ -12,6 +12,6 @@ describe('App shell', () => {
     )
     render(<RouterProvider router={router} />)
     expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Daycipher' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Quick Drill/ })).toBeInTheDocument()
   })
 })
