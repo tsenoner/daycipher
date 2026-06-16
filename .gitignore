@@ -10,3 +10,4 @@ coverage/
 
 # Playwright MCP screenshots
 .playwright-mcp/
+.vercel
