@@ -19,7 +19,13 @@ export interface StepTrace {
   centuryAnchor: Weekday
   yearDoomsday: Weekday
   /** worked Odd+11 substeps for display */
-  oddEleven: { start: number; afterStep1: number; halved: number; afterStep3: number; finalAdd: number }
+  oddEleven: {
+    start: number
+    afterStep1: number
+    halved: number
+    afterStep3: number
+    finalAdd: number
+  }
   monthAnchorDay: number
   /** weekday of the month's anchor date — equals yearDoomsday */
   monthAnchorWeekday: Weekday
