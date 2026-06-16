@@ -1,4 +1,4 @@
-import type { Weekday } from './types'
+import type { StepTrace, Weekday } from './types'
 
 export function isLeapYear(year: number): boolean {
   return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0
@@ -73,4 +73,40 @@ export function weekdayOfYMD(year: number, month: number, day: number): Weekday 
 /** Weekday (Sunday=0) of a Date, read in UTC. */
 export function weekdayOf(date: Date): Weekday {
   return weekdayOfYMD(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate())
+}
+
+/** Reduce an integer offset to the range -3..3 (mod 7), for human-friendly counting. */
+function reduceOffset(diff: number): number {
+  let r = ((diff % 7) + 7) % 7
+  if (r > 3) r -= 7
+  return r
+}
+
+export function explain(year: number, month: number, day: number): StepTrace {
+  const leap = isLeapYear(year)
+  const cAnchor = centuryAnchor(year)
+  const yearDoomsday = yearDoomsdayOddEleven(year)
+  const anchorDay = monthAnchor(month, leap)
+  const offset = reduceOffset(day - anchorDay)
+  const result = mod7(yearDoomsday + offset)
+
+  const start = year % 100
+  const afterStep1 = start % 2 === 1 ? start + 11 : start
+  const halved = afterStep1 / 2
+  const afterStep3 = halved % 2 === 1 ? halved + 11 : halved
+  const finalAdd = 7 - (afterStep3 % 7)
+
+  return {
+    year,
+    month,
+    day,
+    leap,
+    centuryAnchor: cAnchor,
+    yearDoomsday,
+    oddEleven: { start, afterStep1, halved, afterStep3, finalAdd },
+    monthAnchorDay: anchorDay,
+    monthAnchorWeekday: yearDoomsday,
+    offset,
+    result,
+  }
 }

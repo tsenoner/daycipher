@@ -7,6 +7,7 @@ import {
   yearDoomsdayConway,
   weekdayOfYMD,
   weekdayOf,
+  explain,
 } from './doomsday'
 
 describe('isLeapYear', () => {
@@ -113,5 +114,34 @@ describe('weekdayOfYMD', () => {
 describe('weekdayOf(Date)', () => {
   it('reads UTC components', () => {
     expect(weekdayOf(new Date(Date.UTC(1986, 2, 14)))).toBe(5)
+  })
+})
+
+describe('explain', () => {
+  it('produces a consistent trace for 14 March 1986', () => {
+    const t = explain(1986, 3, 14)
+    expect(t.centuryAnchor).toBe(3) // Wed
+    expect(t.yearDoomsday).toBe(5) // Fri
+    expect(t.monthAnchorDay).toBe(14)
+    expect(t.monthAnchorWeekday).toBe(5)
+    expect(t.offset).toBe(0)
+    expect(t.result).toBe(5)
+  })
+  it('reduced offset stays within -3..3', () => {
+    const t = explain(2000, 2, 2)
+    expect(t.result).toBe(3) // Wed
+    expect(Math.abs(t.offset)).toBeLessThanOrEqual(3)
+  })
+  it('trace result always equals weekdayOfYMD across a sample', () => {
+    for (let y = 1601; y <= 2099; y += 7) {
+      for (const [m, d] of [
+        [1, 1],
+        [2, 28],
+        [7, 4],
+        [12, 31],
+      ] as const) {
+        expect(explain(y, m, d).result).toBe(weekdayOfYMD(y, m, d))
+      }
+    }
   })
 })
