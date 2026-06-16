@@ -81,8 +81,8 @@ If prompted that the directory is not empty, choose **"Ignore files and continue
 
 Run:
 ```bash
-npm install react-router-dom idb zustand ts-fsrs @fontsource/fraunces @fontsource/inter
-npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom fake-indexeddb vite-plugin-pwa @vite-pwa/assets-generator eslint prettier eslint-config-prettier @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-plugin-react-hooks
+pnpm add react-router-dom idb zustand ts-fsrs @fontsource/fraunces @fontsource/inter
+pnpm add -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom fake-indexeddb vite-plugin-pwa @vite-pwa/assets-generator eslint prettier eslint-config-prettier @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-plugin-react-hooks
 ```
 (`ts-fsrs` is installed now for Plan 4; unused in this plan but harmless.)
 
@@ -179,7 +179,7 @@ Create `.prettierrc`:
 
 - [ ] **Step 8: Verify the toolchain runs**
 
-Run: `npm run typecheck && npm run build`
+Run: `pnpm typecheck && pnpm build`
 Expected: both succeed (the default Vite template still compiles).
 
 - [ ] **Step 9: Commit**
@@ -273,7 +273,7 @@ describe('centuryAnchor (Sunday=0)', () => {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `npm test -- doomsday`
+Run: `ppnpm test -- doomsday`
 Expected: FAIL — `doomsday` module has no exports yet.
 
 - [ ] **Step 4: Implement the primitives**
@@ -316,7 +316,7 @@ export function centuryAnchor(year: number): Weekday {
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `npm test -- doomsday`
+Run: `ppnpm test -- doomsday`
 Expected: PASS (all primitive tests green).
 
 - [ ] **Step 6: Commit**
@@ -358,7 +358,7 @@ describe('year doomsday', () => {
 
 - [ ] **Step 2: Run to verify failure**
 
-Run: `npm test -- doomsday`
+Run: `ppnpm test -- doomsday`
 Expected: FAIL — functions not exported.
 
 - [ ] **Step 3: Implement both methods**
@@ -387,7 +387,7 @@ export function yearDoomsdayConway(year: number): Weekday {
 
 - [ ] **Step 4: Run to verify pass**
 
-Run: `npm test -- doomsday`
+Run: `ppnpm test -- doomsday`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -449,7 +449,7 @@ describe('weekdayOf(Date)', () => {
 
 - [ ] **Step 2: Run to verify failure**
 
-Run: `npm test -- doomsday`
+Run: `ppnpm test -- doomsday`
 Expected: FAIL — `weekdayOfYMD` / `weekdayOf` not exported.
 
 - [ ] **Step 3: Implement**
@@ -471,7 +471,7 @@ export function weekdayOf(date: Date): Weekday {
 
 - [ ] **Step 4: Run to verify pass**
 
-Run: `npm test -- doomsday`
+Run: `ppnpm test -- doomsday`
 Expected: PASS — including the ~182,000-day exhaustive check.
 
 - [ ] **Step 5: Commit**
@@ -520,7 +520,7 @@ describe('explain', () => {
 
 - [ ] **Step 2: Run to verify failure**
 
-Run: `npm test -- doomsday`
+Run: `ppnpm test -- doomsday`
 Expected: FAIL — `explain` not exported.
 
 - [ ] **Step 3: Implement**
@@ -566,7 +566,7 @@ export function explain(year: number, month: number, day: number): StepTrace {
 
 - [ ] **Step 4: Run to verify pass**
 
-Run: `npm test -- doomsday`
+Run: `ppnpm test -- doomsday`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -620,7 +620,7 @@ describe('generateDate', () => {
 
 - [ ] **Step 2: Run to verify failure**
 
-Run: `npm test -- generate`
+Run: `ppnpm test -- generate`
 Expected: FAIL — module missing.
 
 - [ ] **Step 3: Implement**
@@ -666,7 +666,7 @@ export function generateDate(
 
 - [ ] **Step 4: Run to verify pass**
 
-Run: `npm test -- generate`
+Run: `ppnpm test -- generate`
 Expected: PASS.
 
 - [ ] **Step 5: Add the constraint type to engine barrel & commit**
@@ -677,7 +677,7 @@ export * from './types'
 export * from './doomsday'
 export * from './generate'
 ```
-Run: `npm test && npm run typecheck`
+Run: `ppnpm test && pnpm typecheck`
 Expected: PASS.
 ```bash
 git add src/engine/generate.ts src/engine/generate.test.ts src/engine/index.ts
@@ -803,7 +803,7 @@ Replace `index.html`:
 
 - [ ] **Step 4: Verify build**
 
-Run: `npm run build`
+Run: `pnpm build`
 Expected: PASS (fonts resolve, CSS imports OK).
 
 - [ ] **Step 5: Commit**
@@ -844,7 +844,7 @@ describe('getDb', () => {
 
 - [ ] **Step 2: Run to verify failure**
 
-Run: `npm test -- db.test`
+Run: `ppnpm test -- db.test`
 Expected: FAIL — module missing.
 
 - [ ] **Step 3: Implement the schema**
@@ -924,7 +924,7 @@ import { getDb, STORES, _resetDbForTests } from './db'
 
 - [ ] **Step 5: Run to verify pass**
 
-Run: `npm test -- db.test`
+Run: `ppnpm test -- db.test`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -977,7 +977,7 @@ describe('attempts', () => {
 
 - [ ] **Step 2: Run to verify failure**
 
-Run: `npm test -- attempts`
+Run: `ppnpm test -- attempts`
 Expected: FAIL — module missing.
 
 - [ ] **Step 3: Implement**
@@ -1016,7 +1016,7 @@ export async function countByDay(): Promise<Record<string, number>> {
 
 - [ ] **Step 4: Run to verify pass**
 
-Run: `npm test -- attempts`
+Run: `ppnpm test -- attempts`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -1062,7 +1062,7 @@ describe('meta', () => {
 
 - [ ] **Step 2: Run to verify failure**
 
-Run: `npm test -- meta`
+Run: `ppnpm test -- meta`
 Expected: FAIL — module missing.
 
 - [ ] **Step 3: Implement**
@@ -1111,7 +1111,7 @@ export async function recordPracticeDay(day: string): Promise<StreakState> {
 
 - [ ] **Step 4: Run to verify pass**
 
-Run: `npm test -- meta`
+Run: `ppnpm test -- meta`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -1163,7 +1163,7 @@ describe('backup', () => {
 
 - [ ] **Step 2: Run to verify failure**
 
-Run: `npm test -- backup`
+Run: `ppnpm test -- backup`
 Expected: FAIL — module missing.
 
 - [ ] **Step 3: Implement**
@@ -1206,7 +1206,7 @@ export async function importAll(data: Backup): Promise<void> {
 
 - [ ] **Step 4: Run to verify pass**
 
-Run: `npm test -- backup`
+Run: `ppnpm test -- backup`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -1257,7 +1257,7 @@ describe('settings store', () => {
 
 - [ ] **Step 2: Run to verify failure**
 
-Run: `npm test -- settings`
+Run: `ppnpm test -- settings`
 Expected: FAIL — module missing.
 
 - [ ] **Step 3: Implement**
@@ -1311,7 +1311,7 @@ export const useSettings = create<SettingsState>((set) => ({
 
 - [ ] **Step 4: Run to verify pass**
 
-Run: `npm test -- settings`
+Run: `ppnpm test -- settings`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -1399,13 +1399,13 @@ export default defineConfig({
 Add to `package.json` scripts: `"generate-pwa-assets": "pwa-assets-generator"`.
 Run:
 ```bash
-npm run generate-pwa-assets
+pnpm generate-pwa-assets
 ```
 Expected: writes `public/pwa-192x192.png`, `public/pwa-512x512.png`, `public/maskable-icon-512x512.png`, `public/apple-touch-icon-180x180.png`, `public/favicon.ico`.
 
 - [ ] **Step 5: Verify build produces a service worker**
 
-Run: `npm run build`
+Run: `pnpm build`
 Expected: PASS; `dist/sw.js` and `dist/manifest.webmanifest` exist.
 
 - [ ] **Step 6: Commit**
@@ -1527,7 +1527,7 @@ export function InstallPrompt() {
 
 - [ ] **Step 5: Verify typecheck**
 
-Run: `npm run typecheck`
+Run: `pnpm typecheck`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -1809,7 +1809,7 @@ describe('App shell', () => {
 
 - [ ] **Step 8: Run tests, typecheck, lint, build**
 
-Run: `npm test && npm run typecheck && npm run lint && npm run build`
+Run: `ppnpm test && pnpm typecheck && pnpm lint && pnpm build`
 Expected: all PASS.
 
 - [ ] **Step 9: Commit**
@@ -1850,10 +1850,10 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 20, cache: npm }
       - run: npm ci
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm test
-      - run: npm run build
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm build
 ```
 
 - [ ] **Step 3: Rewrite README**
@@ -1870,9 +1870,9 @@ your progress over time.
 ## Develop
 ```bash
 npm install
-npm run dev        # http://localhost:5173
-npm test           # run the test suite
-npm run build      # production build (PWA service worker)
+pnpm dev        # http://localhost:5173
+pnpm test           # run the test suite
+pnpm build      # production build (PWA service worker)
 ```
 
 The legacy Python/Tkinter prototype lives in `legacy/`.
@@ -1880,7 +1880,7 @@ The legacy Python/Tkinter prototype lives in `legacy/`.
 
 - [ ] **Step 4: Verify everything one last time**
 
-Run: `npm ci && npm run typecheck && npm run lint && npm test && npm run build`
+Run: `pnpm install --frozen-lockfile && pnpm typecheck && pnpm lint && pnpm test && pnpm build`
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
