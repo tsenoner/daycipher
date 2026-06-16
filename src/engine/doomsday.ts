@@ -43,3 +43,22 @@ export function centuryAnchor(year: number): Weekday {
   const c = Math.floor(year / 100)
   return mod7(5 * (c % 4) + 2)
 }
+
+/** Year's doomsday weekday via the Fong–Walters "Odd+11" method. */
+export function yearDoomsdayOddEleven(year: number): Weekday {
+  let t = year % 100
+  if (t % 2 === 1) t += 11
+  t = t / 2
+  if (t % 2 === 1) t += 11
+  t = 7 - (t % 7)
+  return mod7(centuryAnchor(year) + t)
+}
+
+/** Year's doomsday weekday via Conway's classic divide-by-12 method. */
+export function yearDoomsdayConway(year: number): Weekday {
+  const y = year % 100
+  const a = Math.floor(y / 12)
+  const b = y % 12
+  const c = Math.floor(b / 4)
+  return mod7(centuryAnchor(year) + a + b + c)
+}

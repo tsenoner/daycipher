@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { isLeapYear, monthAnchor, centuryAnchor } from './doomsday'
+import {
+  isLeapYear,
+  monthAnchor,
+  centuryAnchor,
+  yearDoomsdayOddEleven,
+  yearDoomsdayConway,
+} from './doomsday'
 
 describe('isLeapYear', () => {
   it.each([
@@ -44,4 +50,29 @@ describe('centuryAnchor (Sunday=0)', () => {
     [2100, 0],
     [1600, 2],
   ])('year %i -> weekday %i', (y, w) => expect(centuryAnchor(y)).toBe(w))
+})
+
+describe('year doomsday', () => {
+  // Sunday=0; known doomsdays: 2005=Mon(1), 1966=Mon(1), 2000=Tue(2), 1900=Wed(3), 2023=Tue(2)
+  it.each([
+    [2005, 1],
+    [1966, 1],
+    [2000, 2],
+    [1900, 3],
+    [2023, 2],
+    [1986, 5],
+  ])('Odd+11 %i -> %i', (y, w) => expect(yearDoomsdayOddEleven(y)).toBe(w))
+  it.each([
+    [2005, 1],
+    [1966, 1],
+    [2000, 2],
+    [1900, 3],
+    [2023, 2],
+    [1986, 5],
+  ])('Conway %i -> %i', (y, w) => expect(yearDoomsdayConway(y)).toBe(w))
+  it('both methods agree across 1600-2099', () => {
+    for (let y = 1600; y <= 2099; y++) {
+      expect(yearDoomsdayOddEleven(y)).toBe(yearDoomsdayConway(y))
+    }
+  })
 })
