@@ -1,0 +1,69 @@
+@import '@fontsource/fraunces/400.css';
+@import '@fontsource/fraunces/600.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/600.css';
+@import './tokens.css';
+
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+h1,
+h2,
+h3,
+.serif {
+  font-family: var(--font-serif);
+  font-weight: 600;
+}
+.muted {
+  color: var(--muted);
+}
+.tabnums {
+  font-variant-numeric: tabular-nums;
+}
+button {
+  font-family: inherit;
+}
+:focus-visible {
+  outline: 3px solid var(--burg);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+.app-shell {
+  max-width: 540px;
+  margin: 0 auto;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+}
+.screen {
+  flex: 1;
+  padding: 16px;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: rect(1px 1px 1px 1px);
+  white-space: nowrap;
+}

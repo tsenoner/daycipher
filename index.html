@@ -3,7 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Daycipher</title>
+    <meta
+      name="description"
+      content="Learn and train the skill of finding the weekday of any date — the Doomsday rule. Offline-first."
+    />
+    <meta name="theme-color" content="#f4eddd" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1c1813" media="(prefers-color-scheme: dark)" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Daycipher" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+    <title>Daycipher — master the weekday of any date</title>
+    <script>
+      // Apply theme before first paint to avoid FOUC.
+      ;(function () {
+        try {
+          var t = localStorage.getItem('daycipher-theme') || 'system'
+          var dark =
+            t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
+          if (dark) document.documentElement.setAttribute('data-theme', 'dark')
+        } catch (e) {}
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
