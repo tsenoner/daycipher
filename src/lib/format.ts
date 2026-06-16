@@ -22,6 +22,8 @@ export function formatDate(year: number, month: number, day: number): string {
 export const weekdayName = (w: Weekday): string => WEEKDAY_NAMES[w]
 export const weekdayShort = (w: Weekday): string => WEEKDAY_NAMES[w].slice(0, 3)
 
+export const monthName = (m: number): string => MONTHS[m - 1]
+
 /** Weekday values in display order. weekStart 1 = Monday-first, 0 = Sunday-first. */
 export function orderedWeekdays(weekStart: 0 | 1): Weekday[] {
   return weekStart === 1 ? [1, 2, 3, 4, 5, 6, 0] : [0, 1, 2, 3, 4, 5, 6]

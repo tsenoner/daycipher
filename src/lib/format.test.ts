@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatDate, weekdayShort, weekdayName, orderedWeekdays } from './format'
+import { formatDate, weekdayShort, weekdayName, orderedWeekdays, monthName } from './format'
 
 describe('format', () => {
   it('formatDate -> "14 March 1986"', () => {
@@ -14,5 +14,9 @@ describe('format', () => {
   it('orderedWeekdays respects week start', () => {
     expect(orderedWeekdays(1)).toEqual([1, 2, 3, 4, 5, 6, 0])
     expect(orderedWeekdays(0)).toEqual([0, 1, 2, 3, 4, 5, 6])
+  })
+  it('monthName', () => {
+    expect(monthName(3)).toBe('March')
+    expect(monthName(12)).toBe('December')
   })
 })
