@@ -62,3 +62,15 @@ export function yearDoomsdayConway(year: number): Weekday {
   const c = Math.floor(b / 4)
   return mod7(centuryAnchor(year) + a + b + c)
 }
+
+/** Weekday (Sunday=0) of the given Gregorian Y/M/D. */
+export function weekdayOfYMD(year: number, month: number, day: number): Weekday {
+  const doomsday = yearDoomsdayOddEleven(year)
+  const anchor = monthAnchor(month, isLeapYear(year))
+  return mod7(doomsday + (day - anchor))
+}
+
+/** Weekday (Sunday=0) of a Date, read in UTC. */
+export function weekdayOf(date: Date): Weekday {
+  return weekdayOfYMD(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate())
+}

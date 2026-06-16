@@ -5,6 +5,8 @@ import {
   centuryAnchor,
   yearDoomsdayOddEleven,
   yearDoomsdayConway,
+  weekdayOfYMD,
+  weekdayOf,
 } from './doomsday'
 
 describe('isLeapYear', () => {
@@ -74,5 +76,42 @@ describe('year doomsday', () => {
     for (let y = 1600; y <= 2099; y++) {
       expect(yearDoomsdayOddEleven(y)).toBe(yearDoomsdayConway(y))
     }
+  })
+})
+
+/** Reference weekday using JS Date in UTC (proleptic Gregorian). Valid for year >= 100. */
+function refWeekday(y: number, m: number, d: number): number {
+  return new Date(Date.UTC(y, m - 1, d)).getUTCDay()
+}
+
+describe('weekdayOfYMD', () => {
+  it('known dates', () => {
+    expect(weekdayOfYMD(1986, 3, 14)).toBe(5) // Friday
+    expect(weekdayOfYMD(2000, 2, 2)).toBe(3) // Wednesday (leap-year trap)
+    expect(weekdayOfYMD(1776, 7, 4)).toBe(4) // Thursday
+    expect(weekdayOfYMD(2026, 6, 16)).toBe(2) // Tuesday
+  })
+  it('matches the reference for EVERY day 1600-01-01 .. 2099-12-31', () => {
+    const daysInMonth = (y: number, m: number) =>
+      [31, isLeapYear(y) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1]
+    let mismatches = 0
+    let firstMismatch = ''
+    for (let y = 1600; y <= 2099; y++) {
+      for (let m = 1; m <= 12; m++) {
+        for (let d = 1; d <= daysInMonth(y, m); d++) {
+          if (weekdayOfYMD(y, m, d) !== refWeekday(y, m, d)) {
+            mismatches++
+            if (!firstMismatch) firstMismatch = `${y}-${m}-${d}`
+          }
+        }
+      }
+    }
+    expect(`${mismatches} (first: ${firstMismatch})`).toBe('0 (first: )')
+  })
+})
+
+describe('weekdayOf(Date)', () => {
+  it('reads UTC components', () => {
+    expect(weekdayOf(new Date(Date.UTC(1986, 2, 14)))).toBe(5)
   })
 })
