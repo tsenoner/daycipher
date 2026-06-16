@@ -1,4 +1,5 @@
 # DayOfDate
+
 This is a simple python GUI to learn + train + track your own progress on an algorithmic process to **determina the day of the week** for any date.
 
 You can find a simple YouTube explaination [here](https://www.youtube.com/watch?v=714LTMNJy5M&t=140s).
