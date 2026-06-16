@@ -33,4 +33,12 @@ describe('generateDate', () => {
       expect(generateDate({ minYear: 1900, maxYear: 1999, month: 2 }, rng).month).toBe(2)
     }
   })
+  it('throws on an out-of-range month constraint', () => {
+    expect(() => generateDate({ minYear: 2000, maxYear: 2000, month: 13 }, makeRng(1))).toThrow(
+      RangeError,
+    )
+    expect(() => generateDate({ minYear: 2000, maxYear: 2000, month: 0 }, makeRng(1))).toThrow(
+      RangeError,
+    )
+  })
 })
