@@ -1,0 +1,71 @@
+import type { Block } from '../features/learn/curriculum'
+
+export function LessonBlocks({ blocks }: { blocks: Block[] }) {
+  return (
+    <div>
+      {blocks.map((b, i) => {
+        switch (b.kind) {
+          case 'h':
+            return (
+              <h3 key={i} style={{ marginTop: 20 }}>
+                {b.text}
+              </h3>
+            )
+          case 'p':
+            return (
+              <p key={i} style={{ lineHeight: 1.6 }}>
+                {b.text}
+              </p>
+            )
+          case 'list':
+            return (
+              <ul key={i} style={{ lineHeight: 1.7, paddingLeft: 20 }}>
+                {b.items.map((it, j) => (
+                  <li key={j}>{it}</li>
+                ))}
+              </ul>
+            )
+          case 'mnemonic':
+            return (
+              <div
+                key={i}
+                style={{
+                  background: 'var(--card)',
+                  borderLeft: '3px solid var(--gold)',
+                  borderRadius: 8,
+                  padding: '10px 12px',
+                  margin: '12px 0',
+                  fontWeight: 600,
+                }}
+              >
+                💡 {b.text}
+              </div>
+            )
+          case 'example':
+            return (
+              <div
+                key={i}
+                style={{
+                  background: 'var(--card)',
+                  border: '1px solid var(--line)',
+                  borderRadius: 'var(--radius)',
+                  padding: 14,
+                  margin: '12px 0',
+                }}
+              >
+                <div className="serif" style={{ fontSize: 18, fontWeight: 600 }}>
+                  {b.date}
+                </div>
+                <ol style={{ lineHeight: 1.7, paddingLeft: 20, marginTop: 8 }}>
+                  {b.steps.map((s, j) => (
+                    <li key={j}>{s}</li>
+                  ))}
+                </ol>
+                <div style={{ marginTop: 8, fontWeight: 700, color: 'var(--green)' }}>→ {b.answer}</div>
+              </div>
+            )
+        }
+      })}
+    </div>
+  )
+}
