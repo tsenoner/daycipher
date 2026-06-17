@@ -1,90 +1,35 @@
-import { useDrill } from './useDrill'
-import { WeekdayPicker } from '../../components/WeekdayPicker'
-import { StepTrace } from '../../components/StepTrace'
-import { formatDate, weekdayName } from '../../lib/format'
-import { weekdayOfYMD, explain, type Weekday } from '../../engine'
-import { useSettings } from '../../store/settings'
-import { unlockAudio, playFeedback } from '../../feedback/feedback'
+import { useState } from 'react'
+import { QuickDrill } from './QuickDrill'
+import { GuidedSolve } from './GuidedSolve'
+
+type Mode = 'quick' | 'guided'
 
 export function PracticeScreen() {
-  const { problem, phase, guessed, attempt, answer, next } = useDrill()
-  const weekStart = useSettings((s) => s.weekStart)
-  const soundEnabled = useSettings((s) => s.soundEnabled)
-
-  const correctWeekday = weekdayOfYMD(problem.year, problem.month, problem.day)
-  const graded = phase === 'graded'
-
-  function onPick(w: Weekday) {
-    unlockAudio()
-    playFeedback(w === correctWeekday, { sound: soundEnabled })
-    answer(w)
-  }
-
+  const [mode, setMode] = useState<Mode>('quick')
   return (
-    <div className="screen" style={{ display: 'flex', flexDirection: 'column', minHeight: '70vh' }}>
-      <div style={{ textAlign: 'center', marginTop: 8 }}>
-        <div
-          className="muted"
-          style={{ fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase' }}
-        >
-          What weekday?
-        </div>
-        <div className="serif" style={{ fontSize: 30, fontWeight: 600, marginTop: 6 }}>
-          {formatDate(problem.year, problem.month, problem.day)}
-        </div>
-      </div>
-
-      <div style={{ marginTop: 'auto', paddingTop: 24 }}>
-        {graded && attempt && (
-          <p
-            role="status"
-            style={{
-              textAlign: 'center',
-              fontWeight: 700,
-              color: attempt.correct ? 'var(--green)' : 'var(--burg)',
-            }}
-          >
-            {attempt.correct
-              ? `✓ Correct — ${weekdayName(correctWeekday)} · ${(attempt.durationMs / 1000).toFixed(1)}s`
-              : `✕ Not quite — it's ${weekdayName(correctWeekday)}`}
-          </p>
-        )}
-
-        <WeekdayPicker
-          weekStart={weekStart}
-          graded={graded}
-          guessed={guessed}
-          correct={graded ? correctWeekday : null}
-          onPick={onPick}
-        />
-
-        {graded && (
-          <StepTrace
-            trace={explain(problem.year, problem.month, problem.day)}
-            defaultOpen={!attempt?.correct}
-          />
-        )}
-
-        {graded && (
+    <div>
+      <div style={{ display: 'flex', gap: 8, padding: '12px 16px 0' }}>
+        {(['quick', 'guided'] as Mode[]).map((m) => (
           <button
+            key={m}
             type="button"
-            onClick={next}
+            aria-pressed={mode === m}
+            onClick={() => setMode(m)}
             style={{
-              marginTop: 16,
-              width: '100%',
-              minHeight: 'var(--tap)',
-              border: 0,
-              borderRadius: 12,
-              background: 'var(--burg)',
-              color: '#fff',
-              fontWeight: 700,
-              fontSize: 16,
+              flex: 1,
+              minHeight: 40,
+              borderRadius: 10,
+              border: `1px solid ${mode === m ? 'var(--burg)' : 'var(--line)'}`,
+              background: mode === m ? 'var(--burg)' : 'var(--card)',
+              color: mode === m ? '#fff' : 'var(--ink)',
+              fontWeight: 600,
             }}
           >
-            Next →
+            {m === 'quick' ? 'Quick Drill' : 'Guided Solve'}
           </button>
-        )}
+        ))}
       </div>
+      {mode === 'quick' ? <QuickDrill /> : <GuidedSolve />}
     </div>
   )
 }

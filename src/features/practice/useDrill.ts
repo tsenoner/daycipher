@@ -1,14 +1,13 @@
-import { useCallback, useState } from 'react'
-import { generateDate, type Weekday } from '../../engine'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { type Weekday } from '../../engine'
 import { gradeProblem, type Problem } from './drill'
 import type { Attempt } from '../../db/db'
-import { addAttempt } from '../../db/attempts'
+import { addAttempt, listAttempts } from '../../db/attempts'
 import { recordPracticeDay } from '../../db/meta'
 import { localDayKey } from '../../lib/datekey'
+import { nextProblem } from './selector'
 
 type Phase = 'answering' | 'graded'
-const RANGE = { minYear: 1900, maxYear: 2099 }
-
 interface DrillState {
   problem: Problem
   phase: Phase
@@ -17,13 +16,24 @@ interface DrillState {
 }
 
 export function useDrill() {
+  const attemptsRef = useRef<Attempt[]>([])
   const [state, setState] = useState<DrillState>(() => ({
-    problem: generateDate(RANGE),
+    problem: nextProblem([]),
     phase: 'answering',
     guessed: null,
     attempt: null,
   }))
   const [startedAt, setStartedAt] = useState(() => performance.now())
+
+  useEffect(() => {
+    let active = true
+    void listAttempts().then((a) => {
+      if (active) attemptsRef.current = a
+    })
+    return () => {
+      active = false
+    }
+  }, [])
 
   const answer = useCallback(
     (w: Weekday) => {
@@ -33,6 +43,7 @@ export function useDrill() {
         const attempt = gradeProblem(s.problem, w, durationMs, 'quick')
         void addAttempt(attempt)
         void recordPracticeDay(localDayKey())
+        attemptsRef.current = [attempt, ...attemptsRef.current]
         return { ...s, phase: 'graded', guessed: w, attempt }
       })
     },
@@ -40,7 +51,7 @@ export function useDrill() {
   )
 
   const next = useCallback(() => {
-    setState({ problem: generateDate(RANGE), phase: 'answering', guessed: null, attempt: null })
+    setState({ problem: nextProblem(attemptsRef.current), phase: 'answering', guessed: null, attempt: null })
     setStartedAt(performance.now())
   }, [])
 
