@@ -1,5 +1,6 @@
-import { weekdayOfYMD, explain, type Weekday } from '../../engine'
+import { weekdayOfYMD, explain, mod7, type Weekday } from '../../engine'
 import type { Attempt } from '../../db/db'
+import { ymdKey } from '../../lib/datekey'
 
 export interface Problem {
   year: number
@@ -15,7 +16,7 @@ export function gradeProblem(
   timestamp: number = Date.now(),
 ): Attempt {
   const correctWeekday = weekdayOfYMD(p.year, p.month, p.day)
-  const targetDate = `${p.year}-${String(p.month).padStart(2, '0')}-${String(p.day).padStart(2, '0')}`
+  const targetDate = ymdKey(p.year, p.month, p.day)
   return {
     timestamp,
     targetDate,
@@ -37,8 +38,6 @@ export interface GuidedAnswers {
   final: Weekday
 }
 
-const m7 = (n: number) => ((n % 7) + 7) % 7
-
 export function gradeGuided(
   p: Problem,
   g: GuidedAnswers,
@@ -46,7 +45,7 @@ export function gradeGuided(
   timestamp: number = Date.now(),
 ): Attempt {
   const t = explain(p.year, p.month, p.day)
-  const targetDate = `${p.year}-${String(p.month).padStart(2, '0')}-${String(p.day).padStart(2, '0')}`
+  const targetDate = ymdKey(p.year, p.month, p.day)
   return {
     timestamp,
     targetDate,
@@ -57,7 +56,7 @@ export function gradeGuided(
     mode: 'guided',
     anchorCorrect: g.century === t.centuryAnchor ? 1 : 0,
     yearDoomCorrect: g.yearDoom === t.yearDoomsday ? 1 : 0,
-    offsetCorrect: m7(g.final - g.yearDoom) === m7(t.result - t.yearDoomsday) ? 1 : 0,
+    offsetCorrect: mod7(g.final - g.yearDoom) === mod7(t.result - t.yearDoomsday) ? 1 : 0,
     timed: false,
   }
 }

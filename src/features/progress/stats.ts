@@ -1,12 +1,18 @@
 import type { Attempt } from '../../db/db'
 import { weekdayName } from '../../lib/format'
-import type { Weekday } from '../../engine'
+import { centuryOf, type Weekday } from '../../engine'
 
 export interface Summary {
   total: number
   correct: number
   accuracy: number
   medianMs: number | null
+}
+
+/** Median of a pre-sorted, non-empty list (averages the two middle values for even length). */
+function median(sorted: number[]): number {
+  const mid = Math.floor(sorted.length / 2)
+  return sorted.length % 2 === 1 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
 }
 
 export function summarize(attempts: Attempt[]): Summary {
@@ -17,7 +23,7 @@ export function summarize(attempts: Attempt[]): Summary {
     .map((a) => a.durationMs)
     .filter((t) => t > 0)
     .sort((a, b) => a - b)
-  const medianMs = times.length ? times[Math.floor(times.length / 2)] : null
+  const medianMs = times.length ? median(times) : null
   return { total, correct, accuracy, medianMs }
 }
 
@@ -37,7 +43,8 @@ function dimKeyLabel(a: Attempt, dim: Dimension): { key: string; label: string }
     return { key: String(w), label: weekdayName(w) }
   }
   const year = Number(a.targetDate.slice(0, 4))
-  const century = Math.floor(year / 100) * 100
+  if (!Number.isFinite(year)) return { key: 'unknown', label: 'Unknown' }
+  const century = centuryOf(year)
   return { key: String(century), label: `${century}s` }
 }
 
@@ -55,7 +62,8 @@ export function accuracyByDimension(attempts: Attempt[], dim: Dimension): Bucket
   }
   const buckets = [...map.values()]
   for (const b of buckets) b.accuracy = b.total ? b.correct / b.total : 0
-  buckets.sort((x, y) => Number(x.key) - Number(y.key))
+  const sortKey = (k: string) => (Number.isFinite(Number(k)) ? Number(k) : Infinity)
+  buckets.sort((x, y) => sortKey(x.key) - sortKey(y.key))
   return buckets
 }
 

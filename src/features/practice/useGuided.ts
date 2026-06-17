@@ -3,9 +3,7 @@ import { type Weekday } from '../../engine'
 import { nextProblem } from './selector'
 import { gradeGuided, type Problem, type GuidedAnswers } from './drill'
 import type { Attempt } from '../../db/db'
-import { addAttempt, listAttempts } from '../../db/attempts'
-import { recordPracticeDay } from '../../db/meta'
-import { localDayKey } from '../../lib/datekey'
+import { listAttempts, recordAttempt } from '../../db/attempts'
 
 type Step = 0 | 1 | 2 | 3
 interface GuidedState {
@@ -37,6 +35,7 @@ export function useGuided() {
 
   const pick = useCallback(
     (w: Weekday) => {
+      let created: Attempt | null = null
       setState((s) => {
         if (s.step === 0) return { ...s, step: 1, picks: { ...s.picks, century: w } }
         if (s.step === 1) return { ...s, step: 2, picks: { ...s.picks, yearDoom: w } }
@@ -44,13 +43,16 @@ export function useGuided() {
           const picks = { ...s.picks, final: w } as GuidedAnswers
           const durationMs = Math.round(performance.now() - startedAt)
           const attempt = gradeGuided(s.problem, picks, durationMs)
-          void addAttempt(attempt)
-          void recordPracticeDay(localDayKey())
-          attemptsRef.current = [attempt, ...attemptsRef.current]
+          created = attempt
           return { ...s, step: 3, picks, attempt }
         }
         return s
       })
+      // Side effects run once, outside the (StrictMode-double-invoked) updater.
+      if (created) {
+        attemptsRef.current = [created, ...attemptsRef.current]
+        void recordAttempt(created)
+      }
     },
     [startedAt],
   )

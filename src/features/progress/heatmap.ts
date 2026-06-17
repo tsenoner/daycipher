@@ -1,3 +1,5 @@
+import { localDayKey } from '../../lib/datekey'
+
 export interface HeatCell {
   date: string
   count: number
@@ -18,31 +20,32 @@ function parseKey(k: string): Date {
   const [y, m, d] = k.split('-').map(Number)
   return new Date(y, m - 1, d)
 }
-function keyOf(dt: Date): string {
-  const m = String(dt.getMonth() + 1).padStart(2, '0')
-  const d = String(dt.getDate()).padStart(2, '0')
-  return `${dt.getFullYear()}-${m}-${d}`
-}
 
-/** weeks = columns of 7 (Sun..Sat), oldest -> newest, windowed to the last `weeks` weeks ending this week. */
+/**
+ * weeks = columns of 7, oldest -> newest, windowed to the last `weeks` weeks
+ * ending this week. Each column starts on `weekStart` (0 = Sunday, 1 = Monday),
+ * matching the weekday picker order used elsewhere.
+ */
 export function buildHeatmap(
   countByDay: Record<string, number>,
   todayKey: string,
   weeks = 18,
+  weekStart: 0 | 1 = 0,
 ): HeatModel {
   const today = parseKey(todayKey)
+  const offsetInWeek = (today.getDay() - weekStart + 7) % 7
   const end = new Date(today)
-  end.setDate(today.getDate() + (6 - today.getDay())) // Saturday of this week
+  end.setDate(today.getDate() + (6 - offsetInWeek)) // last day of this week
   const totalDays = weeks * 7
   const start = new Date(end)
-  start.setDate(end.getDate() - (totalDays - 1)) // Sunday
+  start.setDate(end.getDate() - (totalDays - 1)) // first day (weekStart) of the window
 
   const cells: HeatCell[] = []
   let maxCount = 0
   for (let i = 0; i < totalDays; i++) {
     const dt = new Date(start)
     dt.setDate(start.getDate() + i)
-    const date = keyOf(dt)
+    const date = localDayKey(dt.getTime())
     const count = countByDay[date] ?? 0
     if (count > maxCount) maxCount = count
     cells.push({ date, count, level: 0, weekday: dt.getDay() })

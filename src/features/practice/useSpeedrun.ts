@@ -3,7 +3,7 @@ import { type Weekday } from '../../engine'
 import { nextProblem } from './selector'
 import { gradeProblem, type Problem } from './drill'
 import type { Attempt } from '../../db/db'
-import { addAttempt, listAttempts } from '../../db/attempts'
+import { listAttempts, recordAttempt } from '../../db/attempts'
 import { getMeta, setMeta } from '../../db/meta'
 
 const DURATION = 60
@@ -11,6 +11,8 @@ type Phase = 'ready' | 'running' | 'over'
 
 export function useSpeedrun() {
   const attemptsRef = useRef<Attempt[]>([])
+  const deadlineRef = useRef(0)
+  const questionStartRef = useRef(0)
   const [phase, setPhase] = useState<Phase>('ready')
   const [problem, setProblem] = useState<Problem | null>(null)
   const [correct, setCorrect] = useState(0)
@@ -52,15 +54,22 @@ export function useSpeedrun() {
     setCorrect(0)
     setTotal(0)
     setTimeLeft(DURATION)
+    const now = performance.now()
+    deadlineRef.current = now + DURATION * 1000
+    questionStartRef.current = now
     setProblem(nextProblem(attemptsRef.current))
     setPhase('running')
   }, [])
 
   const answer = useCallback(
     (w: Weekday) => {
-      if (phase !== 'running' || !problem) return
-      const attempt = { ...gradeProblem(problem, w, 0, 'speedrun'), timed: true }
-      void addAttempt(attempt)
+      // Reject taps once time is up, even before the phase→'over' render lands.
+      if (phase !== 'running' || !problem || performance.now() >= deadlineRef.current) return
+      const durationMs = Math.round(performance.now() - questionStartRef.current)
+      questionStartRef.current = performance.now()
+      const attempt: Attempt = { ...gradeProblem(problem, w, durationMs, 'speedrun'), timed: true }
+      void recordAttempt(attempt)
+      attemptsRef.current = [attempt, ...attemptsRef.current]
       setTotal((t) => t + 1)
       if (attempt.correct) setCorrect((c) => c + 1)
       setProblem(nextProblem(attemptsRef.current))

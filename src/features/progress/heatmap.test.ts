@@ -28,4 +28,16 @@ describe('buildHeatmap', () => {
     expect(m.maxCount).toBe(0)
     expect(m.weeks.flat().every((c) => c.level === 0)).toBe(true)
   })
+  it('aligns columns to weekStart=1 (Monday-first)', () => {
+    const m = buildHeatmap({}, '2026-06-17', 2, 1)
+    const cells = m.weeks.flat()
+    expect(cells[0].weekday).toBe(1) // each column starts on Monday
+    expect(cells[6].weekday).toBe(0) // ...and ends on Sunday
+    expect(cells[0].date).toBe('2026-06-08') // Monday of the window's first week
+    expect(cells[cells.length - 1].date).toBe('2026-06-21') // Sunday of the current week
+  })
+  it('defaults to Sunday-first when no weekStart is given', () => {
+    const m = buildHeatmap({}, '2026-06-17', 2)
+    expect(m.weeks.flat()[0].weekday).toBe(0)
+  })
 })

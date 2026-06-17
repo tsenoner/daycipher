@@ -22,8 +22,10 @@ export function DailyChallenge() {
 
   const alreadyDone = prior !== null && results.length === 0
   if (alreadyDone || finished) {
-    const sc = finished ? score : prior!.score
-    const tot = finished ? dates.length : prior!.total
+    // finished → fresh run; otherwise alreadyDone guarantees prior is non-null.
+    const result = finished ? { score, total: dates.length } : prior
+    if (!result) return <div className="screen" />
+    const { score: sc, total: tot } = result
     return (
       <div className="screen">
         <Link to="/" style={{ color: 'var(--muted)', textDecoration: 'none' }}>
@@ -67,7 +69,7 @@ export function DailyChallenge() {
               const right = weekdayOfYMD(r.p.year, r.p.month, r.p.day)
               return (
                 <div
-                  key={i}
+                  key={`${i}-${r.p.year}-${r.p.month}-${r.p.day}`}
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',

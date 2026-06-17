@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { explain } from '../../engine'
+import { yearDoomsdayOddEleven } from '../../engine'
 import { formatDate, weekdayName } from '../../lib/format'
 import { getMeta, setMeta } from '../../db/meta'
 import { localDayKey } from '../../lib/datekey'
@@ -9,7 +9,8 @@ import type { DailyResult } from '../daily/useDaily'
 export function TodayScreen() {
   const [streak, setStreak] = useState({ current: 0, longest: 0 })
   const [daily, setDaily] = useState<DailyResult | null>(null)
-  const [onboarded, setOnboarded] = useState(true)
+  // null = not loaded yet; avoids flashing the welcome banner before meta resolves.
+  const [onboarded, setOnboarded] = useState<boolean | null>(null)
 
   useEffect(() => {
     let active = true
@@ -32,11 +33,11 @@ export function TodayScreen() {
 
   const now = new Date()
   const year = now.getFullYear()
-  const yearDoomsday = explain(year, 4, 4).yearDoomsday
+  const yearDoomsday = yearDoomsdayOddEleven(year)
 
   return (
     <div className="screen">
-      {!onboarded && (
+      {onboarded === false && (
         <div
           style={{
             background: 'var(--card)',

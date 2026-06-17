@@ -21,6 +21,15 @@ describe('summarize', () => {
     expect(s.accuracy).toBeCloseTo(2 / 3)
     expect(s.medianMs).toBe(2000)
   })
+  it('averages the two middle values for an even number of timed solves', () => {
+    const s = summarize([
+      mk({ durationMs: 1000 }),
+      mk({ durationMs: 2000 }),
+      mk({ durationMs: 3000 }),
+      mk({ durationMs: 4000 }),
+    ])
+    expect(s.medianMs).toBe(2500)
+  })
   it('empty', () => {
     expect(summarize([])).toEqual({ total: 0, correct: 0, accuracy: 0, medianMs: null })
   })

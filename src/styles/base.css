@@ -12,6 +12,10 @@ body,
 #root {
   height: 100%;
 }
+html {
+  /* Keep focused elements clear of the sticky bottom nav when scrolled into view. */
+  scroll-padding-bottom: calc(64px + env(safe-area-inset-bottom));
+}
 body {
   margin: 0;
   background: var(--paper);

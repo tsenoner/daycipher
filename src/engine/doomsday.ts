@@ -4,7 +4,10 @@ export function isLeapYear(year: number): boolean {
   return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0
 }
 
-const mod7 = (n: number): Weekday => (((n % 7) + 7) % 7) as Weekday
+export const mod7 = (n: number): Weekday => (((n % 7) + 7) % 7) as Weekday
+
+/** The century a year belongs to, as the year that starts it (e.g. 1986 -> 1900). */
+export const centuryOf = (year: number): number => Math.floor(year / 100) * 100
 
 /** Day-of-month of the month's doomsday anchor. month is 1-12. */
 export function monthAnchor(month: number, leap: boolean): number {

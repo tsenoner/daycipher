@@ -16,27 +16,29 @@ export function applyTheme(theme: Theme): void {
   }
 }
 
+function readStoredTheme(): Theme {
+  try {
+    const stored = localStorage.getItem('daycipher-theme')
+    if (stored === 'light' || stored === 'dark' || stored === 'system') return stored
+  } catch {
+    /* localStorage unavailable */
+  }
+  return 'system'
+}
+
 interface SettingsState {
   theme: Theme
   weekStart: 0 | 1 // 0 = Sunday, 1 = Monday
   soundEnabled: boolean
-  dailyGoal: number
   setTheme: (t: Theme) => void
-  setWeekStart: (w: 0 | 1) => void
-  setSoundEnabled: (s: boolean) => void
-  setDailyGoal: (g: number) => void
 }
 
 export const useSettings = create<SettingsState>((set) => ({
-  theme: (localStorage.getItem('daycipher-theme') as Theme) ?? 'system',
+  theme: readStoredTheme(),
   weekStart: 1,
   soundEnabled: true,
-  dailyGoal: 5,
   setTheme: (theme) => {
     applyTheme(theme)
     set({ theme })
   },
-  setWeekStart: (weekStart) => set({ weekStart }),
-  setSoundEnabled: (soundEnabled) => set({ soundEnabled }),
-  setDailyGoal: (dailyGoal) => set({ dailyGoal }),
 }))

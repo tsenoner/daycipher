@@ -11,7 +11,10 @@ import { useSettings, applyTheme } from './store/settings'
 applyTheme(useSettings.getState().theme)
 initPWA()
 
-createRoot(document.getElementById('root')!).render(
+const rootEl = document.getElementById('root')
+if (!rootEl) throw new Error('Root element #root not found')
+
+createRoot(rootEl).render(
   <StrictMode>
     <RouterProvider router={router} />
   </StrictMode>,

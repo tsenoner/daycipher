@@ -1,5 +1,5 @@
 import type { Attempt } from '../../db/db'
-import { summarize } from './stats'
+import { summarize, type Summary } from './stats'
 
 export interface Achievement {
   id: string
@@ -8,8 +8,12 @@ export interface Achievement {
   earned: boolean
 }
 
-export function achievements(attempts: Attempt[], longestStreak: number): Achievement[] {
-  const { total, accuracy } = summarize(attempts)
+export function achievements(
+  attempts: Attempt[],
+  longestStreak: number,
+  summary: Summary = summarize(attempts),
+): Achievement[] {
+  const { total, accuracy } = summary
   const fast = attempts.filter((a) => a.correct && a.durationMs > 0 && a.durationMs < 3000).length
   return [
     { id: 'first', label: 'First Steps', desc: 'Solve your first date', earned: total >= 1 },

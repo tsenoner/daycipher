@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { listAttempts, countByDay } from '../../db/attempts'
+import { listAttempts, tallyByDay } from '../../db/attempts'
 import { getMeta } from '../../db/meta'
 import { localDayKey } from '../../lib/datekey'
+import { useSettings } from '../../store/settings'
 import { summarize, accuracyByDimension, weakest, stepStats, type Summary } from './stats'
 import { achievements } from './achievements'
 import { buildHeatmap, type HeatModel } from './heatmap'
@@ -17,21 +18,21 @@ interface Data {
 }
 
 export function ProgressScreen() {
+  const weekStart = useSettings((s) => s.weekStart)
   const [data, setData] = useState<Data | null>(null)
 
   useEffect(() => {
     let active = true
     void (async () => {
-      const [attempts, counts, current, longest] = await Promise.all([
+      const [attempts, current, longest] = await Promise.all([
         listAttempts(),
-        countByDay(),
         getMeta<number>('currentStreak', 0),
         getMeta<number>('longestStreak', 0),
       ])
       if (!active) return
       setData({
         attempts,
-        heat: buildHeatmap(counts, localDayKey()),
+        heat: buildHeatmap(tallyByDay(attempts), localDayKey(), 18, weekStart),
         summary: summarize(attempts),
         streak: { current, longest },
       })
@@ -39,7 +40,7 @@ export function ProgressScreen() {
     return () => {
       active = false
     }
-  }, [])
+  }, [weekStart])
 
   if (!data) return <div className="screen" />
 
@@ -73,7 +74,7 @@ export function ProgressScreen() {
   const centuries = accuracyByDimension(data.attempts, 'century')
   const weak = weakest(centuries)
   const steps = stepStats(data.attempts)
-  const achs = achievements(data.attempts, data.streak.longest)
+  const achs = achievements(data.attempts, data.streak.longest, summary)
   const tiles = [
     { n: `${streak.current}`, l: `streak · best ${streak.longest}` },
     { n: `${Math.round(summary.accuracy * 100)}%`, l: 'accuracy' },

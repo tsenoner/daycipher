@@ -5,7 +5,7 @@ describe('settings store', () => {
   beforeEach(() => {
     localStorage.clear()
     document.documentElement.removeAttribute('data-theme')
-    useSettings.setState({ theme: 'system', weekStart: 1, soundEnabled: true, dailyGoal: 5 })
+    useSettings.setState({ theme: 'system', weekStart: 1, soundEnabled: true })
   })
 
   it('applyTheme sets data-theme for dark and persists', () => {

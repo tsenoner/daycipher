@@ -22,17 +22,31 @@ export interface StreakState {
 
 /** Register that the user practiced on `day` (local YYYY-MM-DD). Idempotent per day. */
 export async function recordPracticeDay(day: string): Promise<StreakState> {
-  const last = await getMeta<string | null>('lastActiveDay', null)
-  let current = await getMeta<number>('currentStreak', 0)
-  let longest = await getMeta<number>('longestStreak', 0)
+  const db = await getDb()
+  // One transaction for the whole read-modify-write so concurrent calls (e.g. a
+  // daily completion and a drill answer firing together) can't race the streak.
+  const tx = db.transaction('meta', 'readwrite')
+  const store = tx.objectStore('meta')
+  const read = async <T>(key: string, fallback: T): Promise<T> => {
+    const rec = await store.get(key)
+    return rec ? (rec.value as T) : fallback
+  }
 
-  if (last === day) return { currentStreak: current, longestStreak: longest, lastActiveDay: day }
-  const gap = last ? dayDiff(last, day) : Infinity
-  current = gap === 1 ? current + 1 : 1
-  longest = Math.max(longest, current)
+  const last = await read<string | null>('lastActiveDay', null)
+  let current = await read<number>('currentStreak', 0)
+  let longest = await read<number>('longestStreak', 0)
 
-  await setMeta('currentStreak', current)
-  await setMeta('longestStreak', longest)
-  await setMeta('lastActiveDay', day)
+  if (last !== day) {
+    const gap = last ? dayDiff(last, day) : Infinity
+    current = gap === 1 ? current + 1 : 1
+    longest = Math.max(longest, current)
+    await Promise.all([
+      store.put({ key: 'currentStreak', value: current }),
+      store.put({ key: 'longestStreak', value: longest }),
+      store.put({ key: 'lastActiveDay', value: day }),
+    ])
+  }
+
+  await tx.done
   return { currentStreak: current, longestStreak: longest, lastActiveDay: day }
 }

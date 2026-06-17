@@ -14,7 +14,7 @@ export function WeekdayPicker({ weekStart, graded, guessed, correct, onPick }: W
     <div
       role="group"
       aria-label="Choose the weekday"
-      style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}
+      style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}
     >
       {orderedWeekdays(weekStart).map((w) => {
         const isCorrect = graded && correct === w

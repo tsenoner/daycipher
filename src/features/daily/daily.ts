@@ -12,7 +12,10 @@ function hashKey(key: string): number {
 
 const RANGE = { minYear: 1900, maxYear: 2099 }
 
-/** Deterministic set of dates for a given local day key — same for everyone, stable per day. */
+/**
+ * Deterministic set of dates for a given local day key: everyone sharing the
+ * same local calendar date gets the same set, stable for that whole day.
+ */
 export function dailyDates(dayKey: string, n = 5): Problem[] {
   const rng = makeRng(hashKey(dayKey))
   return Array.from({ length: n }, () => generateDate(RANGE, rng))

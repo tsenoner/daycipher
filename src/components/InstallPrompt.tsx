@@ -21,7 +21,14 @@ export function InstallPrompt() {
   if (standalone) return null
   if (deferred) {
     return (
-      <button onClick={() => void deferred.prompt()} style={{ minHeight: 44 }}>
+      <button
+        onClick={() => {
+          // The event is single-use; clear it so the button can't fire prompt() twice.
+          void deferred.prompt()
+          setDeferred(null)
+        }}
+        style={{ minHeight: 44 }}
+      >
         Install Daycipher
       </button>
     )

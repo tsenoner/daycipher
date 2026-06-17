@@ -2,8 +2,6 @@ import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
 
 export const STORES = {
   attempts: 'attempts',
-  cards: 'cards',
-  skills: 'skills',
   meta: 'meta',
 } as const
 
@@ -29,8 +27,6 @@ export interface MetaRecord {
 
 interface DaycipherDB extends DBSchema {
   attempts: { key: number; value: Attempt; indexes: { byTimestamp: number } }
-  cards: { key: string; value: Record<string, unknown> }
-  skills: { key: string; value: Record<string, unknown> }
   meta: { key: string; value: MetaRecord }
 }
 
@@ -38,15 +34,19 @@ let dbPromise: Promise<IDBPDatabase<DaycipherDB>> | null = null
 
 export function getDb(): Promise<IDBPDatabase<DaycipherDB>> {
   if (!dbPromise) {
-    dbPromise = openDB<DaycipherDB>('daycipher', 1, {
+    const opening = openDB<DaycipherDB>('daycipher', 1, {
       upgrade(db) {
         const attempts = db.createObjectStore('attempts', { keyPath: 'id', autoIncrement: true })
         attempts.createIndex('byTimestamp', 'timestamp')
-        db.createObjectStore('cards', { keyPath: 'cardId' })
-        db.createObjectStore('skills', { keyPath: 'dimension' })
         db.createObjectStore('meta', { keyPath: 'key' })
       },
     })
+    // Don't memoize a rejection: if the open fails (e.g. IndexedDB blocked in
+    // private mode), drop the cached promise so the next call can retry.
+    opening.catch(() => {
+      if (dbPromise === opening) dbPromise = null
+    })
+    dbPromise = opening
   }
   return dbPromise
 }

@@ -16,13 +16,13 @@ export function Heatmap({ model, cell = 13, gap = 3 }: HeatmapProps) {
             <tr key={row}>
               {model.weeks.map((week, ci) => {
                 const c = week[row]
-                if (!c) return <td key={ci} style={{ padding: 0 }} />
+                if (!c) return <td key={`empty-${ci}`} style={{ padding: 0 }} />
                 const label =
                   c.count > 0
                     ? `${c.count} ${c.count === 1 ? 'problem' : 'problems'} on ${c.date}`
                     : `No practice on ${c.date}`
                 return (
-                  <td key={ci} style={{ padding: 0 }}>
+                  <td key={c.date} style={{ padding: 0 }}>
                     <span
                       role="img"
                       aria-label={label}

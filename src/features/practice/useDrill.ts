@@ -2,9 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { type Weekday } from '../../engine'
 import { gradeProblem, type Problem } from './drill'
 import type { Attempt } from '../../db/db'
-import { addAttempt, listAttempts } from '../../db/attempts'
-import { recordPracticeDay } from '../../db/meta'
-import { localDayKey } from '../../lib/datekey'
+import { listAttempts, recordAttempt } from '../../db/attempts'
 import { nextProblem } from './selector'
 
 type Phase = 'answering' | 'graded'
@@ -37,15 +35,19 @@ export function useDrill() {
 
   const answer = useCallback(
     (w: Weekday) => {
+      let created: Attempt | null = null
       setState((s) => {
         if (s.phase === 'graded') return s
         const durationMs = Math.round(performance.now() - startedAt)
         const attempt = gradeProblem(s.problem, w, durationMs, 'quick')
-        void addAttempt(attempt)
-        void recordPracticeDay(localDayKey())
-        attemptsRef.current = [attempt, ...attemptsRef.current]
+        created = attempt
         return { ...s, phase: 'graded', guessed: w, attempt }
       })
+      // Side effects run once, outside the (StrictMode-double-invoked) updater.
+      if (created) {
+        attemptsRef.current = [created, ...attemptsRef.current]
+        void recordAttempt(created)
+      }
     },
     [startedAt],
   )
