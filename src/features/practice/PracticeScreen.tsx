@@ -1,15 +1,17 @@
 import { useState } from 'react'
 import { QuickDrill } from './QuickDrill'
 import { GuidedSolve } from './GuidedSolve'
+import { Speedrun } from './Speedrun'
 
-type Mode = 'quick' | 'guided'
+type Mode = 'quick' | 'guided' | 'speed'
+const LABELS: Record<Mode, string> = { quick: 'Quick', guided: 'Guided', speed: 'Speedrun' }
 
 export function PracticeScreen() {
   const [mode, setMode] = useState<Mode>('quick')
   return (
     <div>
       <div style={{ display: 'flex', gap: 8, padding: '12px 16px 0' }}>
-        {(['quick', 'guided'] as Mode[]).map((m) => (
+        {(['quick', 'guided', 'speed'] as Mode[]).map((m) => (
           <button
             key={m}
             type="button"
@@ -23,13 +25,14 @@ export function PracticeScreen() {
               background: mode === m ? 'var(--burg)' : 'var(--card)',
               color: mode === m ? '#fff' : 'var(--ink)',
               fontWeight: 600,
+              fontSize: 14,
             }}
           >
-            {m === 'quick' ? 'Quick Drill' : 'Guided Solve'}
+            {LABELS[m]}
           </button>
         ))}
       </div>
-      {mode === 'quick' ? <QuickDrill /> : <GuidedSolve />}
+      {mode === 'quick' ? <QuickDrill /> : mode === 'guided' ? <GuidedSolve /> : <Speedrun />}
     </div>
   )
 }
