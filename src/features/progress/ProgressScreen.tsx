@@ -4,6 +4,7 @@ import { listAttempts, countByDay } from '../../db/attempts'
 import { getMeta } from '../../db/meta'
 import { localDayKey } from '../../lib/datekey'
 import { summarize, accuracyByDimension, weakest, stepStats, type Summary } from './stats'
+import { achievements } from './achievements'
 import { buildHeatmap, type HeatModel } from './heatmap'
 import { Heatmap } from '../../components/Heatmap'
 import type { Attempt } from '../../db/db'
@@ -72,6 +73,7 @@ export function ProgressScreen() {
   const centuries = accuracyByDimension(data.attempts, 'century')
   const weak = weakest(centuries)
   const steps = stepStats(data.attempts)
+  const achs = achievements(data.attempts, data.streak.longest)
   const tiles = [
     { n: `${streak.current}`, l: `streak · best ${streak.longest}` },
     { n: `${Math.round(summary.accuracy * 100)}%`, l: 'accuracy' },
@@ -184,6 +186,30 @@ export function ProgressScreen() {
           </p>
         </>
       )}
+
+      <h3 style={{ marginTop: 20 }}>Achievements</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        {achs.map((a) => (
+          <div
+            key={a.id}
+            style={{
+              background: 'var(--card)',
+              border: `1px solid ${a.earned ? 'var(--gold)' : 'var(--line)'}`,
+              borderRadius: 12,
+              padding: 12,
+              opacity: a.earned ? 1 : 0.55,
+            }}
+          >
+            <div style={{ fontWeight: 700, color: a.earned ? 'var(--gold)' : 'var(--ink)' }}>
+              {a.earned ? '🏅 ' : ''}
+              {a.label}
+            </div>
+            <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>
+              {a.desc}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

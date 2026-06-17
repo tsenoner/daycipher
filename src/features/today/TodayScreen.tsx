@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { explain } from '../../engine'
 import { formatDate, weekdayName } from '../../lib/format'
-import { getMeta } from '../../db/meta'
+import { getMeta, setMeta } from '../../db/meta'
 import { localDayKey } from '../../lib/datekey'
 import type { DailyResult } from '../daily/useDaily'
 
 export function TodayScreen() {
   const [streak, setStreak] = useState({ current: 0, longest: 0 })
   const [daily, setDaily] = useState<DailyResult | null>(null)
+  const [onboarded, setOnboarded] = useState(true)
 
   useEffect(() => {
     let active = true
@@ -16,10 +17,12 @@ export function TodayScreen() {
       getMeta<number>('currentStreak', 0),
       getMeta<number>('longestStreak', 0),
       getMeta<DailyResult | null>('daily:' + localDayKey(), null),
-    ]).then(([current, longest, d]) => {
+      getMeta<boolean>('onboarded', false),
+    ]).then(([current, longest, d, value]) => {
       if (active) {
         setStreak({ current, longest })
         setDaily(d)
+        setOnboarded(value)
       }
     })
     return () => {
@@ -33,6 +36,48 @@ export function TodayScreen() {
 
   return (
     <div className="screen">
+      {!onboarded && (
+        <div
+          style={{
+            background: 'var(--card)',
+            border: '1px solid var(--gold)',
+            borderRadius: 'var(--radius)',
+            padding: 14,
+            marginBottom: 12,
+          }}
+        >
+          <div style={{ fontWeight: 700 }}>Welcome to Daycipher 👋</div>
+          <p className="muted" style={{ fontSize: 13, margin: '6px 0' }}>
+            New here? Start with{' '}
+            <Link to="/learn" style={{ color: 'var(--burg)' }}>
+              Learn
+            </Link>
+            , then drill in{' '}
+            <Link to="/practice" style={{ color: 'var(--burg)' }}>
+              Practice
+            </Link>
+            .
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              void setMeta('onboarded', true)
+              setOnboarded(true)
+            }}
+            style={{
+              minHeight: 40,
+              borderRadius: 10,
+              border: 0,
+              background: 'var(--burg)',
+              color: '#fff',
+              fontWeight: 600,
+              padding: '0 14px',
+            }}
+          >
+            Got it
+          </button>
+        </div>
+      )}
       <div
         style={{
           display: 'inline-flex',
