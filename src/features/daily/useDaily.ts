@@ -26,36 +26,63 @@ export function useDaily() {
   const [results, setResults] = useState<Answered[]>([])
   const [prior, setPrior] = useState<DailyResult | null | undefined>(undefined)
   const startRef = useRef(performance.now())
-  const persistedRef = useRef(false)
+  const persistedRef = useRef(0) // how many of `results` are already saved in the DB
 
+  // Load any completed result, and resume an in-progress run: a mid-challenge
+  // reload restores prior answers instead of re-asking — and re-recording — them.
   useEffect(() => {
     let active = true
-    void getMeta<DailyResult | null>('daily:' + dayKey, null).then((r) => {
-      if (active) setPrior(r)
-    })
+    void (async () => {
+      const [pr, saved] = await Promise.all([
+        getMeta<DailyResult | null>('daily:' + dayKey, null),
+        getMeta<Weekday[]>('dailyAnswers:' + dayKey, []),
+      ])
+      if (!active) return
+      if (pr === null && saved.length > 0) {
+        const resumed = saved.slice(0, dates.length).map((g, i) => {
+          const attempt = gradeProblem(dates[i], g, 0, 'daily')
+          return { p: dates[i], guessed: g, correct: attempt.correct, attempt }
+        })
+        persistedRef.current = resumed.length // already persisted on a previous visit
+        setResults(resumed)
+      }
+      setPrior(pr)
+    })()
     return () => {
       active = false
     }
-  }, [dayKey])
-
-  // Persist only once the full set is done — so a mid-run reload (which resets
-  // results) never leaves half-recorded attempts to be re-counted later.
-  useEffect(() => {
-    if (results.length < dates.length || results.length === 0 || persistedRef.current) return
-    persistedRef.current = true
-    const result = { score: results.filter((r) => r.correct).length, total: dates.length }
-    setPrior(result)
-    void (async () => {
-      for (const r of results) await addAttempt(r.attempt)
-      await setMeta('daily:' + dayKey, result)
-      await recordPracticeDay(dayKey)
-    })()
-  }, [results, dates.length, dayKey])
+  }, [dayKey, dates])
 
   const index = results.length
   const finished = index >= dates.length
   const current = finished ? null : dates[index]
   const score = results.filter((r) => r.correct).length
+
+  // Persist each newly answered question immediately (so partial progress still
+  // counts), and finalize once the set is complete. Runs outside the state
+  // updater so StrictMode's double-invoked updater can't double-write.
+  useEffect(() => {
+    if (prior === undefined) return // wait until load/resume settles
+    if (results.length <= persistedRef.current) return
+    const fresh = results.slice(persistedRef.current)
+    persistedRef.current = results.length
+    const complete = results.length >= dates.length
+    const result = complete
+      ? { score: results.filter((r) => r.correct).length, total: dates.length }
+      : null
+    if (result) setPrior(result)
+    void (async () => {
+      for (const r of fresh) await addAttempt(r.attempt)
+      await setMeta(
+        'dailyAnswers:' + dayKey,
+        results.map((r) => r.guessed),
+      )
+      if (result) {
+        await setMeta('daily:' + dayKey, result)
+        await recordPracticeDay(dayKey)
+      }
+    })()
+  }, [results, prior, dates, dayKey])
 
   const answer = useCallback(
     (w: Weekday) => {

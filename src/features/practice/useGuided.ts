@@ -33,26 +33,28 @@ export function useGuided() {
     }
   }, [])
 
+  // Persist the graded attempt and feed it to the adaptive selector. Keyed on
+  // the attempt so it runs once per solve, and never inside the state updater
+  // (which React 18 StrictMode double-invokes).
+  useEffect(() => {
+    const a = state.attempt
+    if (!a) return
+    attemptsRef.current = [a, ...attemptsRef.current]
+    void recordAttempt(a)
+  }, [state.attempt])
+
   const pick = useCallback(
     (w: Weekday) => {
-      let created: Attempt | null = null
       setState((s) => {
         if (s.step === 0) return { ...s, step: 1, picks: { ...s.picks, century: w } }
         if (s.step === 1) return { ...s, step: 2, picks: { ...s.picks, yearDoom: w } }
         if (s.step === 2) {
           const picks = { ...s.picks, final: w } as GuidedAnswers
           const durationMs = Math.round(performance.now() - startedAt)
-          const attempt = gradeGuided(s.problem, picks, durationMs)
-          created = attempt
-          return { ...s, step: 3, picks, attempt }
+          return { ...s, step: 3, picks, attempt: gradeGuided(s.problem, picks, durationMs) }
         }
         return s
       })
-      // Side effects run once, outside the (StrictMode-double-invoked) updater.
-      if (created) {
-        attemptsRef.current = [created, ...attemptsRef.current]
-        void recordAttempt(created)
-      }
     },
     [startedAt],
   )

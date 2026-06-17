@@ -33,21 +33,23 @@ export function useDrill() {
     }
   }, [])
 
+  // Persist the graded attempt and feed it to the adaptive selector. Keyed on
+  // the attempt so it runs once per answer, and never inside the state updater
+  // (which React 18 StrictMode double-invokes).
+  useEffect(() => {
+    const a = state.attempt
+    if (!a) return
+    attemptsRef.current = [a, ...attemptsRef.current]
+    void recordAttempt(a)
+  }, [state.attempt])
+
   const answer = useCallback(
     (w: Weekday) => {
-      let created: Attempt | null = null
       setState((s) => {
         if (s.phase === 'graded') return s
         const durationMs = Math.round(performance.now() - startedAt)
-        const attempt = gradeProblem(s.problem, w, durationMs, 'quick')
-        created = attempt
-        return { ...s, phase: 'graded', guessed: w, attempt }
+        return { ...s, phase: 'graded', guessed: w, attempt: gradeProblem(s.problem, w, durationMs, 'quick') }
       })
-      // Side effects run once, outside the (StrictMode-double-invoked) updater.
-      if (created) {
-        attemptsRef.current = [created, ...attemptsRef.current]
-        void recordAttempt(created)
-      }
     },
     [startedAt],
   )
