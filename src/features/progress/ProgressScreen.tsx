@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { listAttempts, countByDay } from '../../db/attempts'
 import { getMeta } from '../../db/meta'
 import { localDayKey } from '../../lib/datekey'
-import { summarize, accuracyByDimension, weakest, type Summary } from './stats'
+import { summarize, accuracyByDimension, weakest, stepStats, type Summary } from './stats'
 import { buildHeatmap, type HeatModel } from './heatmap'
 import { Heatmap } from '../../components/Heatmap'
 import type { Attempt } from '../../db/db'
@@ -71,6 +71,7 @@ export function ProgressScreen() {
   const { summary, streak } = data
   const centuries = accuracyByDimension(data.attempts, 'century')
   const weak = weakest(centuries)
+  const steps = stepStats(data.attempts)
   const tiles = [
     { n: `${streak.current}`, l: `streak · best ${streak.longest}` },
     { n: `${Math.round(summary.accuracy * 100)}%`, l: 'accuracy' },
@@ -146,6 +147,42 @@ export function ProgressScreen() {
             drill it →
           </Link>
         </p>
+      )}
+
+      {steps.some((s) => s.total > 0) && (
+        <>
+          <h3 style={{ marginTop: 20 }}>Where you lose points</h3>
+          {steps.map((s) => {
+            const pct = s.total ? Math.round((s.wrong / s.total) * 100) : 0
+            return (
+              <div
+                key={s.step}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, fontSize: 13 }}
+              >
+                <span style={{ width: 110, color: 'var(--muted)' }}>{s.label}</span>
+                <span
+                  style={{
+                    flex: 1,
+                    height: 9,
+                    background: 'var(--line)',
+                    borderRadius: 99,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <span
+                    style={{ display: 'block', height: '100%', width: `${pct}%`, background: 'var(--burg)' }}
+                  />
+                </span>
+                <span style={{ width: 64, textAlign: 'right' }}>
+                  {pct}% ({s.total})
+                </span>
+              </div>
+            )
+          })}
+          <p className="muted" style={{ marginTop: 8, fontSize: 12 }}>
+            Missed-rate per step, from your Guided Solve attempts.
+          </p>
+        </>
       )}
     </div>
   )
