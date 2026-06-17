@@ -15,7 +15,9 @@ describe('dailyDates', () => {
     for (const { year, month, day } of ds) {
       expect(year).toBeGreaterThanOrEqual(1900)
       expect(year).toBeLessThanOrEqual(2099)
-      const dim = [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1]
+      const dim = [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][
+        month - 1
+      ]
       expect(day).toBeGreaterThanOrEqual(1)
       expect(day).toBeLessThanOrEqual(dim)
     }
