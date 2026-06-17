@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { useDaily } from './useDaily'
+import { dailyDates } from './daily'
 import { listAttempts } from '../../db/attempts'
-import { getMeta } from '../../db/meta'
+import { getMeta, setMeta } from '../../db/meta'
 import { localDayKey } from '../../lib/datekey'
 import { _resetDbForTests } from '../../db/db'
 
@@ -40,5 +41,23 @@ describe('useDaily', () => {
     await waitFor(() => expect(second.result.current.prior).toMatchObject({ total }))
 
     expect(await listAttempts()).toHaveLength(total) // 5 total, not 7
+  })
+
+  it('finalizes a fully-answered run resumed before its finalize write landed', async () => {
+    const key = localDayKey()
+    const total = dailyDates(key).length
+    // Simulate a prior session that saved every answer but was interrupted
+    // before writing the completion result or crediting the practice streak.
+    await setMeta(
+      'dailyAnswers:' + key,
+      Array.from({ length: total }, () => 0),
+    )
+
+    const r = renderHook(() => useDaily())
+    await waitFor(() => expect(r.result.current.prior).toMatchObject({ total }))
+
+    // The resumed-complete run is now finalized: result persisted and day credited.
+    expect(await getMeta('daily:' + key, null)).not.toBeNull()
+    expect(await getMeta<number>('currentStreak', 0)).toBeGreaterThanOrEqual(1)
   })
 })

@@ -1,4 +1,4 @@
-import { localDayKey } from '../../lib/datekey'
+import { ymdKey } from '../../lib/datekey'
 
 export interface HeatCell {
   date: string
@@ -45,7 +45,7 @@ export function buildHeatmap(
   for (let i = 0; i < totalDays; i++) {
     const dt = new Date(start)
     dt.setDate(start.getDate() + i)
-    const date = localDayKey(dt.getTime())
+    const date = ymdKey(dt.getFullYear(), dt.getMonth() + 1, dt.getDate())
     const count = countByDay[date] ?? 0
     if (count > maxCount) maxCount = count
     cells.push({ date, count, level: 0, weekday: dt.getDay() })

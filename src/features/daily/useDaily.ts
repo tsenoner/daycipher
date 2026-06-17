@@ -63,20 +63,25 @@ export function useDaily() {
   // updater so StrictMode's double-invoked updater can't double-write.
   useEffect(() => {
     if (prior === undefined) return // wait until load/resume settles
-    if (results.length <= persistedRef.current) return
-    const fresh = results.slice(persistedRef.current)
-    persistedRef.current = results.length
     const complete = results.length >= dates.length
+    const fresh = results.slice(persistedRef.current)
+    // Persist when there are new answers, OR when a fully-answered run was
+    // resumed before its finalize write landed (fresh is empty but prior is
+    // still null) — otherwise that completed day would never be credited.
+    if (fresh.length === 0 && !(complete && prior === null)) return
+    persistedRef.current = results.length
     const result = complete
       ? { score: results.filter((r) => r.correct).length, total: dates.length }
       : null
     if (result) setPrior(result)
     void (async () => {
       for (const r of fresh) await addAttempt(r.attempt)
-      await setMeta(
-        'dailyAnswers:' + dayKey,
-        results.map((r) => r.guessed),
-      )
+      if (fresh.length > 0) {
+        await setMeta(
+          'dailyAnswers:' + dayKey,
+          results.map((r) => r.guessed),
+        )
+      }
       if (result) {
         await setMeta('daily:' + dayKey, result)
         await recordPracticeDay(dayKey)
