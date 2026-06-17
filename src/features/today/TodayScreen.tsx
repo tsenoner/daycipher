@@ -3,17 +3,24 @@ import { Link } from 'react-router-dom'
 import { explain } from '../../engine'
 import { formatDate, weekdayName } from '../../lib/format'
 import { getMeta } from '../../db/meta'
+import { localDayKey } from '../../lib/datekey'
+import type { DailyResult } from '../daily/useDaily'
 
 export function TodayScreen() {
   const [streak, setStreak] = useState({ current: 0, longest: 0 })
+  const [daily, setDaily] = useState<DailyResult | null>(null)
 
   useEffect(() => {
     let active = true
     void Promise.all([
       getMeta<number>('currentStreak', 0),
       getMeta<number>('longestStreak', 0),
-    ]).then(([current, longest]) => {
-      if (active) setStreak({ current, longest })
+      getMeta<DailyResult | null>('daily:' + localDayKey(), null),
+    ]).then(([current, longest, d]) => {
+      if (active) {
+        setStreak({ current, longest })
+        setDaily(d)
+      }
     })
     return () => {
       active = false
@@ -63,16 +70,41 @@ export function TodayScreen() {
       </div>
 
       <Link
-        to="/practice"
+        to="/daily"
         style={{
           display: 'block',
-          textAlign: 'center',
           marginTop: 16,
           background: 'var(--burg)',
           color: '#fff',
           textDecoration: 'none',
+          borderRadius: 'var(--radius)',
+          padding: 14,
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontWeight: 700 }}>Daily Challenge</div>
+            <div style={{ fontSize: 12, opacity: 0.85 }}>
+              {daily ? `Done today · ${daily.score}/${daily.total}` : '5 dates · same for everyone'}
+            </div>
+          </div>
+          <span className="serif" style={{ fontSize: 20 }}>
+            →
+          </span>
+        </div>
+      </Link>
+
+      <Link
+        to="/practice"
+        style={{
+          display: 'block',
+          textAlign: 'center',
+          marginTop: 12,
+          border: '1.5px solid var(--burg)',
+          color: 'var(--burg)',
+          textDecoration: 'none',
           borderRadius: 12,
-          padding: '14px',
+          padding: '12px',
           fontWeight: 700,
           fontSize: 16,
         }}
