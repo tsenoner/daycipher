@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { summarize, accuracyByDimension, weakest } from './stats'
+import { summarize, accuracyByDimension, weakest, stepStats } from './stats'
 import type { Attempt } from '../../db/db'
 
 const mk = (over: Partial<Attempt>): Attempt => ({
@@ -56,5 +56,19 @@ describe('weakest', () => {
   it('ignores under-min buckets', () => {
     const buckets = accuracyByDimension([mk({ targetDate: '1700-01-01', correct: false })], 'century')
     expect(weakest(buckets, 3)).toBeNull()
+  })
+})
+
+describe('stepStats', () => {
+  it('counts per-step wrongs over guided attempts only', () => {
+    const guided = [
+      mk({ anchorCorrect: 1, yearDoomCorrect: 0, offsetCorrect: 1 }),
+      mk({ anchorCorrect: 1, yearDoomCorrect: 0, offsetCorrect: 0 }),
+    ]
+    const quick = [mk({})]
+    const s = stepStats([...guided, ...quick])
+    expect(s.find((x) => x.step === 'year')).toMatchObject({ total: 2, wrong: 2 })
+    expect(s.find((x) => x.step === 'anchor')).toMatchObject({ total: 2, wrong: 0 })
+    expect(s.find((x) => x.step === 'offset')).toMatchObject({ total: 2, wrong: 1 })
   })
 })

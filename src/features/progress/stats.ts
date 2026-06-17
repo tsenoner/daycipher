@@ -66,3 +66,22 @@ export function weakest(buckets: Bucket[], minCount = 3): Bucket | null {
     b.accuracy < lo.accuracy || (b.accuracy === lo.accuracy && b.correct < lo.correct) ? b : lo,
   )
 }
+
+export interface StepStat {
+  step: 'anchor' | 'year' | 'offset'
+  label: string
+  wrong: number
+  total: number
+}
+
+export function stepStats(attempts: Attempt[]): StepStat[] {
+  const defs: [keyof Attempt, StepStat['step'], string][] = [
+    ['anchorCorrect', 'anchor', 'Century anchor'],
+    ['yearDoomCorrect', 'year', 'Year doomsday'],
+    ['offsetCorrect', 'offset', 'Final offset'],
+  ]
+  return defs.map(([field, step, label]) => {
+    const graded = attempts.filter((a) => a[field] === 0 || a[field] === 1)
+    return { step, label, wrong: graded.filter((a) => a[field] === 0).length, total: graded.length }
+  })
+}
