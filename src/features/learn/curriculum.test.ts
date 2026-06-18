@@ -21,6 +21,7 @@ describe('curriculum', () => {
     expect(getStage('nope')).toBeUndefined()
   })
   it('every checked worked example agrees with the engine', () => {
+    // Verifies each example's final answer against the engine; the prose steps are not machine-checked.
     const examples = CURRICULUM.flatMap((s) =>
       s.blocks.filter((b): b is Extract<Block, { kind: 'example' }> => b.kind === 'example'),
     )

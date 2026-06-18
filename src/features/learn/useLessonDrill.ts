@@ -299,7 +299,11 @@ export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
       latchedRef.current = done
       setPriorOutcomes(outcomes)
       setProblem(nextLessonProblem(stageId, rngRef.current))
+      // Stage 7 (and any timed stage) times from mount: prime the clock here so the
+      // first measurement excludes the async load. Later reps reset it in `answer`.
       startRef.current = performance.now()
+      // Self-heal: a stage already DONE in the log but missing from `learnCompleted`
+      // (e.g. an effect lost to a crash) re-latches its completion. Idempotent.
       if (done && !completed.includes(stageId)) await markStageComplete(stageId)
     })()
     return () => {

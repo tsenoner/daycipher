@@ -113,7 +113,7 @@ function LessonDrill({
 }: {
   stageId: string
   practice?: boolean
-  onPracticeAgain?: () => void
+  onPracticeAgain: () => void
 }) {
   const drill = useLessonDrill(stageId, { practice })
   const weekStart = useSettings((s) => s.weekStart)
