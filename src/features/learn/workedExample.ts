@@ -41,10 +41,13 @@ function oddElevenSteps(t: StepTrace): string[] {
   ]
 }
 
-/** The "step forward from the month anchor" line. */
-function offsetStep(t: StepTrace, day: number): string {
-  const diff = day - t.monthAnchorDay
-  return `From the ${t.monthAnchorDay}th to the ${day}th: ${day} − ${t.monthAnchorDay} = ${diff} → ${weekdayName(t.result)}`
+/** The "step forward from the month anchor" lines (forward 1..6, casting out sevens). */
+function offsetStep(t: StepTrace, day: number): string[] {
+  const forward = (((day - t.monthAnchorDay) % 7) + 7) % 7
+  return [
+    `From the ${t.monthAnchorDay}th, step ${forward} day(s) forward to the ${day}th (cast out sevens)`,
+    `${weekdayName(t.monthAnchorWeekday)} + ${forward} → ${weekdayName(t.result)}`,
+  ]
 }
 
 function datedExample(stage: WorkedStage, year: number, month: number, day: number): GeneratedExample {
@@ -54,14 +57,14 @@ function datedExample(stage: WorkedStage, year: number, month: number, day: numb
       ? [
           `${formatYear(year)}'s doomsday = ${weekdayName(t.yearDoomsday)}`,
           `Nearest ${monthName(month)} anchor: the ${t.monthAnchorDay}th = ${weekdayName(t.monthAnchorWeekday)}`,
-          offsetStep(t, day),
+          ...offsetStep(t, day),
         ]
       : [
           anchorStep(year, t.centuryAnchor),
           ...oddElevenSteps(t),
           `${formatYear(year)} doomsday = ${weekdayName(t.yearDoomsday)}`,
           `${monthName(month)} anchor: the ${t.monthAnchorDay}th = ${weekdayName(t.monthAnchorWeekday)}`,
-          offsetStep(t, day),
+          ...offsetStep(t, day),
         ]
   return {
     date: `${day} ${monthName(month)} ${formatYear(year)}`,
