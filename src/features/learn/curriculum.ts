@@ -16,7 +16,7 @@ export interface Stage {
 export const CURRICULUM: Stage[] = [
   {
     id: 'mod7',
-    n: 0,
+    n: 1,
     title: 'Think in 7s',
     goal: 'Treat weekdays as numbers 0–6 and add them mod 7.',
     blocks: [
@@ -40,7 +40,7 @@ export const CURRICULUM: Stage[] = [
   },
   {
     id: 'months',
-    n: 1,
+    n: 2,
     title: 'Month anchors',
     goal: "Memorize one “doomsday” date in every month — they all share the year's doomsday.",
     blocks: [
@@ -73,7 +73,7 @@ export const CURRICULUM: Stage[] = [
   },
   {
     id: 'thisyear',
-    n: 2,
+    n: 3,
     title: 'Dates in this year',
     goal: "Solve any date in the current year from one fact — this year's doomsday.",
     blocks: [
@@ -100,7 +100,7 @@ export const CURRICULUM: Stage[] = [
   },
   {
     id: 'century',
-    n: 3,
+    n: 4,
     title: 'Century anchors',
     goal: 'Know the anchor weekday for each century.',
     blocks: [
@@ -126,7 +126,7 @@ export const CURRICULUM: Stage[] = [
   },
   {
     id: 'year',
-    n: 4,
+    n: 5,
     title: "The year's doomsday (Odd+11)",
     goal: 'Turn the century anchor into the specific year — with pure addition.',
     blocks: [
@@ -164,7 +164,7 @@ export const CURRICULUM: Stage[] = [
   },
   {
     id: 'full',
-    n: 5,
+    n: 6,
     title: 'Any date, end to end',
     goal: 'Combine all the layers into one fluent solve.',
     blocks: [
@@ -191,7 +191,7 @@ export const CURRICULUM: Stage[] = [
   },
   {
     id: 'speed',
-    n: 6,
+    n: 7,
     title: 'Getting fast',
     goal: 'Move from computing to recalling — toward sub-5-second answers.',
     blocks: [

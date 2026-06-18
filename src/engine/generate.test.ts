@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { generateDate, makeRng } from './generate'
+import { generateDate, makeRng, pick, daysInMonth } from './generate'
 import { isLeapYear } from './doomsday'
 
 describe('generateDate', () => {
@@ -40,5 +40,37 @@ describe('generateDate', () => {
     expect(() => generateDate({ minYear: 2000, maxYear: 2000, month: 0 }, makeRng(1))).toThrow(
       RangeError,
     )
+  })
+})
+
+describe('pick', () => {
+  it('returns an integer within [min, max] inclusive', () => {
+    const rng = makeRng(99)
+    for (let i = 0; i < 1000; i++) {
+      const v = pick(rng, 3, 6)
+      expect(Number.isInteger(v)).toBe(true)
+      expect(v).toBeGreaterThanOrEqual(3)
+      expect(v).toBeLessThanOrEqual(6)
+    }
+  })
+  it('can reach both endpoints', () => {
+    const rng = makeRng(5)
+    const seen = new Set<number>()
+    for (let i = 0; i < 300; i++) seen.add(pick(rng, 0, 6))
+    expect(seen.has(0)).toBe(true)
+    expect(seen.has(6)).toBe(true)
+  })
+})
+
+describe('daysInMonth', () => {
+  it('knows leap February (incl. century rules)', () => {
+    expect(daysInMonth(2024, 2)).toBe(29)
+    expect(daysInMonth(2023, 2)).toBe(28)
+    expect(daysInMonth(2000, 2)).toBe(29)
+    expect(daysInMonth(1900, 2)).toBe(28)
+  })
+  it('throws on an invalid month', () => {
+    expect(() => daysInMonth(2000, 0)).toThrow(RangeError)
+    expect(() => daysInMonth(2000, 13)).toThrow(RangeError)
   })
 })

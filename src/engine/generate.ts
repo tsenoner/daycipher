@@ -18,12 +18,13 @@ export function makeRng(seed: number): () => number {
   }
 }
 
-const daysInMonth = (year: number, month: number): number => {
+export const daysInMonth = (year: number, month: number): number => {
   if (month < 1 || month > 12) throw new RangeError(`invalid month: ${month}`)
   return [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1]
 }
 
-const pick = (rng: () => number, min: number, max: number): number =>
+/** Uniform integer in [min, max] inclusive, drawn from `rng` (reused by lesson generators). */
+export const pick = (rng: () => number, min: number, max: number): number =>
   min + Math.floor(rng() * (max - min + 1))
 
 export function generateDate(
