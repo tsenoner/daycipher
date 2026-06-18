@@ -46,7 +46,7 @@ function offsetStep(t: StepTrace, day: number): string[] {
   const forward = (((day - t.monthAnchorDay) % 7) + 7) % 7
   return [
     `From the ${t.monthAnchorDay}th, step ${forward} day(s) forward to the ${day}th (cast out sevens)`,
-    `${weekdayName(t.monthAnchorWeekday)} + ${forward} = ${weekdayName(t.result)}`,
+    `${weekdayName(t.monthAnchorWeekday)} + ${forward} → ${weekdayName(t.result)}`,
   ]
 }
 

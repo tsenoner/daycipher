@@ -15,7 +15,7 @@ describe('WorkedExample', () => {
     await userEvent.click(screen.getByRole('button', { name: /show another/i }))
     // The hero date is gone; a generated "→ <Weekday>" answer is shown.
     expect(screen.queryByText(hero.date)).toBeNull()
-    expect(screen.getByText(/→ \w+day/)).toBeTruthy()
+    expect(screen.getByText(/^→ \w+day$/)).toBeTruthy()
 
     // Reset returns to the hero.
     await userEvent.click(screen.getByRole('button', { name: /back to the lesson example/i }))
