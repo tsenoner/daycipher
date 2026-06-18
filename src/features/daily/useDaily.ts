@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { type Weekday } from '../../engine'
-import { dailyDates } from './daily'
+import { dailyDates, dailyRange } from './daily'
 import { gradeProblem, type Problem } from '../practice/drill'
 import type { Attempt } from '../../db/db'
 import { addAttempt } from '../../db/attempts'
 import { getMeta, setMeta, recordPracticeDay } from '../../db/meta'
+import { getCompleted, getPracticeUnlocked } from '../learn/learnGate'
 import { localDayKey } from '../../lib/datekey'
 
 export interface DailyResult {
@@ -22,26 +23,35 @@ export function useDaily() {
   // Freeze the day for the whole session so the puzzle set, the result key, and
   // the streak credit all agree even if the user crosses local midnight mid-run.
   const [dayKey] = useState(() => localDayKey())
-  const [dates] = useState<Problem[]>(() => dailyDates(dayKey))
+  const [dates, setDates] = useState<Problem[]>(() => dailyDates(dayKey))
   const [results, setResults] = useState<Answered[]>([])
   const [prior, setPrior] = useState<DailyResult | null | undefined>(undefined)
   const startRef = useRef(performance.now())
   const persistedRef = useRef(0) // how many of `results` are already saved in the DB
+  const countRef = useRef(dates.length) // fixed number of daily problems, set once
 
   // Load any completed result, and resume an in-progress run: a mid-challenge
   // reload restores prior answers instead of re-asking — and re-recording — them.
   useEffect(() => {
     let active = true
     void (async () => {
-      const [pr, saved] = await Promise.all([
+      const [pr, saved, completed, practiceUnlocked] = await Promise.all([
         getMeta<DailyResult | null>('daily:' + dayKey, null),
         getMeta<Weekday[]>('dailyAnswers:' + dayKey, []),
+        getCompleted(),
+        getPracticeUnlocked(),
       ])
       if (!active) return
+      // Scope the set to the learner's unlocked stages before resuming. For an
+      // already-unlocked user this equals the full range (same seed), so `ds`
+      // is identical to the initial set — behaviour is unchanged.
+      const range = dailyRange(completed, practiceUnlocked)
+      const ds = dailyDates(dayKey, countRef.current, range)
+      setDates(ds)
       if (pr === null && saved.length > 0) {
-        const resumed = saved.slice(0, dates.length).map((g, i) => {
-          const attempt = gradeProblem(dates[i], g, 0, 'daily')
-          return { p: dates[i], guessed: g, correct: attempt.correct, attempt }
+        const resumed = saved.slice(0, ds.length).map((g, i) => {
+          const attempt = gradeProblem(ds[i], g, 0, 'daily')
+          return { p: ds[i], guessed: g, correct: attempt.correct, attempt }
         })
         persistedRef.current = resumed.length // already persisted on a previous visit
         setResults(resumed)
@@ -51,7 +61,7 @@ export function useDaily() {
     return () => {
       active = false
     }
-  }, [dayKey, dates])
+  }, [dayKey])
 
   const index = results.length
   const finished = index >= dates.length
