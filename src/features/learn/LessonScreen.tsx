@@ -11,6 +11,7 @@ import { useLessonDrill } from './useLessonDrill'
 import { ruleFor } from './learnMastery'
 import type { Weekday } from '../../engine'
 import { getCompleted, isStageUnlocked } from './learnGate'
+import { isDone } from './learnProgress'
 
 const LAST_STAGE_ID = CURRICULUM[CURRICULUM.length - 1].id
 
@@ -20,7 +21,7 @@ export function LessonScreen() {
   const navigate = useNavigate()
   // null while the completed set is loading — avoids flashing a locked redirect.
   const [completed, setCompleted] = useState<string[] | null>(null)
-  const [started, setStarted] = useState(false)
+  const [mode, setMode] = useState<'idle' | 'learn' | 'practice'>('idle')
 
   useEffect(() => {
     let active = true
@@ -35,6 +36,7 @@ export function LessonScreen() {
   // Redirect away from a locked stage once we know the completed set. Done in an
   // effect so navigation never runs during render.
   const locked = stage != null && completed != null && !isStageUnlocked(stage.id, completed)
+  const stageDone = stage != null && completed != null && isDone(stage.id, completed)
   useEffect(() => {
     // Send a locked stage back to the Learn map (not into an arbitrary earlier
     // lesson) so the learner sees what is unlocked and what is next.
@@ -67,12 +69,16 @@ export function LessonScreen() {
       <h1 style={{ marginTop: 2 }}>{stage.title}</h1>
       <p className="muted">{stage.goal}</p>
       <LessonBlocks blocks={stage.blocks} />
-      {started ? (
-        <LessonDrill stageId={stage.id} />
+      {mode !== 'idle' ? (
+        <LessonDrill
+          stageId={stage.id}
+          practice={mode === 'practice'}
+          onPracticeAgain={() => setMode('practice')}
+        />
       ) : (
         <button
           type="button"
-          onClick={() => setStarted(true)}
+          onClick={() => setMode(stageDone ? 'practice' : 'learn')}
           style={{
             marginTop: 16,
             width: '100%',
@@ -85,7 +91,7 @@ export function LessonScreen() {
             fontSize: 15,
           }}
         >
-          Start exercises →
+          {stageDone ? 'Practice again' : 'Start exercises →'}
         </button>
       )}
     </div>
@@ -100,8 +106,16 @@ const dotStyle = (bg: string): React.CSSProperties => ({
   border: bg === 'transparent' ? '1.5px solid var(--line)' : 0,
 })
 
-function LessonDrill({ stageId }: { stageId: string }) {
-  const drill = useLessonDrill(stageId)
+function LessonDrill({
+  stageId,
+  practice = false,
+  onPracticeAgain,
+}: {
+  stageId: string
+  practice?: boolean
+  onPracticeAgain?: () => void
+}) {
+  const drill = useLessonDrill(stageId, { practice })
   const weekStart = useSettings((s) => s.weekStart)
   const rule = ruleFor(stageId)
 
@@ -122,9 +136,11 @@ function LessonDrill({ stageId }: { stageId: string }) {
     <div style={{ marginTop: 16 }}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>{dots}</div>
       <div className="muted" style={{ fontSize: 13, marginTop: 8 }}>
-        {progress.done
-          ? '✓ Internalized'
-          : `${progress.remaining} more good answer(s) to internalize`}
+        {practice
+          ? 'Practice mode — drill as long as you like'
+          : progress.done
+            ? '✓ Internalized'
+            : `${progress.remaining} more good answer(s) to internalize`}
       </div>
 
       {feedback && (
@@ -154,8 +170,8 @@ function LessonDrill({ stageId }: { stageId: string }) {
         </div>
       )}
 
-      {done ? (
-        <div style={{ marginTop: 16 }}>
+      {!practice && done ? (
+        <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
           {stageId === LAST_STAGE_ID ? (
             <Link
               to="/practice"
@@ -171,37 +187,61 @@ function LessonDrill({ stageId }: { stageId: string }) {
               Back to Learn →
             </Link>
           )}
+          <button
+            type="button"
+            onClick={onPracticeAgain}
+            style={{
+              minHeight: 'var(--tap)',
+              borderRadius: 12,
+              border: '1px solid var(--line)',
+              background: 'var(--card)',
+              color: 'var(--ink)',
+              fontWeight: 700,
+              fontSize: 15,
+            }}
+          >
+            Practice again
+          </button>
         </div>
       ) : (
-        current && (
-          <div style={{ marginTop: 16 }}>
-            <div className="serif" style={{ fontSize: 20, fontWeight: 600 }}>
-              {current.prompt}
-            </div>
-            {current.sub && (
-              <div className="muted" style={{ fontSize: 13, marginTop: 4, marginBottom: 12 }}>
-                {current.sub}
+        <>
+          {current && (
+            <div style={{ marginTop: 16 }}>
+              <div className="serif" style={{ fontSize: 20, fontWeight: 600 }}>
+                {current.prompt}
               </div>
-            )}
-            <div style={{ marginTop: 12 }}>
-              {current.answerKind === 'number' ? (
-                <NumberPad
-                  options={current.options ?? []}
-                  graded={false}
-                  onPick={(n) => drill.answer(n)}
-                />
-              ) : current.answerKind === 'boolean' ? (
-                <BooleanPicker graded={false} onPick={(n) => drill.answer(n)} />
-              ) : (
-                <WeekdayPicker
-                  weekStart={weekStart}
-                  graded={false}
-                  onPick={(w) => drill.answer(w)}
-                />
+              {current.sub && (
+                <div className="muted" style={{ fontSize: 13, marginTop: 4, marginBottom: 12 }}>
+                  {current.sub}
+                </div>
               )}
+              <div style={{ marginTop: 12 }}>
+                {current.answerKind === 'number' ? (
+                  <NumberPad
+                    options={current.options ?? []}
+                    graded={false}
+                    onPick={(n) => drill.answer(n)}
+                  />
+                ) : current.answerKind === 'boolean' ? (
+                  <BooleanPicker graded={false} onPick={(n) => drill.answer(n)} />
+                ) : (
+                  <WeekdayPicker
+                    weekStart={weekStart}
+                    graded={false}
+                    onPick={(w) => drill.answer(w)}
+                  />
+                )}
+              </div>
             </div>
-          </div>
-        )
+          )}
+          {practice && (
+            <div style={{ marginTop: 16 }}>
+              <Link to="/learn" style={{ color: 'var(--burg)', fontWeight: 700, textDecoration: 'none' }}>
+                Done →
+              </Link>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

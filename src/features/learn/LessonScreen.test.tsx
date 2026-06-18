@@ -60,4 +60,22 @@ describe('LessonScreen', () => {
     await userEvent.click(screen.getByRole('button', { name: /Start exercises/ }))
     expect(await screen.findByRole('group', { name: /yes or no/i })).toBeInTheDocument()
   })
+
+  it('a completed stage offers Practice again instead of Start exercises', async () => {
+    const { markStageComplete } = await import('./learnGate')
+    await markStageComplete('mod7')
+    renderAt('/learn/mod7')
+    await screen.findByRole('heading', { name: 'Think in 7s' })
+    expect(await screen.findByRole('button', { name: /Practice again/ })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Start exercises/ })).toBeNull()
+  })
+
+  it('Practice again starts an endless drill, not the Internalized screen', async () => {
+    const { markStageComplete } = await import('./learnGate')
+    await markStageComplete('mod7')
+    renderAt('/learn/mod7')
+    await userEvent.click(await screen.findByRole('button', { name: /Practice again/ }))
+    expect(await screen.findByRole('group', { name: /Choose the number/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Done/ })).toBeInTheDocument()
+  })
 })
