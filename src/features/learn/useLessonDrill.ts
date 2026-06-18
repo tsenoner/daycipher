@@ -3,6 +3,7 @@ import {
   centuryAnchor,
   daysInMonth,
   generateDate,
+  isLeapYear,
   mod7,
   monthAnchor,
   pick,
@@ -34,8 +35,8 @@ export interface LessonProblem {
   mode: string // `learn:<stageId>`
   prompt: string
   sub?: string
-  /** Drives the answer widget: NumberPad (number) vs WeekdayPicker (weekday). */
-  answerKind: 'number' | 'weekday'
+  /** Drives the answer widget: NumberPad (number) · WeekdayPicker (weekday) · BooleanPicker (boolean). */
+  answerKind: 'number' | 'weekday' | 'boolean'
   /** Explicit NumberPad options (stages 1–2); undefined for weekday stages. */
   options?: number[]
   /** The known-correct answer value (a weekday 0..6, or a day-of-month). */
@@ -99,6 +100,18 @@ export function nextLessonProblem(stageId: string, rng: () => number): LessonPro
         answerKind: 'number',
         options: ANCHOR_DAYS,
         correct: monthAnchor(month, leap),
+        date: null,
+        timed,
+      }
+    }
+    case 'leap': {
+      const year = leapDrillYear(rng)
+      return {
+        stageId,
+        mode,
+        prompt: `Is ${year} a leap year?`,
+        answerKind: 'boolean',
+        correct: isLeapYear(year) ? 1 : 0,
         date: null,
         timed,
       }
@@ -173,6 +186,17 @@ function leapJanFebDate(rng: () => number): { year: number; month: number; day: 
   return { year, month, day }
 }
 
+// Years that exercise the ÷100 / ÷400 rules, mixed with ordinary years, so a
+// guesser who ignores the century rule fails the leap stage (§ leap).
+const LEAP_DRILL_YEARS = [
+  1600, 1700, 1800, 1900, 2000, 2100, 2200, 2400, // century edge cases
+  2024, 2020, 1996, 2008, 2025, 2023, 2026, 1997, // ordinary: some ÷4, some not
+]
+
+function leapDrillYear(rng: () => number): number {
+  return LEAP_DRILL_YEARS[pick(rng, 0, LEAP_DRILL_YEARS.length - 1)]
+}
+
 /**
  * Grade a guessed answer for `p` into a real `Attempt` row, dispatching to the
  * right grader per stage (§4). Stages 1–2 grade a bare number; 3/6/7 grade a real
@@ -184,7 +208,7 @@ export function gradeLesson(
   durationMs: number,
   timestamp: number = Date.now(),
 ): Attempt {
-  if (p.answerKind === 'number') {
+  if (p.answerKind === 'number' || p.answerKind === 'boolean') {
     return gradeNumber(p.correct, guess, p.mode, durationMs, timestamp)
   }
   if (p.date) {
@@ -239,7 +263,7 @@ export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
   const [feedback, setFeedback] = useState<{
     correct: boolean
     answer: number
-    answerKind: 'number' | 'weekday'
+    answerKind: 'number' | 'weekday' | 'boolean'
   } | null>(null)
   // Mirror the live problem in a ref so `answer` can grade against it without a
   // stale closure and without nesting a state setter inside another updater.

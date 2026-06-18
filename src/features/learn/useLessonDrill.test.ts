@@ -7,7 +7,7 @@ import {
   ANCHOR_DAYS,
   type LessonProblem,
 } from './useLessonDrill'
-import { makeRng } from '../../engine'
+import { makeRng, isLeapYear } from '../../engine'
 import { listAttempts } from '../../db/attempts'
 import { getMeta } from '../../db/meta'
 import { _resetDbForTests } from '../../db/db'
@@ -64,6 +64,16 @@ describe('nextLessonProblem', () => {
   it('is deterministic for a given seed', () => {
     expect(nextLessonProblem('full', makeRng(99))).toEqual(nextLessonProblem('full', makeRng(99)))
   })
+
+  it('stage leap asks a yes/no leap-year question graded by isLeapYear', () => {
+    const p = nextLessonProblem('leap', makeRng(31))
+    expect(p.answerKind).toBe('boolean')
+    expect([0, 1]).toContain(p.correct)
+    expect(p.prompt).toMatch(/leap year\?/i)
+    // The prompt's year and the correct flag must agree with the engine.
+    const year = Number(p.prompt.match(/\d{4}/)![0])
+    expect(p.correct).toBe(isLeapYear(year) ? 1 : 0)
+  })
 })
 
 describe('gradeLesson', () => {
@@ -89,6 +99,14 @@ describe('gradeLesson', () => {
     const p = nextLessonProblem('months', makeRng(2))
     const a = gradeLesson(p, p.correct === 0 ? 1 : 0, 0, 10)
     expect(a.correct).toBe(false)
+  })
+
+  it('a leap answer writes a learn:leap row carrying the 0/1 guess', () => {
+    const p = nextLessonProblem('leap', makeRng(31))
+    const a = gradeLesson(p, p.correct, 0, 10)
+    expect(a.mode).toBe('learn:leap')
+    expect(a.targetDate).toBe('')
+    expect(a.correct).toBe(true)
   })
 })
 
