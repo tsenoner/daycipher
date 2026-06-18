@@ -15,8 +15,11 @@ const MONTHS = [
   'December',
 ]
 
+/** Human label for an astronomical year: y <= 0 -> "<1-y> BC", else the plain year. */
+export const formatYear = (year: number): string => (year <= 0 ? `${1 - year} BC` : String(year))
+
 export function formatDate(year: number, month: number, day: number): string {
-  return `${day} ${MONTHS[month - 1]} ${year}`
+  return `${day} ${MONTHS[month - 1]} ${formatYear(year)}`
 }
 
 export const weekdayName = (w: Weekday): string => WEEKDAY_NAMES[w]
