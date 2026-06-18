@@ -2,10 +2,14 @@ import { describe, it, expect } from 'vitest'
 import { CURRICULUM, getStage, type Block } from './curriculum'
 
 describe('curriculum', () => {
-  it('has 7 stages with unique ids and ascending n', () => {
-    expect(CURRICULUM).toHaveLength(7)
-    expect(new Set(CURRICULUM.map((s) => s.id)).size).toBe(7)
-    expect(CURRICULUM.map((s) => s.n)).toEqual([1, 2, 3, 4, 5, 6, 7])
+  it('has 8 stages with unique ids and ascending n', () => {
+    expect(CURRICULUM).toHaveLength(8)
+    expect(new Set(CURRICULUM.map((s) => s.id)).size).toBe(8)
+    expect(CURRICULUM.map((s) => s.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8])
+  })
+  it('teaches leap-year determination as its own stage', () => {
+    expect(getStage('leap')?.title).toBe('Leap years')
+    expect(CURRICULUM.findIndex((s) => s.id === 'leap')).toBe(1) // right after mod7
   })
   it('every stage has content', () => {
     for (const s of CURRICULUM) expect(s.blocks.length).toBeGreaterThan(0)

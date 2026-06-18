@@ -47,8 +47,29 @@ export const CURRICULUM: Stage[] = [
     ],
   },
   {
-    id: 'months',
+    id: 'leap',
     n: 2,
+    title: 'Leap years',
+    goal: 'Decide whether a year is a leap year at a glance.',
+    blocks: [
+      {
+        kind: 'p',
+        text: 'A leap year adds February 29. Three steps: divisible by 4 is a leap year — except years divisible by 100, which are not — except those divisible by 400, which are.',
+      },
+      { kind: 'mnemonic', text: '÷4 yes · ÷100 no · ÷400 yes again.' },
+      {
+        kind: 'list',
+        items: ['2024 ✓ (÷4)', '1900 ✗ (÷100, not ÷400)', '2000 ✓ (÷400)', '2100 ✗ (÷100, not ÷400)'],
+      },
+      {
+        kind: 'p',
+        text: 'Why it matters here: only January and February gain the extra day, so only their anchors shift — Jan 3→4, Feb 28→29. Every other month is unchanged.',
+      },
+    ],
+  },
+  {
+    id: 'months',
+    n: 3,
     title: 'Month anchors',
     goal: "Memorize one “doomsday” date in every month — they all share the year's doomsday.",
     k: 3,
@@ -77,13 +98,13 @@ export const CURRICULUM: Stage[] = [
       },
       {
         kind: 'p',
-        text: 'The #1 beginner mistake: in leap years January and February shift by one (Jan 4, Feb 29). Burn that in now.',
+        text: 'Remember the previous stage: in a leap year, January and February shift by one — Jan 4, Feb 29. That trap catches everyone.',
       },
     ],
   },
   {
     id: 'thisyear',
-    n: 3,
+    n: 4,
     title: 'Dates in this year',
     goal: "Solve any date in the current year from one fact — this year's doomsday.",
     blocks: [
@@ -110,7 +131,7 @@ export const CURRICULUM: Stage[] = [
   },
   {
     id: 'century',
-    n: 4,
+    n: 5,
     title: 'Century anchors',
     goal: 'Know the anchor weekday for each century.',
     blocks: [
@@ -136,7 +157,7 @@ export const CURRICULUM: Stage[] = [
   },
   {
     id: 'year',
-    n: 5,
+    n: 6,
     title: "The year's doomsday (Odd+11)",
     goal: 'Turn the century anchor into the specific year — with pure addition.',
     blocks: [
@@ -174,7 +195,7 @@ export const CURRICULUM: Stage[] = [
   },
   {
     id: 'full',
-    n: 6,
+    n: 7,
     title: 'Any date, end to end',
     goal: 'Combine all the layers into one fluent solve.',
     blocks: [
@@ -201,7 +222,7 @@ export const CURRICULUM: Stage[] = [
   },
   {
     id: 'speed',
-    n: 7,
+    n: 8,
     title: 'Getting fast',
     goal: 'Move from computing to recalling — toward sub-5-second answers.',
     timed: true,

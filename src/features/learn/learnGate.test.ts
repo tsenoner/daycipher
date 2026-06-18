@@ -18,10 +18,10 @@ describe('isStageUnlocked', () => {
     expect(isStageUnlocked('mod7', [])).toBe(true)
   })
   it('a later stage opens iff the previous one is completed', () => {
-    expect(isStageUnlocked('months', [])).toBe(false)
-    expect(isStageUnlocked('months', ['mod7'])).toBe(true)
-    expect(isStageUnlocked('thisyear', ['mod7'])).toBe(false)
-    expect(isStageUnlocked('thisyear', ['mod7', 'months'])).toBe(true)
+    expect(isStageUnlocked('leap', [])).toBe(false)
+    expect(isStageUnlocked('leap', ['mod7'])).toBe(true)
+    expect(isStageUnlocked('months', ['mod7'])).toBe(false)
+    expect(isStageUnlocked('months', ['mod7', 'leap'])).toBe(true)
   })
   it('keys off curriculum order, not completion of unrelated stages', () => {
     expect(isStageUnlocked('thisyear', ['century', 'year'])).toBe(false)
@@ -35,11 +35,11 @@ describe('isPracticeUnlocked', () => {
   it('the latch wins regardless of completion', () => {
     expect(isPracticeUnlocked([], true)).toBe(true)
   })
-  it('opens when all 7 stages are completed', () => {
+  it('opens when every stage is completed', () => {
     expect(isPracticeUnlocked(ALL, false)).toBe(true)
   })
   it('stays locked while any stage is missing and no latch', () => {
-    expect(isPracticeUnlocked(ALL.slice(0, 6), false)).toBe(false)
+    expect(isPracticeUnlocked(ALL.slice(0, -1), false)).toBe(false)
   })
 })
 
@@ -48,11 +48,12 @@ describe('nextStageId', () => {
     expect(nextStageId([])).toBe('mod7')
   })
   it('is the first not-yet-completed stage in order', () => {
-    expect(nextStageId(['mod7'])).toBe('months')
-    expect(nextStageId(['mod7', 'months', 'thisyear'])).toBe('century')
+    expect(nextStageId(['mod7'])).toBe('leap')
+    expect(nextStageId(['mod7', 'leap'])).toBe('months')
+    expect(nextStageId(['mod7', 'leap', 'months', 'thisyear'])).toBe('century')
   })
   it('ignores out-of-order completion gaps and returns the earliest hole', () => {
-    expect(nextStageId(['mod7', 'thisyear'])).toBe('months')
+    expect(nextStageId(['mod7', 'thisyear'])).toBe('leap')
   })
   it('is null once every stage is completed', () => {
     expect(nextStageId(ALL)).toBeNull()
@@ -72,12 +73,12 @@ describe('markStageComplete', () => {
     expect(await getMeta('learnCompleted', [])).toEqual(['mod7', 'months'])
   })
 
-  it('does not flip practiceUnlocked until all 7 are present', async () => {
-    for (const id of ALL.slice(0, 6)) await markStageComplete(id)
+  it('does not flip practiceUnlocked until every stage is present', async () => {
+    for (const id of ALL.slice(0, -1)) await markStageComplete(id)
     expect(await getMeta('practiceUnlocked', false)).toBe(false)
   })
 
-  it('flips practiceUnlocked once learnCompleted covers all 7', async () => {
+  it('flips practiceUnlocked once learnCompleted covers every stage', async () => {
     for (const id of ALL) await markStageComplete(id)
     expect(await getMeta('practiceUnlocked', false)).toBe(true)
   })

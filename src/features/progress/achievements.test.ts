@@ -18,7 +18,7 @@ const mk = (over: Partial<Attempt>): Attempt => ({
 })
 const has = (a: ReturnType<typeof achievements>, id: string) => a.find((x) => x.id === id)!.earned
 
-const ALL_STAGES = ['mod7', 'months', 'thisyear', 'century', 'year', 'full', 'speed']
+const ALL_STAGES = ['mod7', 'leap', 'months', 'thisyear', 'century', 'year', 'full', 'speed']
 
 describe('achievements', () => {
   it('nothing earned with no data', () => {

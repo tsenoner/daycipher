@@ -19,7 +19,7 @@ describe('dailyRange', () => {
     expect(dailyRange([], true)).toEqual({ minYear: 1900, maxYear: 2099 })
   })
   it('opens the full range once the completed prefix includes century', () => {
-    const throughCentury = CURRICULUM.slice(0, 4).map((s) => s.id)
+    const throughCentury = CURRICULUM.slice(0, 5).map((s) => s.id)
     expect(throughCentury).toContain('century')
     expect(dailyRange(throughCentury, false)).toEqual({ minYear: 1900, maxYear: 2099 })
   })

@@ -78,7 +78,7 @@ describe('useDaily', () => {
     first.unmount()
 
     // The learner unlocks the full range mid-day (completed prefix reaches century).
-    for (const id of CURRICULUM.slice(0, 4).map((s) => s.id)) await markStageComplete(id)
+    for (const id of CURRICULUM.slice(0, 5).map((s) => s.id)) await markStageComplete(id)
     expect((await getMeta<string[]>('learnCompleted', [])).includes('century')).toBe(true)
 
     // Remount: the resumed set must still be the frozen current-year dates — NOT
