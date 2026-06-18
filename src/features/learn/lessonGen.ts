@@ -7,7 +7,6 @@ import {
   mod7,
   monthAnchor,
   pick,
-  pickFrom,
   thisYearDoomsday,
   warpYear,
   weekdayOfYMD,
@@ -90,8 +89,16 @@ export interface LessonProblem {
   timed: boolean
 }
 
-// Weight the three centuries a learner actually meets higher (§4, `century` stage).
-const CENTURY_WEIGHTS = [1700, 1800, 1800, 1900, 1900, 1900, 2000, 2000, 2000, 2100]
+const TAUGHT_CENTURIES: readonly number[] = [1700, 1800, 1900, 2000, 2100]
+
+/** Nearest leap year to `base` within the supported range (for the full-stage Jan/Feb trap). */
+function nearestLeapYear(base: number): number {
+  for (let d = 0; d <= 8; d++) {
+    if (base + d <= 9999 && isLeapYear(base + d)) return base + d
+    if (base - d >= -9998 && isLeapYear(base - d)) return base - d
+  }
+  return 2000
+}
 
 export interface LessonCtx {
   /** Per-mount served-problem index (0-based); used by without-replacement stages. */
@@ -127,8 +134,8 @@ export function nextLessonProblem(
           timed,
         }
       }
-      const a = pick(rng, 3, 6)
-      const b = pick(rng, 3, 6)
+      const a = pick(rng, 2, 9)
+      const b = pick(rng, 2, 9)
       return {
         stageId,
         mode,
@@ -183,7 +190,7 @@ export function nextLessonProblem(
       }
     }
     case 'century': {
-      const year = pickFrom(rng, CENTURY_WEIGHTS)
+      const year = coveringPick(TAUGHT_CENTURIES, ctx.runSeed ?? 0, ctx.index ?? 0)
       return {
         stageId,
         mode,
@@ -196,11 +203,11 @@ export function nextLessonProblem(
       }
     }
     case 'year': {
-      const year = pick(rng, 1900, 2099)
+      const year = warpYear(rng())
       return {
         stageId,
         mode,
-        prompt: `Doomsday of ${year}?`,
+        prompt: `Doomsday of ${formatYear(year)}?`,
         answerKind: 'weekday',
         correct: yearDoomsdayOddEleven(year),
         date: null,
@@ -210,33 +217,30 @@ export function nextLessonProblem(
     }
     case 'full':
     case 'speed': {
-      // ~20% leap Jan/Feb dates for `full` so the leap trap recurs end-to-end.
-      const d =
-        stageId === 'full' && rng() < 0.2
-          ? leapJanFebDate(rng)
-          : generateDate({ minYear: 1900, maxYear: 2099 }, rng)
+      // ~20% leap Jan/Feb dates (the recurring trap), else a wide proleptic date.
+      let year: number
+      let month: number
+      if (stageId === 'full' && rng() < 0.2) {
+        year = nearestLeapYear(warpYear(rng()))
+        month = pick(rng, 1, 2)
+      } else {
+        year = warpYear(rng())
+        month = pick(rng, 1, 12)
+      }
+      const day = pick(rng, 1, daysInMonth(year, month))
       return {
         stageId,
         mode,
-        prompt: `${d.day} ${monthName(d.month)} ${d.year} — weekday?`,
+        prompt: `${day} ${monthName(month)} ${formatYear(year)} — weekday?`,
         answerKind: 'weekday',
-        correct: weekdayOfYMD(d.year, d.month, d.day),
-        date: d,
+        correct: weekdayOfYMD(year, month, day),
+        date: { year, month, day },
         timed,
       }
     }
     default:
       throw new RangeError(`unknown lesson stage: ${stageId}`)
   }
-}
-
-/** A leap-year January/February date — the recurring trap drilled in the `full` stage (§4). */
-function leapJanFebDate(rng: () => number): { year: number; month: number; day: number } {
-  // Leap years in 1900–2099 are exactly the multiples of 4 (1900 is not a leap year).
-  const year = 1904 + 4 * pick(rng, 0, 48)
-  const month = pick(rng, 1, 2)
-  const day = pick(rng, 1, daysInMonth(year, month))
-  return { year, month, day }
 }
 
 /**
