@@ -17,7 +17,7 @@ export function LessonBlocks({ blocks }: { blocks: Block[] }) {
           case 'h':
             return (
               <h3 key={i} style={{ marginTop: 20 }}>
-                {b.text}
+                {interpolate(b.text)}
               </h3>
             )
           case 'p':
@@ -30,7 +30,7 @@ export function LessonBlocks({ blocks }: { blocks: Block[] }) {
             return (
               <ul key={i} style={{ lineHeight: 1.7, paddingLeft: 20 }}>
                 {b.items.map((it, j) => (
-                  <li key={j}>{it}</li>
+                  <li key={j}>{interpolate(it)}</li>
                 ))}
               </ul>
             )
@@ -47,7 +47,7 @@ export function LessonBlocks({ blocks }: { blocks: Block[] }) {
                   fontWeight: 600,
                 }}
               >
-                💡 {b.text}
+                💡 {interpolate(b.text)}
               </div>
             )
           case 'example':

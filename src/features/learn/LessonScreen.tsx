@@ -70,7 +70,11 @@ export function LessonScreen() {
       <p className="muted">{stage.goal}</p>
       <LessonBlocks blocks={stage.blocks} />
       {mode !== 'idle' ? (
+        // Key on `mode` so the learn→practice flip REMOUNTS the drill: practice
+        // must start from a genuinely fresh window. Without it React reuses the
+        // same instance and the finished learn run's results/feedback bleed in.
         <LessonDrill
+          key={mode}
           stageId={stage.id}
           practice={mode === 'practice'}
           onPracticeAgain={() => setMode('practice')}
