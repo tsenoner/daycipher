@@ -17,9 +17,12 @@ function renderAt(path: string) {
 }
 
 describe('LessonScreen', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     _resetDbForTests()
-    indexedDB.deleteDatabase('daycipher')
+    await new Promise<void>((resolve) => {
+      const req = indexedDB.deleteDatabase('daycipher')
+      req.onsuccess = req.onerror = req.onblocked = () => resolve()
+    })
   })
 
   it('renders the first (always unlocked) stage without a Mark complete button', async () => {
@@ -47,5 +50,14 @@ describe('LessonScreen', () => {
     renderAt('/learn/full')
     expect(await screen.findByText('Learn list')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Any date, end to end' })).toBeNull()
+  })
+
+  it('leap stage drills with a Yes/No picker after Start exercises', async () => {
+    const { markStageComplete } = await import('./learnGate')
+    await markStageComplete('mod7')
+    renderAt('/learn/leap')
+    await screen.findByRole('heading', { name: 'Leap years' })
+    await userEvent.click(screen.getByRole('button', { name: /Start exercises/ }))
+    expect(await screen.findByRole('group', { name: /yes or no/i })).toBeInTheDocument()
   })
 })

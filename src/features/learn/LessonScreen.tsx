@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { CURRICULUM, getStage } from './curriculum'
 import { LessonBlocks } from '../../components/LessonBlocks'
+import { BooleanPicker } from '../../components/BooleanPicker'
 import { NumberPad } from '../../components/NumberPad'
 import { WeekdayPicker } from '../../components/WeekdayPicker'
 import { useSettings } from '../../store/settings'
@@ -144,7 +145,11 @@ function LessonDrill({ stageId }: { stageId: string }) {
             : `✕ Not quite — it was ${
                 feedback.answerKind === 'weekday'
                   ? weekdayName(feedback.answer as Weekday)
-                  : feedback.answer
+                  : feedback.answerKind === 'boolean'
+                    ? feedback.answer === 1
+                      ? 'Yes'
+                      : 'No'
+                    : feedback.answer
               }`}
         </div>
       )}
@@ -185,6 +190,8 @@ function LessonDrill({ stageId }: { stageId: string }) {
                   graded={false}
                   onPick={(n) => drill.answer(n)}
                 />
+              ) : current.answerKind === 'boolean' ? (
+                <BooleanPicker graded={false} onPick={(n) => drill.answer(n)} />
               ) : (
                 <WeekdayPicker
                   weekStart={weekStart}
