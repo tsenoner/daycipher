@@ -44,12 +44,12 @@ export function monthAnchor(month: number, leap: boolean): number {
 /** Century anchor weekday. anchor = (5·(c mod 4) + 2) mod 7, c = floor(year/100), Tuesday(2) base. */
 export function centuryAnchor(year: number): Weekday {
   const c = Math.floor(year / 100)
-  return mod7(5 * (c % 4) + 2)
+  return mod7(5 * (((c % 4) + 4) % 4) + 2)
 }
 
 /** Year's doomsday weekday via the Fong–Walters "Odd+11" method. */
 export function yearDoomsdayOddEleven(year: number): Weekday {
-  let t = year % 100
+  let t = ((year % 100) + 100) % 100
   if (t % 2 === 1) t += 11
   t = t / 2
   if (t % 2 === 1) t += 11
@@ -59,7 +59,7 @@ export function yearDoomsdayOddEleven(year: number): Weekday {
 
 /** Year's doomsday weekday via Conway's classic divide-by-12 method. */
 export function yearDoomsdayConway(year: number): Weekday {
-  const y = year % 100
+  const y = ((year % 100) + 100) % 100
   const a = Math.floor(y / 12)
   const b = y % 12
   const c = Math.floor(b / 4)
@@ -93,7 +93,7 @@ export function explain(year: number, month: number, day: number): StepTrace {
   const offset = reduceOffset(day - anchorDay)
   const result = mod7(yearDoomsday + offset)
 
-  const start = year % 100
+  const start = ((year % 100) + 100) % 100
   const afterStep1 = start % 2 === 1 ? start + 11 : start
   const halved = afterStep1 / 2
   const afterStep3 = halved % 2 === 1 ? halved + 11 : halved

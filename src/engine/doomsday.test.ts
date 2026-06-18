@@ -9,6 +9,7 @@ import {
   weekdayOf,
   explain,
 } from './doomsday'
+import { makeRng } from './generate'
 
 describe('isLeapYear', () => {
   it.each([
@@ -142,6 +143,53 @@ describe('explain', () => {
       ] as const) {
         expect(explain(y, m, d).result).toBe(weekdayOfYMD(y, m, d))
       }
+    }
+  })
+})
+
+/** Independent oracle: proleptic-Gregorian weekday via Julian Day Number, Sunday = 0. */
+function refWeekdayJDN(y: number, m: number, d: number): number {
+  const a = Math.floor((14 - m) / 12)
+  const yy = y + 4800 - a
+  const mm = m + 12 * a - 3
+  const jdn =
+    d +
+    Math.floor((153 * mm + 2) / 5) +
+    365 * yy +
+    Math.floor(yy / 4) -
+    Math.floor(yy / 100) +
+    Math.floor(yy / 400) -
+    32045
+  return (((jdn + 1) % 7) + 7) % 7
+}
+
+describe('proleptic Gregorian across the wide range', () => {
+  it('weekdayOfYMD matches the JDN reference, including BC years', () => {
+    const rng = makeRng(20260618)
+    for (let i = 0; i < 2000; i++) {
+      const y = -9998 + Math.floor(rng() * (9999 - -9998 + 1))
+      const m = 1 + Math.floor(rng() * 12)
+      const d = 15 // valid in every month
+      expect(weekdayOfYMD(y, m, d)).toBe(refWeekdayJDN(y, m, d))
+    }
+  })
+
+  it('is exactly periodic every 400 years (incl. across year 0)', () => {
+    for (const y of [-800, -401, -100, 0, 99, 1582, 1900, 2024]) {
+      expect(weekdayOfYMD(y, 7, 15)).toBe(weekdayOfYMD(y + 400, 7, 15))
+    }
+  })
+
+  it('Conway and Odd+11 agree on the year doomsday for BC years', () => {
+    for (const y of [-4999, -1200, -400, -1, 0]) {
+      expect(yearDoomsdayConway(y)).toBe(yearDoomsdayOddEleven(y))
+    }
+  })
+
+  it('centuryAnchor is normalized for negative centuries (no negative mod leak)', () => {
+    // 4/4 is an anchor, so its weekday equals the year doomsday for any year.
+    for (const y of [-4300, -300, -7, 0]) {
+      expect(weekdayOfYMD(y, 4, 4)).toBe(yearDoomsdayOddEleven(y))
     }
   })
 })
