@@ -24,6 +24,9 @@ export const weekdayShort = (w: Weekday): string => WEEKDAY_NAMES[w].slice(0, 3)
 
 export const monthName = (m: number): string => MONTHS[m - 1]
 
+/** Label for a boolean (yes/no) drill answer: 0 → "No", 1 → "Yes". */
+export const booleanLabel = (v: 0 | 1): string => (v === 1 ? 'Yes' : 'No')
+
 /** Weekday values in display order. weekStart 1 = Monday-first, 0 = Sunday-first. */
 export function orderedWeekdays(weekStart: 0 | 1): Weekday[] {
   return weekStart === 1 ? [1, 2, 3, 4, 5, 6, 0] : [0, 1, 2, 3, 4, 5, 6]

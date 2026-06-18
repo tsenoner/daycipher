@@ -25,16 +25,14 @@ describe('curriculum', () => {
     const examples = CURRICULUM.flatMap((s) =>
       s.blocks.filter((b): b is Extract<Block, { kind: 'example' }> => b.kind === 'example'),
     )
-    const checked = examples.filter((e) => e.check)
-    expect(checked.length).toBeGreaterThan(0) // guard: don't silently check nothing
+    expect(examples.length).toBeGreaterThan(0) // guard: don't silently check nothing
     // Every example must carry a `check` — otherwise a new example with a
     // wrong hand-written answer would slip through unverified.
-    expect(checked.length).toBe(examples.length)
-    for (const e of checked) {
+    expect(examples.every((e) => e.check)).toBe(true)
+    for (const e of examples) {
+      const c = e.check!
       const w =
-        e.check!.kind === 'ymd'
-          ? weekdayOfYMD(e.check!.year, e.check!.month, e.check!.day)
-          : yearDoomsdayOddEleven(e.check!.year)
+        c.kind === 'ymd' ? weekdayOfYMD(c.year, c.month, c.day) : yearDoomsdayOddEleven(c.year)
       expect(e.answer.startsWith(weekdayName(w))).toBe(true)
     }
   })

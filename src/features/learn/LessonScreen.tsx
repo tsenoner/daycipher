@@ -6,7 +6,7 @@ import { BooleanPicker } from '../../components/BooleanPicker'
 import { NumberPad } from '../../components/NumberPad'
 import { WeekdayPicker } from '../../components/WeekdayPicker'
 import { useSettings } from '../../store/settings'
-import { weekdayName } from '../../lib/format'
+import { booleanLabel, weekdayName } from '../../lib/format'
 import { useLessonDrill } from './useLessonDrill'
 import { ruleFor } from './learnMastery'
 import type { Weekday } from '../../engine'
@@ -166,9 +166,7 @@ function LessonDrill({
                 feedback.answerKind === 'weekday'
                   ? weekdayName(feedback.answer as Weekday)
                   : feedback.answerKind === 'boolean'
-                    ? feedback.answer === 1
-                      ? 'Yes'
-                      : 'No'
+                    ? booleanLabel(feedback.answer as 0 | 1)
                     : feedback.answer
               }`}
         </div>

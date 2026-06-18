@@ -1,3 +1,5 @@
+import { booleanLabel } from '../lib/format'
+
 interface BooleanPickerProps {
   graded: boolean
   guessed?: 0 | 1 | null
@@ -6,8 +8,8 @@ interface BooleanPickerProps {
 }
 
 const OPTIONS: { value: 0 | 1; label: string }[] = [
-  { value: 0, label: 'No' },
-  { value: 1, label: 'Yes' },
+  { value: 0, label: booleanLabel(0) },
+  { value: 1, label: booleanLabel(1) },
 ]
 
 export function BooleanPicker({ graded, guessed, correct, onPick }: BooleanPickerProps) {

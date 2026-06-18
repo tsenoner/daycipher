@@ -2,11 +2,14 @@ import type { Block } from '../features/learn/curriculum'
 import { CURRENT_YEAR, thisYearDoomsday } from '../engine'
 import { weekdayName } from '../lib/format'
 
+// Resolved once at module load (CURRENT_YEAR is itself a module-load constant),
+// so interpolate() doesn't recompute the year's doomsday per block per render.
+const THIS_YEAR = String(CURRENT_YEAR)
+const THIS_YEAR_DOOMSDAY = weekdayName(thisYearDoomsday())
+
 /** Replace runtime tokens so "this year" facts never go stale in the copy. */
 function interpolate(text: string): string {
-  return text
-    .replaceAll('{thisYear}', String(CURRENT_YEAR))
-    .replaceAll('{thisYearDoomsday}', weekdayName(thisYearDoomsday()))
+  return text.replaceAll('{thisYear}', THIS_YEAR).replaceAll('{thisYearDoomsday}', THIS_YEAR_DOOMSDAY)
 }
 
 export function LessonBlocks({ blocks }: { blocks: Block[] }) {

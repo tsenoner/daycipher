@@ -7,6 +7,7 @@ import {
   mod7,
   monthAnchor,
   pick,
+  pickFrom,
   thisYearDoomsday,
   weekdayOfYMD,
   yearDoomsdayOddEleven,
@@ -133,7 +134,7 @@ export function nextLessonProblem(stageId: string, rng: () => number): LessonPro
       }
     }
     case 'century': {
-      const year = CENTURY_WEIGHTS[pick(rng, 0, CENTURY_WEIGHTS.length - 1)]
+      const year = pickFrom(rng, CENTURY_WEIGHTS)
       return {
         stageId,
         mode,
@@ -197,7 +198,7 @@ const LEAP_DRILL_YEARS = [
 ]
 
 function leapDrillYear(rng: () => number): number {
-  return LEAP_DRILL_YEARS[pick(rng, 0, LEAP_DRILL_YEARS.length - 1)]
+  return pickFrom(rng, LEAP_DRILL_YEARS)
 }
 
 /**
