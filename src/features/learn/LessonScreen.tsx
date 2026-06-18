@@ -68,7 +68,7 @@ export function LessonScreen() {
       </div>
       <h1 style={{ marginTop: 2 }}>{stage.title}</h1>
       <p className="muted">{stage.goal}</p>
-      <LessonBlocks blocks={stage.blocks} />
+      <LessonBlocks blocks={stage.blocks} stageId={stage.id} />
       {mode !== 'idle' ? (
         // Key on `mode` so the learn→practice flip REMOUNTS the drill: practice
         // must start from a genuinely fresh window. Without it React reuses the
