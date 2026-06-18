@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { CURRICULUM, getStage, type Block } from './curriculum'
+import { weekdayOfYMD, yearDoomsdayOddEleven } from '../../engine'
+import { weekdayName } from '../../lib/format'
 
 describe('curriculum', () => {
   it('has 8 stages with unique ids and ascending n', () => {
@@ -18,10 +20,18 @@ describe('curriculum', () => {
     expect(getStage('full')?.title).toBe('Any date, end to end')
     expect(getStage('nope')).toBeUndefined()
   })
-  it('the full-date worked example resolves to Friday', () => {
-    const ex = getStage('full')!.blocks.find(
-      (b): b is Extract<Block, { kind: 'example' }> => b.kind === 'example',
-    )!
-    expect(ex.answer).toBe('Friday')
+  it('every checked worked example agrees with the engine', () => {
+    const examples = CURRICULUM.flatMap((s) =>
+      s.blocks.filter((b): b is Extract<Block, { kind: 'example' }> => b.kind === 'example'),
+    )
+    const checked = examples.filter((e) => e.check)
+    expect(checked.length).toBeGreaterThan(0) // guard: don't silently check nothing
+    for (const e of checked) {
+      const w =
+        e.check!.kind === 'ymd'
+          ? weekdayOfYMD(e.check!.year, e.check!.month, e.check!.day)
+          : yearDoomsdayOddEleven(e.check!.year)
+      expect(e.answer.startsWith(weekdayName(w))).toBe(true)
+    }
   })
 })

@@ -1,9 +1,13 @@
+export type ExampleCheck =
+  | { kind: 'ymd'; year: number; month: number; day: number }
+  | { kind: 'yearDoom'; year: number }
+
 export type Block =
   | { kind: 'p'; text: string }
   | { kind: 'h'; text: string }
   | { kind: 'list'; items: string[] }
   | { kind: 'mnemonic'; text: string }
-  | { kind: 'example'; date: string; steps: string[]; answer: string }
+  | { kind: 'example'; date: string; steps: string[]; answer: string; check?: ExampleCheck }
 
 export interface Stage {
   id: string
@@ -126,6 +130,7 @@ export const CURRICULUM: Stage[] = [
           'Saturday + 6 = Friday',
         ],
         answer: 'Friday',
+        check: { kind: 'ymd', year: 2026, month: 12, day: 25 },
       },
     ],
   },
@@ -186,6 +191,7 @@ export const CURRICULUM: Stage[] = [
           '2000s anchor is Tuesday; Tuesday + 6 = Monday',
         ],
         answer: 'Monday — every doomsday date in 2005 is a Monday',
+        check: { kind: 'yearDoom', year: 2005 },
       },
       {
         kind: 'p',
@@ -213,6 +219,7 @@ export const CURRICULUM: Stage[] = [
           'Your date is the 14th, so no stepping needed: Friday',
         ],
         answer: 'Friday',
+        check: { kind: 'ymd', year: 1986, month: 3, day: 14 },
       },
       {
         kind: 'p',
