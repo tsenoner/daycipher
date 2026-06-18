@@ -11,6 +11,7 @@ import { makeRng, isLeapYear } from '../../engine'
 import { listAttempts } from '../../db/attempts'
 import { getMeta } from '../../db/meta'
 import { _resetDbForTests } from '../../db/db'
+import { stageOutcomes } from './learnMastery'
 
 type DrillResult = {
   current: { current: LessonProblem | null; answer: (v: number, ms?: number) => void }
@@ -208,5 +209,36 @@ describe('useLessonDrill', () => {
     // mod7 is K=3,M=4. After 1 rep the M-rep gap (4-1=3) dominates the K gap (3-1=2),
     // so remaining never understates how many reps still stand between here and done.
     expect(result.current.progress.remaining).toBe(3)
+  })
+
+  it('practice mode logs :practice rows, never latches completion, and credits the streak', async () => {
+    const { result } = renderHook(() => useLessonDrill('mod7', { rng: makeRng(21), practice: true }))
+    await waitFor(() => expect(result.current.current).not.toBeNull())
+
+    for (let i = 0; i < 5; i++) await answerCorrect(result)
+
+    const all = await listAttempts()
+    expect(all).toHaveLength(5)
+    expect(all.every((a) => a.mode === 'learn:mod7:practice')).toBe(true)
+    // :practice rows are invisible to the stage's mastery window …
+    expect(stageOutcomes(all, 'mod7')).toEqual([])
+    // … and never latch completion …
+    expect(await getMeta<string[]>('learnCompleted', [])).not.toContain('mod7')
+    // … but a correct practice rep still keeps the daily streak alive.
+    expect(await getMeta<number>('currentStreak', 0)).toBe(1)
+  })
+
+  it('practice mode starts a fresh window even when the stage is already internalized', async () => {
+    // Internalize mod7 the normal way first.
+    const learn = renderHook(() => useLessonDrill('mod7', { rng: makeRng(22) }))
+    await waitFor(() => expect(learn.result.current.current).not.toBeNull())
+    for (let i = 0; i < 4; i++) await answerCorrect(learn.result)
+    await waitFor(() => expect(learn.result.current.done).toBe(true))
+    learn.unmount()
+
+    // Re-enter in practice mode: done must be false (fresh window), not resumed from the log.
+    const practice = renderHook(() => useLessonDrill('mod7', { rng: makeRng(23), practice: true }))
+    await waitFor(() => expect(practice.result.current.current).not.toBeNull())
+    expect(practice.result.current.done).toBe(false)
   })
 })

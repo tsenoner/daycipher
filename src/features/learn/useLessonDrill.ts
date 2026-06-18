@@ -235,6 +235,8 @@ export interface LessonDrillOptions {
   rng?: () => number
   /** Inject the answer duration (default: wall-clock); used to drive stage-7 timing in tests. */
   durationMs?: number
+  /** Practice-again: fresh in-session window, never latches completion, logs `:practice` rows. */
+  practice?: boolean
 }
 
 /**
@@ -246,7 +248,7 @@ export interface LessonDrillOptions {
  * recomputed from the prior log plus `results` on demand; a double-apply can't corrupt it.
  */
 export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
-  const { rng = Math.random, durationMs } = opts
+  const { rng = Math.random, durationMs, practice = false } = opts
   // The stage is fixed for a mounted drill; hold injected knobs in refs so the
   // answer callback stays identity-stable across renders.
   const rngRef = useRef(rng)
@@ -280,6 +282,16 @@ export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
   useEffect(() => {
     let active = true
     void (async () => {
+      if (practice) {
+        // Practice-again: never resume prior outcomes, never latch. The window is
+        // session-only, so `done` starts false and the drill keeps serving problems.
+        if (!active) return
+        latchedRef.current = false
+        setPriorOutcomes([])
+        setProblem(nextLessonProblem(stageId, rngRef.current))
+        startRef.current = performance.now()
+        return
+      }
       const [all, completed] = await Promise.all([listAttempts(), getCompleted()])
       if (!active) return
       const outcomes = stageOutcomes(all, stageId)
@@ -287,17 +299,13 @@ export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
       latchedRef.current = done
       setPriorOutcomes(outcomes)
       setProblem(nextLessonProblem(stageId, rngRef.current))
-      // Stage 7 (and any timed stage) times from mount: prime the clock here so the
-      // first measurement excludes the async load. Later reps reset it in `answer`.
       startRef.current = performance.now()
-      // Self-heal: a stage already DONE in the log but missing from `learnCompleted`
-      // (e.g. an effect lost to a crash) re-latches its completion. Idempotent.
       if (done && !completed.includes(stageId)) await markStageComplete(stageId)
     })()
     return () => {
       active = false
     }
-  }, [stageId, rule])
+  }, [stageId, rule, practice])
 
   // Memoize so the window only recomputes when its inputs change — `rule` is a
   // stable per-stage object (derived map), so these stay referentially steady.
@@ -318,15 +326,18 @@ export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
     const done = progress.done
     void (async () => {
       for (const r of fresh) {
-        if (r.attempt.correct) await recordAttempt(r.attempt)
-        else await addAttempt(r.attempt)
+        const row = practice ? { ...r.attempt, mode: `${r.attempt.mode}:practice` } : r.attempt
+        if (row.correct) await recordAttempt(row)
+        else await addAttempt(row)
       }
-      if (done && !latchedRef.current) {
+      // Practice never completes a stage — only the first DONE transition of a
+      // real mastery run latches.
+      if (!practice && done && !latchedRef.current) {
         latchedRef.current = true
         await markStageComplete(stageId)
       }
     })()
-  }, [results, priorOutcomes, progress.done, stageId])
+  }, [results, priorOutcomes, progress.done, stageId, practice])
 
   const answer = useCallback(
     (value: number, injectedMs?: number) => {
