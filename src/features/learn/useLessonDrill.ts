@@ -70,6 +70,8 @@ export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
   // Load prior rows once so progress resumes a reload from the log, never restarts
   // it. A remount re-reads the same rows — it does not re-record them.
   useEffect(() => {
+    // Reset the served-index at the start of each run so a dev StrictMode double-invoke serves index 0 first (matching prod); covering stages (leap/century) then deal from position 0.
+    servedRef.current = 0
     let active = true
     void (async () => {
       if (practice) {
