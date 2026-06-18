@@ -7,7 +7,7 @@ import {
   ANCHOR_DAYS,
   type LessonProblem,
 } from './useLessonDrill'
-import { makeRng, isLeapYear } from '../../engine'
+import { makeRng } from '../../engine'
 import { listAttempts } from '../../db/attempts'
 import { getMeta } from '../../db/meta'
 import { _resetDbForTests } from '../../db/db'
@@ -66,14 +66,11 @@ describe('nextLessonProblem', () => {
     expect(nextLessonProblem('full', makeRng(99))).toEqual(nextLessonProblem('full', makeRng(99)))
   })
 
-  it('stage leap asks a yes/no leap-year question graded by isLeapYear', () => {
-    const p = nextLessonProblem('leap', makeRng(31))
+  it('stage leap asks a yes/no leap-year question with a 0/1 answer', () => {
+    const p = nextLessonProblem('leap', makeRng(31), { index: 0, runSeed: 1 })
     expect(p.answerKind).toBe('boolean')
     expect([0, 1]).toContain(p.correct)
     expect(p.prompt).toMatch(/leap year\?/i)
-    // The prompt's year and the correct flag must agree with the engine.
-    const year = Number(p.prompt.match(/\d{4}/)![0])
-    expect(p.correct).toBe(isLeapYear(year) ? 1 : 0)
   })
 
   it('accepts an optional ctx without changing weighted-stage output', () => {

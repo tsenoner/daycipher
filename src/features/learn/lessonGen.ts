@@ -3,11 +3,13 @@ import {
   daysInMonth,
   generateDate,
   isLeapYear,
+  makeRng,
   mod7,
   monthAnchor,
   pick,
   pickFrom,
   thisYearDoomsday,
+  warpYear,
   weekdayOfYMD,
   yearDoomsdayOddEleven,
   CURRENT_YEAR,
@@ -15,8 +17,47 @@ import {
 } from '../../engine'
 import { gradeNumber, gradeProblem, gradeWeekday } from '../practice/drill'
 import type { Attempt } from '../../db/db'
-import { monthName, weekdayName } from '../../lib/format'
+import { formatYear, monthName, weekdayName } from '../../lib/format'
 import { getStage } from './curriculum'
+
+/** Fisher–Yates shuffle of a copy, driven by `rng`. */
+function shuffle<T>(arr: readonly T[], rng: () => number): T[] {
+  const a = arr.slice()
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+/** Deal `domain` without replacement as a pure fn of (runSeed, index): every item
+ *  appears once per cycle of length `domain.length` before any repeats. */
+export function coveringPick<T>(domain: readonly T[], runSeed: number, index: number): T {
+  const n = domain.length
+  const cycle = Math.floor(index / n)
+  const pos = ((index % n) + n) % n
+  return shuffle(domain, makeRng((runSeed + cycle * 0x9e3779b1) >>> 0))[pos]
+}
+
+type LeapClass = 'div4not100' | 'div100not400' | 'div400' | 'notdiv4'
+const LEAP_CLASSES: readonly LeapClass[] = ['div4not100', 'div100not400', 'div400', 'notdiv4']
+const LEAP_PRED: Record<LeapClass, (y: number) => boolean> = {
+  div4not100: (y) => y % 4 === 0 && y % 100 !== 0,
+  div100not400: (y) => y % 100 === 0 && y % 400 !== 0,
+  div400: (y) => y % 400 === 0,
+  notdiv4: (y) => y % 4 !== 0,
+}
+
+/** A year of the given leap class, near the wide centered distribution. */
+function leapClassYear(klass: LeapClass, rng: () => number): number {
+  const base = warpYear(rng())
+  const pred = LEAP_PRED[klass]
+  for (let d = 0; d <= 800; d++) {
+    if (base + d <= 9999 && pred(base + d)) return base + d
+    if (base - d >= -9998 && pred(base - d)) return base - d
+  }
+  return klass === 'div400' ? 2000 : klass === 'div100not400' ? 1900 : klass === 'div4not100' ? 2024 : 2025
+}
 
 /** NumberPad option set for the `months` stage — the doomsday day-of-month answers. */
 export const ANCHOR_DAYS = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 28, 29]
@@ -68,7 +109,6 @@ export function nextLessonProblem(
   rng: () => number,
   ctx: LessonCtx = {},
 ): LessonProblem {
-  void ctx // unused until leap/century adopt without-replacement (Tasks 6–7)
   const mode = `learn:${stageId}`
   const timed = getStage(stageId)?.timed ?? false
   switch (stageId) {
@@ -117,11 +157,12 @@ export function nextLessonProblem(
       }
     }
     case 'leap': {
-      const year = leapDrillYear(rng)
+      const klass = coveringPick(LEAP_CLASSES, ctx.runSeed ?? 0, ctx.index ?? 0)
+      const year = leapClassYear(klass, rng)
       return {
         stageId,
         mode,
-        prompt: `Is ${year} a leap year?`,
+        prompt: `Is ${formatYear(year)} a leap year?`,
         answerKind: 'boolean',
         correct: isLeapYear(year) ? 1 : 0,
         date: null,
@@ -196,17 +237,6 @@ function leapJanFebDate(rng: () => number): { year: number; month: number; day: 
   const month = pick(rng, 1, 2)
   const day = pick(rng, 1, daysInMonth(year, month))
   return { year, month, day }
-}
-
-// Years that exercise the ÷100 / ÷400 rules, mixed with ordinary years, so a
-// guesser who ignores the century rule fails the leap stage (§ leap).
-const LEAP_DRILL_YEARS = [
-  1600, 1700, 1800, 1900, 2000, 2100, 2200, 2400, // century edge cases
-  2024, 2020, 1996, 2008, 2025, 2023, 2026, 1997, // ordinary: some ÷4, some not
-]
-
-function leapDrillYear(rng: () => number): number {
-  return pickFrom(rng, LEAP_DRILL_YEARS)
 }
 
 /**
