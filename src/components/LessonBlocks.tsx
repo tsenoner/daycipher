@@ -1,4 +1,13 @@
 import type { Block } from '../features/learn/curriculum'
+import { CURRENT_YEAR, thisYearDoomsday } from '../engine'
+import { weekdayName } from '../lib/format'
+
+/** Replace runtime tokens so "this year" facts never go stale in the copy. */
+function interpolate(text: string): string {
+  return text
+    .replaceAll('{thisYear}', String(CURRENT_YEAR))
+    .replaceAll('{thisYearDoomsday}', weekdayName(thisYearDoomsday()))
+}
 
 export function LessonBlocks({ blocks }: { blocks: Block[] }) {
   return (
@@ -14,7 +23,7 @@ export function LessonBlocks({ blocks }: { blocks: Block[] }) {
           case 'p':
             return (
               <p key={i} style={{ lineHeight: 1.6 }}>
-                {b.text}
+                {interpolate(b.text)}
               </p>
             )
           case 'list':

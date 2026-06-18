@@ -110,7 +110,7 @@ export const CURRICULUM: Stage[] = [
     blocks: [
       {
         kind: 'p',
-        text: "You can start solving real dates today with just the month anchors plus one fact: this year's doomsday. For 2026 it is Saturday.",
+        text: "You can solve real dates today with just the month anchors plus one fact: this year's doomsday. For {thisYear} it is {thisYearDoomsday}.",
       },
       {
         kind: 'p',

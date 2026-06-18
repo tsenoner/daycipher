@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { LessonBlocks } from './LessonBlocks'
 import type { Block } from '../features/learn/curriculum'
+import { CURRENT_YEAR, thisYearDoomsday } from '../engine'
+import { weekdayName } from '../lib/format'
 
 const blocks: Block[] = [
   { kind: 'p', text: 'Intro paragraph.' },
@@ -19,5 +21,13 @@ describe('LessonBlocks', () => {
     expect(screen.getByText('14 March 1986')).toBeInTheDocument()
     expect(screen.getByText('step one')).toBeInTheDocument()
     expect(screen.getByText(/Friday/)).toBeInTheDocument()
+  })
+
+  describe('LessonBlocks token interpolation', () => {
+    it('replaces {thisYear} and {thisYearDoomsday} in paragraph text', () => {
+      render(<LessonBlocks blocks={[{ kind: 'p', text: 'For {thisYear} it is {thisYearDoomsday}.' }]} />)
+      const expected = `For ${CURRENT_YEAR} it is ${weekdayName(thisYearDoomsday())}.`
+      expect(screen.getByText(expected)).toBeInTheDocument()
+    })
   })
 })
