@@ -60,3 +60,60 @@ export function gradeGuided(
     timed: false,
   }
 }
+
+/**
+ * Grade a bare-number answer (stages 1 `mod7`, 2 `months`). The "weekday" fields
+ * carry the actual number drawn (a weekday 0..6 or a day-of-month 3..29); the row
+ * is isolated from weekday-named UI by its `learn:*` mode prefix, never by nulling
+ * fields (the `Attempt` type forbids null here). `targetDate` is '' — no real date.
+ */
+export function gradeNumber(
+  expected: number,
+  guessed: number,
+  mode: string,
+  durationMs: number,
+  timestamp: number = Date.now(),
+): Attempt {
+  return {
+    timestamp,
+    targetDate: '',
+    correctWeekday: expected,
+    guessedWeekday: guessed,
+    correct: expected === guessed,
+    durationMs,
+    mode,
+    anchorCorrect: null,
+    yearDoomCorrect: null,
+    offsetCorrect: null,
+    timed: false,
+  }
+}
+
+/**
+ * Grade a raw weekday answer (stage 4 `century` via the 'anchor' dimension). The
+ * optional `dimension` mirrors the graded weekday into `anchorCorrect`/`yearDoomCorrect`
+ * for parity with `gradeGuided`. `targetDate` is '' — no real date is being solved.
+ */
+export function gradeWeekday(
+  expected: Weekday,
+  guessed: Weekday,
+  mode: string,
+  durationMs: number,
+  timestamp: number = Date.now(),
+  dimension?: 'anchor' | 'yearDoom',
+): Attempt {
+  const correct = expected === guessed
+  return {
+    timestamp,
+    targetDate: '',
+    correctWeekday: expected,
+    guessedWeekday: guessed,
+    correct,
+    durationMs,
+    mode,
+    anchorCorrect: dimension === 'anchor' ? (correct ? 1 : 0) : null,
+    yearDoomCorrect: dimension === 'yearDoom' ? (correct ? 1 : 0) : null,
+    offsetCorrect: null,
+    timed: false,
+  }
+}

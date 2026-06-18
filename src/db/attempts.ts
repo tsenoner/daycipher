@@ -25,6 +25,19 @@ export async function listAttempts(): Promise<Attempt[]> {
   return all.reverse()
 }
 
+/** A lesson rep, written by the Learn drill (`mode='learn:<stageId>'`). */
+export function isLearnAttempt(a: Attempt): boolean {
+  return a.mode.startsWith('learn:')
+}
+
+/**
+ * Drop `learn:*` rows so lesson reps never inflate "solved"/accuracy or steer the
+ * adaptive picker. Daily rows are kept — a Daily solve is a genuine full solve.
+ */
+export function practiceAttempts(all: Attempt[]): Attempt[] {
+  return all.filter((a) => !isLearnAttempt(a))
+}
+
 /** Map of local-day -> attempt count for an already-loaded set of attempts. */
 export function tallyByDay(attempts: Attempt[]): Record<string, number> {
   const out: Record<string, number> = {}

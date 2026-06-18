@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { addAttempt, listAttempts, countByDay } from './attempts'
-import { _resetDbForTests } from './db'
+import { addAttempt, listAttempts, countByDay, isLearnAttempt, practiceAttempts } from './attempts'
+import { _resetDbForTests, type Attempt } from './db'
 
 const base = {
   targetDate: '1986-03-14',
@@ -35,5 +35,22 @@ describe('attempts', () => {
     await addAttempt({ ...base, timestamp: d + 1000 })
     const counts = await countByDay()
     expect(counts['2026-06-16']).toBe(2)
+  })
+})
+
+describe('learn-attempt filters', () => {
+  const mk = (mode: string): Attempt => ({ ...base, timestamp: 1, mode })
+
+  it('isLearnAttempt is true only for learn:* modes', () => {
+    expect(isLearnAttempt(mk('learn:mod7'))).toBe(true)
+    expect(isLearnAttempt(mk('learn:speed'))).toBe(true)
+    expect(isLearnAttempt(mk('quick'))).toBe(false)
+    expect(isLearnAttempt(mk('daily'))).toBe(false)
+    expect(isLearnAttempt(mk('guided'))).toBe(false)
+  })
+
+  it('practiceAttempts drops learn:* rows and keeps the rest', () => {
+    const rows = [mk('quick'), mk('learn:mod7'), mk('daily'), mk('learn:century')]
+    expect(practiceAttempts(rows).map((a) => a.mode)).toEqual(['quick', 'daily'])
   })
 })
