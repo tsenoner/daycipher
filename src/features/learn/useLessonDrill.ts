@@ -17,6 +17,8 @@ export interface LessonDrillOptions {
   durationMs?: number
   /** Practice-again: fresh in-session window, never latches completion, logs `:practice` rows. */
   practice?: boolean
+  /** Stable per-run seed for without-replacement stages (default: random). */
+  runSeed?: number
 }
 
 /**
@@ -34,6 +36,8 @@ export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
   const rngRef = useRef(rng)
   const durationRef = useRef(durationMs)
   durationRef.current = durationMs
+  const runSeedRef = useRef<number>(opts.runSeed ?? Math.floor(Math.random() * 0x7fffffff))
+  const servedRef = useRef(0) // per-mount count of problems served (the ctx index source)
 
   // Prior `learn:<stage>` outcomes (oldest-first), loaded once from the log. The
   // live window is this prefix plus the in-session `results`.
@@ -57,6 +61,12 @@ export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
 
   const rule = ruleFor(stageId)
 
+  const serve = useCallback(() => {
+    const index = servedRef.current
+    servedRef.current = index + 1
+    return nextLessonProblem(stageId, rngRef.current, { index, runSeed: runSeedRef.current })
+  }, [stageId])
+
   // Load prior rows once so progress resumes a reload from the log, never restarts
   // it. A remount re-reads the same rows — it does not re-record them.
   useEffect(() => {
@@ -68,7 +78,7 @@ export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
         if (!active) return
         latchedRef.current = false
         setPriorOutcomes([])
-        setProblem(nextLessonProblem(stageId, rngRef.current))
+        setProblem(serve())
         startRef.current = performance.now()
         return
       }
@@ -78,7 +88,7 @@ export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
       const done = stageProgress(outcomes, rule).done
       latchedRef.current = done
       setPriorOutcomes(outcomes)
-      setProblem(nextLessonProblem(stageId, rngRef.current))
+      setProblem(serve())
       // Stage 7 (and any timed stage) times from mount: prime the clock here so the
       // first measurement excludes the async load. Later reps reset it in `answer`.
       startRef.current = performance.now()
@@ -89,7 +99,7 @@ export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
     return () => {
       active = false
     }
-  }, [stageId, rule, practice])
+  }, [stageId, rule, practice, serve])
 
   // Memoize so the window only recomputes when its inputs change — `rule` is a
   // stable per-stage object (derived map), so these stay referentially steady.
@@ -135,9 +145,9 @@ export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
       // top-level setters — no nested updater — so StrictMode stays single-write.
       setResults((rs) => [...rs, { problem: p, attempt }])
       setFeedback({ correct: attempt.correct, answer: p.correct, answerKind: p.answerKind })
-      setProblem(nextLessonProblem(stageId, rngRef.current))
+      setProblem(serve())
     },
-    [stageId],
+    [serve],
   )
 
   return {
@@ -152,4 +162,4 @@ export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
 
 // Preserve the public import surface used by tests and screens.
 export { nextLessonProblem, gradeLesson, ANCHOR_DAYS } from './lessonGen'
-export type { LessonProblem, AnswerKind } from './lessonGen'
+export type { LessonProblem, AnswerKind, LessonCtx } from './lessonGen'

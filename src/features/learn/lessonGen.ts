@@ -52,11 +52,23 @@ export interface LessonProblem {
 // Weight the three centuries a learner actually meets higher (§4, `century` stage).
 const CENTURY_WEIGHTS = [1700, 1800, 1800, 1900, 1900, 1900, 2000, 2000, 2000, 2100]
 
+export interface LessonCtx {
+  /** Per-mount served-problem index (0-based); used by without-replacement stages. */
+  index?: number
+  /** Stable per-run seed; used by without-replacement stages. */
+  runSeed?: number
+}
+
 /**
  * Deterministically draw one instance for `stageId` from `rng` (§4). Pure — no DB,
  * no wall-clock; every stage answers with a single number or weekday.
  */
-export function nextLessonProblem(stageId: string, rng: () => number): LessonProblem {
+export function nextLessonProblem(
+  stageId: string,
+  rng: () => number,
+  ctx: LessonCtx = {},
+): LessonProblem {
+  void ctx // unused until leap/century adopt without-replacement (Tasks 6–7)
   const mode = `learn:${stageId}`
   const timed = getStage(stageId)?.timed ?? false
   switch (stageId) {

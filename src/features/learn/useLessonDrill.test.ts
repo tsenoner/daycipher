@@ -75,6 +75,12 @@ describe('nextLessonProblem', () => {
     const year = Number(p.prompt.match(/\d{4}/)![0])
     expect(p.correct).toBe(isLeapYear(year) ? 1 : 0)
   })
+
+  it('accepts an optional ctx without changing weighted-stage output', () => {
+    const a = nextLessonProblem('full', makeRng(99))
+    const b = nextLessonProblem('full', makeRng(99), { index: 3, runSeed: 7 })
+    expect(b).toEqual(a) // weighted stages ignore ctx
+  })
 })
 
 describe('gradeLesson', () => {
