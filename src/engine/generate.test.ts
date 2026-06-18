@@ -86,6 +86,16 @@ describe('warpYear', () => {
     }
   })
 
+  it('handles the u=0 and u=1 boundaries without blowing up', () => {
+    for (const u of [0, 1]) {
+      const y = warpYear(u)
+      expect(Number.isFinite(y)).toBe(true)
+      expect(Number.isInteger(y)).toBe(true)
+      expect(y).toBeGreaterThanOrEqual(-9998)
+      expect(y).toBeLessThanOrEqual(9999)
+    }
+  })
+
   it('keeps ~80% of draws in the relatable core yet reaches both extremes', () => {
     const N = 20000
     let inCore = 0
