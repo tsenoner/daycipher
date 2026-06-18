@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { generateDate, makeRng, pick, daysInMonth } from './generate'
+import { generateDate, makeRng, pick, daysInMonth, warpYear } from './generate'
 import { isLeapYear } from './doomsday'
 
 describe('generateDate', () => {
@@ -72,5 +72,35 @@ describe('daysInMonth', () => {
   it('throws on an invalid month', () => {
     expect(() => daysInMonth(2000, 0)).toThrow(RangeError)
     expect(() => daysInMonth(2000, 13)).toThrow(RangeError)
+  })
+})
+
+describe('warpYear', () => {
+  it('maps the midpoint to the center and stays within bounds', () => {
+    expect(warpYear(0.5)).toBe(2050)
+    for (let i = 1; i < 1000; i++) {
+      const y = warpYear(i / 1000)
+      expect(y).toBeGreaterThanOrEqual(-9998)
+      expect(y).toBeLessThanOrEqual(9999)
+      expect(Number.isInteger(y)).toBe(true)
+    }
+  })
+
+  it('keeps ~80% of draws in the relatable core yet reaches both extremes', () => {
+    const N = 20000
+    let inCore = 0
+    let min = Infinity
+    let max = -Infinity
+    for (let i = 1; i < N; i++) {
+      const y = warpYear(i / N)
+      if (y >= 1500 && y <= 2600) inCore++
+      min = Math.min(min, y)
+      max = Math.max(max, y)
+    }
+    const frac = inCore / (N - 1)
+    expect(frac).toBeGreaterThan(0.7)
+    expect(frac).toBeLessThan(0.9)
+    expect(min).toBe(-9998) // deep BC tail (clamped)
+    expect(max).toBe(9999) // deep future tail (clamped)
   })
 })
