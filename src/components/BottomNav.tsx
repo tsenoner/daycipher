@@ -1,4 +1,10 @@
+import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import {
+  getCompleted,
+  getPracticeUnlocked,
+  isPracticeUnlocked,
+} from '../features/learn/learnGate'
 
 const tabs = [
   { to: '/', label: 'Today', end: true },
@@ -8,6 +14,19 @@ const tabs = [
 ]
 
 export function BottomNav() {
+  // Default to NOT locked so unlocked users never see a lock flash; only the async
+  // check can switch this on.
+  const [locked, setLocked] = useState(false)
+  useEffect(() => {
+    let active = true
+    void Promise.all([getCompleted(), getPracticeUnlocked()]).then(([completed, unlocked]) => {
+      if (active) setLocked(!isPracticeUnlocked(completed, unlocked))
+    })
+    return () => {
+      active = false
+    }
+  }, [])
+
   return (
     <nav
       aria-label="Primary"
@@ -40,7 +59,7 @@ export function BottomNav() {
             color: isActive ? 'var(--burg)' : 'var(--muted)',
           })}
         >
-          {t.label}
+          {t.to === '/practice' && locked ? `${t.label} 🔒` : t.label}
         </NavLink>
       ))}
     </nav>

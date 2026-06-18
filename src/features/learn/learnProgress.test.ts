@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { getDone, markDone, isDone } from './learnProgress'
+import { getDone, isDone } from './learnProgress'
+import { markStageComplete } from './learnGate'
 import { _resetDbForTests } from '../../db/db'
 
 describe('learnProgress', () => {
@@ -10,10 +11,9 @@ describe('learnProgress', () => {
   it('starts empty', async () => {
     expect(await getDone()).toEqual([])
   })
-  it('marks done idempotently', async () => {
-    expect(await markDone('mod7')).toEqual(['mod7'])
-    expect(await markDone('mod7')).toEqual(['mod7'])
-    expect(await markDone('months')).toEqual(['mod7', 'months'])
+  it('getDone reads learnCompleted', async () => {
+    await markStageComplete('mod7')
+    await markStageComplete('months')
     expect(await getDone()).toEqual(['mod7', 'months'])
   })
   it('isDone', () => {

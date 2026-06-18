@@ -1,23 +1,44 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { getStage } from './curriculum'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { CURRICULUM, getStage } from './curriculum'
 import { LessonBlocks } from '../../components/LessonBlocks'
-import { getDone, markDone, isDone } from './learnProgress'
+import { NumberPad } from '../../components/NumberPad'
+import { WeekdayPicker } from '../../components/WeekdayPicker'
+import { useSettings } from '../../store/settings'
+import { weekdayName } from '../../lib/format'
+import { useLessonDrill } from './useLessonDrill'
+import { ruleFor } from './learnMastery'
+import type { Weekday } from '../../engine'
+import { getCompleted, isStageUnlocked } from './learnGate'
+
+const LAST_STAGE_ID = CURRICULUM[CURRICULUM.length - 1].id
 
 export function LessonScreen() {
   const { stageId } = useParams()
   const stage = stageId ? getStage(stageId) : undefined
-  const [done, setDone] = useState<string[]>([])
+  const navigate = useNavigate()
+  // null while the completed set is loading — avoids flashing a locked redirect.
+  const [completed, setCompleted] = useState<string[] | null>(null)
+  const [started, setStarted] = useState(false)
 
   useEffect(() => {
     let active = true
-    void getDone().then((d) => {
-      if (active) setDone(d)
+    void getCompleted().then((c) => {
+      if (active) setCompleted(c)
     })
     return () => {
       active = false
     }
   }, [])
+
+  // Redirect away from a locked stage once we know the completed set. Done in an
+  // effect so navigation never runs during render.
+  const locked = stage != null && completed != null && !isStageUnlocked(stage.id, completed)
+  useEffect(() => {
+    // Send a locked stage back to the Learn map (not into an arbitrary earlier
+    // lesson) so the learner sees what is unlocked and what is next.
+    if (locked) navigate('/learn', { replace: true })
+  }, [locked, navigate])
 
   if (!stage) {
     return (
@@ -30,7 +51,10 @@ export function LessonScreen() {
     )
   }
 
-  const completed = isDone(stage.id, done)
+  if (completed === null || locked) {
+    return <div className="screen" />
+  }
+
   return (
     <div className="screen">
       <Link to="/learn" style={{ color: 'var(--muted)', textDecoration: 'none' }}>
@@ -42,39 +66,136 @@ export function LessonScreen() {
       <h1 style={{ marginTop: 2 }}>{stage.title}</h1>
       <p className="muted">{stage.goal}</p>
       <LessonBlocks blocks={stage.blocks} />
-      <button
-        type="button"
-        disabled={completed}
-        onClick={() => {
-          void markDone(stage.id).then(setDone)
-        }}
-        style={{
-          marginTop: 16,
-          width: '100%',
-          minHeight: 'var(--tap)',
-          borderRadius: 12,
-          border: completed ? '1px solid var(--line)' : 0,
-          background: completed ? 'var(--card)' : 'var(--green)',
-          color: completed ? 'var(--muted)' : '#fff',
-          fontWeight: 700,
-          fontSize: 15,
-        }}
-      >
-        {completed ? '✓ Completed' : 'Mark complete'}
-      </button>
-      <Link
-        to="/practice"
-        style={{
-          display: 'block',
-          textAlign: 'center',
-          marginTop: 12,
-          color: 'var(--burg)',
-          fontWeight: 600,
-          textDecoration: 'none',
-        }}
-      >
-        Practice this →
-      </Link>
+      {started ? (
+        <LessonDrill stageId={stage.id} />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setStarted(true)}
+          style={{
+            marginTop: 16,
+            width: '100%',
+            minHeight: 'var(--tap)',
+            borderRadius: 12,
+            border: 0,
+            background: 'var(--green)',
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: 15,
+          }}
+        >
+          Start exercises →
+        </button>
+      )}
+    </div>
+  )
+}
+
+const dotStyle = (bg: string): React.CSSProperties => ({
+  width: 14,
+  height: 14,
+  borderRadius: 999,
+  background: bg,
+  border: bg === 'transparent' ? '1.5px solid var(--line)' : 0,
+})
+
+function LessonDrill({ stageId }: { stageId: string }) {
+  const drill = useLessonDrill(stageId)
+  const weekStart = useSettings((s) => s.weekStart)
+  const rule = ruleFor(stageId)
+
+  if (!drill.loaded) {
+    return <div className="screen" />
+  }
+
+  const { current, progress, feedback, done } = drill
+  const window = progress.window
+
+  const dots = Array.from({ length: rule.M }, (_, i) => {
+    let bg = 'transparent'
+    if (i < window.length) bg = window[i] ? 'var(--green)' : 'var(--burg)'
+    return <span key={i} style={dotStyle(bg)} />
+  })
+
+  return (
+    <div style={{ marginTop: 16 }}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>{dots}</div>
+      <div className="muted" style={{ fontSize: 13, marginTop: 8 }}>
+        {progress.done
+          ? '✓ Internalized'
+          : `${progress.remaining} more good answer(s) to internalize`}
+      </div>
+
+      {feedback && (
+        <div
+          role="status"
+          style={{
+            marginTop: 12,
+            padding: '8px 12px',
+            borderRadius: 10,
+            background: feedback.correct ? 'var(--green)' : 'var(--burg)',
+            color: '#fff',
+            fontWeight: 600,
+            fontSize: 14,
+          }}
+        >
+          {feedback.correct
+            ? '✓ Correct'
+            : `✕ Not quite — it was ${
+                current && current.answerKind === 'weekday'
+                  ? weekdayName(feedback.answer as Weekday)
+                  : feedback.answer
+              }`}
+        </div>
+      )}
+
+      {done ? (
+        <div style={{ marginTop: 16 }}>
+          {stageId === LAST_STAGE_ID ? (
+            <Link
+              to="/practice"
+              style={{ color: 'var(--burg)', fontWeight: 700, textDecoration: 'none' }}
+            >
+              Practice unlocked → Start practicing
+            </Link>
+          ) : (
+            <Link
+              to="/learn"
+              style={{ color: 'var(--burg)', fontWeight: 700, textDecoration: 'none' }}
+            >
+              Back to Learn →
+            </Link>
+          )}
+        </div>
+      ) : (
+        current && (
+          <div style={{ marginTop: 16 }}>
+            <div className="serif" style={{ fontSize: 20, fontWeight: 600 }}>
+              {current.prompt}
+            </div>
+            {current.sub && (
+              <div className="muted" style={{ fontSize: 13, marginTop: 4, marginBottom: 12 }}>
+                {current.sub}
+              </div>
+            )}
+            <div style={{ marginTop: 12 }}>
+              {current.answerKind === 'number' ? (
+                <NumberPad
+                  options={current.options ?? []}
+                  graded={false}
+                  onPick={(n) => drill.answer(n)}
+                />
+              ) : (
+                <WeekdayPicker
+                  weekStart={weekStart}
+                  graded={false}
+                  onPick={(w) => drill.answer(w)}
+                />
+              )}
+            </div>
+          </div>
+        )
+      )}
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { yearDoomsdayOddEleven } from '../../engine'
 import { formatDate, weekdayName } from '../../lib/format'
 import { getMeta, setMeta } from '../../db/meta'
 import { localDayKey } from '../../lib/datekey'
+import { getCompleted, getPracticeUnlocked, isPracticeUnlocked } from '../learn/learnGate'
 import type { DailyResult } from '../daily/useDaily'
 
 export function TodayScreen() {
@@ -11,6 +12,8 @@ export function TodayScreen() {
   const [daily, setDaily] = useState<DailyResult | null>(null)
   // null = not loaded yet; avoids flashing the welcome banner before meta resolves.
   const [onboarded, setOnboarded] = useState<boolean | null>(null)
+  // Default to NOT locked so unlocked users never see a lock-aware copy flash.
+  const [locked, setLocked] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -19,11 +22,14 @@ export function TodayScreen() {
       getMeta<number>('longestStreak', 0),
       getMeta<DailyResult | null>('daily:' + localDayKey(), null),
       getMeta<boolean>('onboarded', false),
-    ]).then(([current, longest, d, value]) => {
+      getCompleted(),
+      getPracticeUnlocked(),
+    ]).then(([current, longest, d, value, completed, practiceUnlocked]) => {
       if (active) {
         setStreak({ current, longest })
         setDaily(d)
         setOnboarded(value)
+        setLocked(!isPracticeUnlocked(completed, practiceUnlocked))
       }
     })
     return () => {
@@ -53,11 +59,17 @@ export function TodayScreen() {
             <Link to="/learn" style={{ color: 'var(--burg)' }}>
               Learn
             </Link>
-            , then drill in{' '}
-            <Link to="/practice" style={{ color: 'var(--burg)' }}>
-              Practice
-            </Link>
-            .
+            {locked ? (
+              <>. Practice unlocks as you finish Learn.</>
+            ) : (
+              <>
+                , then drill in{' '}
+                <Link to="/practice" style={{ color: 'var(--burg)' }}>
+                  Practice
+                </Link>
+                .
+              </>
+            )}
           </p>
           <button
             type="button"
@@ -141,7 +153,7 @@ export function TodayScreen() {
       </Link>
 
       <Link
-        to="/practice"
+        to={locked ? '/learn' : '/practice'}
         style={{
           display: 'block',
           textAlign: 'center',
@@ -155,7 +167,7 @@ export function TodayScreen() {
           fontSize: 16,
         }}
       >
-        Quick Drill →
+        {locked ? 'Continue learning →' : 'Quick Drill →'}
       </Link>
     </div>
   )
