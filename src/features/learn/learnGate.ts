@@ -26,17 +26,6 @@ export function nextStageId(completed: string[]): string | null {
   return next ? next.id : null
 }
 
-/**
- * How many leading stages are completed in sequence — the COUNT of the unbroken
- * completed prefix (0..7), not an index. Drives Daily difficulty scaling (§7): a
- * gap stops the count, so Daily can widen once the prefix reaches `century`.
- */
-export function unlockedDailyMaxStageIndex(completed: string[]): number {
-  let i = 0
-  while (i < CURRICULUM.length && completed.includes(CURRICULUM[i].id)) i++
-  return i
-}
-
 /** Stage ids internalized so far (R3/R4 source of truth). */
 export function getCompleted(): Promise<string[]> {
   return getMeta<string[]>('learnCompleted', [])

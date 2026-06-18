@@ -187,6 +187,8 @@ describe('useLessonDrill', () => {
 
     await answerCorrect(result)
     await waitFor(() => expect(result.current.progress.correctInWindow).toBe(1))
-    expect(result.current.progress.remaining).toBe(2) // K=3, 1 done
+    // mod7 is K=3,M=4. After 1 rep the M-rep gap (4-1=3) dominates the K gap (3-1=2),
+    // so remaining never understates how many reps still stand between here and done.
+    expect(result.current.progress.remaining).toBe(3)
   })
 })

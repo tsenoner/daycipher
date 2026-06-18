@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { yearDoomsdayOddEleven } from '../../engine'
+import { thisYearDoomsday } from '../../engine'
 import { formatDate, weekdayName } from '../../lib/format'
 import { getMeta, setMeta } from '../../db/meta'
 import { localDayKey } from '../../lib/datekey'
@@ -38,8 +38,7 @@ export function TodayScreen() {
   }, [])
 
   const now = new Date()
-  const year = now.getFullYear()
-  const yearDoomsday = yearDoomsdayOddEleven(year)
+  const yearDoomsday = thisYearDoomsday()
 
   return (
     <div className="screen">

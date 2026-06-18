@@ -3,7 +3,6 @@ import {
   isStageUnlocked,
   isPracticeUnlocked,
   nextStageId,
-  unlockedDailyMaxStageIndex,
   markStageComplete,
   getCompleted,
   getPracticeUnlocked,
@@ -57,18 +56,6 @@ describe('nextStageId', () => {
   })
   it('is null once every stage is completed', () => {
     expect(nextStageId(ALL)).toBeNull()
-  })
-})
-
-describe('unlockedDailyMaxStageIndex', () => {
-  it('is the count of leading completed stages (sequential prefix)', () => {
-    expect(unlockedDailyMaxStageIndex([])).toBe(0)
-    expect(unlockedDailyMaxStageIndex(['mod7'])).toBe(1)
-    expect(unlockedDailyMaxStageIndex(['mod7', 'months', 'thisyear'])).toBe(3)
-    expect(unlockedDailyMaxStageIndex(ALL)).toBe(7)
-  })
-  it('stops at the first sequential gap', () => {
-    expect(unlockedDailyMaxStageIndex(['mod7', 'thisyear', 'century'])).toBe(1)
   })
 })
 

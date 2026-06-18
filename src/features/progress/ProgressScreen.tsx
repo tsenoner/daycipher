@@ -51,7 +51,12 @@ export function ProgressScreen() {
 
   if (!data) return <div className="screen" />
 
-  if (data.attempts.length === 0) {
+  // The whole stats view is practice-scoped, so gate on practice rows, not all
+  // attempts. A learn-only user (just `learn:*` reps) should see onboarding, not
+  // an all-zero practice dashboard. Computed once here and reused below.
+  const practice = practiceAttempts(data.attempts)
+
+  if (practice.length === 0) {
     const practiceOpen = isPracticeUnlocked(data.completed, data.practiceUnlocked)
     return (
       <div className="screen">
@@ -79,7 +84,6 @@ export function ProgressScreen() {
   }
 
   const { summary, streak } = data
-  const practice = practiceAttempts(data.attempts)
   const centuries = accuracyByDimension(practice, 'century')
   const weak = weakest(centuries)
   const steps = stepStats(practice)

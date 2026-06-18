@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   STAGE_RULES,
   perStageOutcome,
+  stageOutcomes,
   stageProgress,
   isStageDone,
   SPEED_MS,
@@ -55,6 +56,26 @@ describe('perStageOutcome', () => {
   })
 })
 
+describe('stageOutcomes', () => {
+  it('filters to the stage, restores oldest-first, and maps to booleans', () => {
+    const mixed = [
+      ...rows('mod7', [true, false, true]),
+      ...rows('months', [false, false]),
+    ]
+    // rows() returns newest-first; stageOutcomes must hand back oldest-first.
+    expect(stageOutcomes(mixed, 'mod7')).toEqual([true, false, true])
+    expect(stageOutcomes(mixed, 'months')).toEqual([false, false])
+  })
+
+  it('folds the timed budget for the timed stage (speed)', () => {
+    const speedRows = [true, true].map((correct, i) =>
+      mk({ mode: 'learn:speed', correct, timed: true, durationMs: SPEED_MS + 50, timestamp: i }),
+    )
+    // Correct but too slow → all outcomes false despite correct rows.
+    expect(stageOutcomes(speedRows.reverse(), 'speed')).toEqual([false, false])
+  })
+})
+
 describe('stageProgress', () => {
   const rule = STAGE_RULES.full // K=4, M=5
 
@@ -63,7 +84,8 @@ describe('stageProgress', () => {
     expect(p.done).toBe(false)
     expect(p.window).toEqual([true, true, true])
     expect(p.correctInWindow).toBe(3)
-    expect(p.remaining).toBe(1) // K - correctInWindow
+    // 3 corrects (K=4 gap 1) but only 3 reps (M=5 gap 2) → the larger gap wins.
+    expect(p.remaining).toBe(2)
   })
 
   it('done at K-of-M', () => {
@@ -98,6 +120,20 @@ describe('stageProgress', () => {
     expect(p.correctInWindow).toBe(4)
     expect(p.remaining).toBe(0)
     expect(p.done).toBe(true)
+  })
+
+  it('remaining never reads 0 while not done: K corrects but fewer than M reps', () => {
+    // K=4 corrects reached at only 4 reps; M=5 still needs one more rep.
+    const p = stageProgress([true, true, true, true], rule)
+    expect(p.correctInWindow).toBe(4)
+    expect(p.done).toBe(false)
+    expect(p.remaining).toBe(1) // the M-rep gap (5 - 4), not the K gap (0)
+  })
+
+  it('remaining is exactly 0 when done', () => {
+    const p = stageProgress([true, true, true, true, true], rule)
+    expect(p.done).toBe(true)
+    expect(p.remaining).toBe(0)
   })
 })
 

@@ -142,7 +142,7 @@ function LessonDrill({ stageId }: { stageId: string }) {
           {feedback.correct
             ? '✓ Correct'
             : `✕ Not quite — it was ${
-                current && current.answerKind === 'weekday'
+                feedback.answerKind === 'weekday'
                   ? weekdayName(feedback.answer as Weekday)
                   : feedback.answer
               }`}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   centuryAnchor,
   daysInMonth,
@@ -6,6 +6,7 @@ import {
   mod7,
   monthAnchor,
   pick,
+  thisYearDoomsday,
   weekdayOfYMD,
   yearDoomsdayOddEleven,
   CURRENT_YEAR,
@@ -15,8 +16,9 @@ import { gradeNumber, gradeProblem, gradeWeekday } from '../practice/drill'
 import type { Attempt } from '../../db/db'
 import { addAttempt, listAttempts, recordAttempt } from '../../db/attempts'
 import { monthName, weekdayName } from '../../lib/format'
-import { perStageOutcome, ruleFor, stageProgress } from './learnMastery'
-import { markStageComplete } from './learnGate'
+import { perStageOutcome, ruleFor, stageOutcomes, stageProgress } from './learnMastery'
+import { getStage } from './curriculum'
+import { getCompleted, markStageComplete } from './learnGate'
 
 /** NumberPad option set for stage 2 (`months`) — the doomsday day-of-month answers. */
 export const ANCHOR_DAYS = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 28, 29]
@@ -55,6 +57,7 @@ const CENTURY_WEIGHTS = [1700, 1800, 1800, 1900, 1900, 1900, 2000, 2000, 2000, 2
  */
 export function nextLessonProblem(stageId: string, rng: () => number): LessonProblem {
   const mode = `learn:${stageId}`
+  const timed = getStage(stageId)?.timed ?? false
   switch (stageId) {
     case 'mod7': {
       // Either "cast out sevens" on one number, or an addend pair (mod 7).
@@ -68,7 +71,7 @@ export function nextLessonProblem(stageId: string, rng: () => number): LessonPro
           options: [0, 1, 2, 3, 4, 5, 6],
           correct: mod7(n),
           date: null,
-          timed: false,
+          timed,
         }
       }
       const a = pick(rng, 3, 6)
@@ -81,7 +84,7 @@ export function nextLessonProblem(stageId: string, rng: () => number): LessonPro
         options: [0, 1, 2, 3, 4, 5, 6],
         correct: mod7(a + b),
         date: null,
-        timed: false,
+        timed,
       }
     }
     case 'months': {
@@ -97,7 +100,7 @@ export function nextLessonProblem(stageId: string, rng: () => number): LessonPro
         options: ANCHOR_DAYS,
         correct: monthAnchor(month, leap),
         date: null,
-        timed: false,
+        timed,
       }
     }
     case 'thisyear': {
@@ -106,11 +109,11 @@ export function nextLessonProblem(stageId: string, rng: () => number): LessonPro
         stageId,
         mode,
         prompt: `${d.day} ${monthName(d.month)} ${CURRENT_YEAR} — weekday?`,
-        sub: `this year's doomsday is ${weekdayName(yearDoomsdayOddEleven(CURRENT_YEAR))}`,
+        sub: `this year's doomsday is ${weekdayName(thisYearDoomsday())}`,
         answerKind: 'weekday',
         correct: weekdayOfYMD(d.year, d.month, d.day),
         date: d,
-        timed: false,
+        timed,
       }
     }
     case 'century': {
@@ -123,7 +126,7 @@ export function nextLessonProblem(stageId: string, rng: () => number): LessonPro
         correct: centuryAnchor(year),
         date: null,
         dimension: 'anchor',
-        timed: false,
+        timed,
       }
     }
     case 'year': {
@@ -136,7 +139,7 @@ export function nextLessonProblem(stageId: string, rng: () => number): LessonPro
         correct: yearDoomsdayOddEleven(year),
         date: null,
         dimension: 'yearDoom',
-        timed: false,
+        timed,
       }
     }
     case 'full':
@@ -153,7 +156,7 @@ export function nextLessonProblem(stageId: string, rng: () => number): LessonPro
         answerKind: 'weekday',
         correct: weekdayOfYMD(d.year, d.month, d.day),
         date: d,
-        timed: stageId === 'speed',
+        timed,
       }
     }
     default:
@@ -231,7 +234,13 @@ export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
   const [priorOutcomes, setPriorOutcomes] = useState<boolean[] | null>(null)
   const [results, setResults] = useState<Answered[]>([])
   const [problem, setProblem] = useState<LessonProblem | null>(null)
-  const [feedback, setFeedback] = useState<{ correct: boolean; answer: number } | null>(null)
+  // Carries the ANSWERED problem's `answerKind` so feedback formats the revealed
+  // answer correctly even after the cursor has advanced to a different-kind problem.
+  const [feedback, setFeedback] = useState<{
+    correct: boolean
+    answer: number
+    answerKind: 'number' | 'weekday'
+  } | null>(null)
   // Mirror the live problem in a ref so `answer` can grade against it without a
   // stale closure and without nesting a state setter inside another updater.
   const problemRef = useRef<LessonProblem | null>(null)
@@ -247,26 +256,32 @@ export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
   useEffect(() => {
     let active = true
     void (async () => {
-      const all = await listAttempts()
+      const [all, completed] = await Promise.all([listAttempts(), getCompleted()])
       if (!active) return
-      const outcomes = all
-        .filter((a) => a.mode === `learn:${stageId}`)
-        .reverse() // oldest-first
-        .map((a) => perStageOutcome(a, stageId))
-      latchedRef.current = stageProgress(outcomes, rule).done
+      const outcomes = stageOutcomes(all, stageId)
+      const done = stageProgress(outcomes, rule).done
+      latchedRef.current = done
       setPriorOutcomes(outcomes)
       setProblem(nextLessonProblem(stageId, rngRef.current))
+      // Stage 7 (and any timed stage) times from mount: prime the clock here so the
+      // first measurement excludes the async load. Later reps reset it in `answer`.
+      startRef.current = performance.now()
+      // Self-heal: a stage already DONE in the log but missing from `learnCompleted`
+      // (e.g. an effect lost to a crash) re-latches its completion. Idempotent.
+      if (done && !completed.includes(stageId)) await markStageComplete(stageId)
     })()
     return () => {
       active = false
     }
   }, [stageId, rule])
 
-  const outcomes = [
-    ...(priorOutcomes ?? []),
-    ...results.map((r) => perStageOutcome(r.attempt, stageId)),
-  ]
-  const progress = stageProgress(outcomes, rule)
+  // Memoize so the window only recomputes when its inputs change — `rule` is a
+  // stable per-stage object (derived map), so these stay referentially steady.
+  const outcomes = useMemo(
+    () => [...(priorOutcomes ?? []), ...results.map((r) => perStageOutcome(r.attempt, stageId))],
+    [priorOutcomes, results, stageId],
+  )
+  const progress = useMemo(() => stageProgress(outcomes, rule), [outcomes, rule])
 
   // Persist each newly answered row immediately, OUTSIDE the state updater, so a
   // StrictMode double-invoked updater can't double-write. Day-credit is gated on
@@ -300,7 +315,7 @@ export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
       // Append the answer (the effect persists it) and advance the cursor. Both are
       // top-level setters — no nested updater — so StrictMode stays single-write.
       setResults((rs) => [...rs, { problem: p, attempt }])
-      setFeedback({ correct: attempt.correct, answer: p.correct })
+      setFeedback({ correct: attempt.correct, answer: p.correct, answerKind: p.answerKind })
       setProblem(nextLessonProblem(stageId, rngRef.current))
     },
     [stageId],

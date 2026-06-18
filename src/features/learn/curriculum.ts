@@ -11,6 +11,12 @@ export interface Stage {
   title: string
   goal: string
   blocks: Block[]
+  /** Mastery threshold K ("K of the last M" correct); defaults to 4 when unset. */
+  k?: number
+  /** Mastery window M ("K of the last M"); defaults to 5 when unset. */
+  m?: number
+  /** Whether the stage's outcome additionally requires a fast timed answer; defaults to false. */
+  timed?: boolean
 }
 
 export const CURRICULUM: Stage[] = [
@@ -19,6 +25,8 @@ export const CURRICULUM: Stage[] = [
     n: 1,
     title: 'Think in 7s',
     goal: 'Treat weekdays as numbers 0–6 and add them mod 7.',
+    k: 3,
+    m: 4,
     blocks: [
       {
         kind: 'p',
@@ -43,6 +51,8 @@ export const CURRICULUM: Stage[] = [
     n: 2,
     title: 'Month anchors',
     goal: "Memorize one “doomsday” date in every month — they all share the year's doomsday.",
+    k: 3,
+    m: 4,
     blocks: [
       {
         kind: 'p',
@@ -194,6 +204,7 @@ export const CURRICULUM: Stage[] = [
     n: 7,
     title: 'Getting fast',
     goal: 'Move from computing to recalling — toward sub-5-second answers.',
+    timed: true,
     blocks: [
       {
         kind: 'p',

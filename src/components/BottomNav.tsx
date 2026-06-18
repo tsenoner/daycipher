@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import {
   getCompleted,
   getPracticeUnlocked,
@@ -17,6 +17,10 @@ export function BottomNav() {
   // Default to NOT locked so unlocked users never see a lock flash; only the async
   // check can switch this on.
   const [locked, setLocked] = useState(false)
+  // BottomNav is a persistent sibling of the router Outlet, so it does not remount on
+  // navigation. Depend on pathname to re-read the lock on every route change: since the
+  // unlock is a one-way latch, moving (e.g. tapping Practice) reliably clears a stale lock.
+  const { pathname } = useLocation()
   useEffect(() => {
     let active = true
     void Promise.all([getCompleted(), getPracticeUnlocked()]).then(([completed, unlocked]) => {
@@ -25,7 +29,7 @@ export function BottomNav() {
     return () => {
       active = false
     }
-  }, [])
+  }, [pathname])
 
   return (
     <nav

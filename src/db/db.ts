@@ -52,8 +52,11 @@ export function getDb(): Promise<IDBPDatabase<DaycipherDB>> {
 }
 
 /** Test helper: drop the cached connection so a fresh deleteDatabase takes effect. */
-export function _resetDbForTests(): void {
+export function _resetDbForTests(): Promise<void> {
   // Close any open connection first; an open connection blocks deleteDatabase.
-  void dbPromise?.then((db) => db.close()).catch(() => {})
+  // Return the close promise so a test can await it before deleteDatabase — an
+  // un-awaited close races the delete and can leak state between tests.
+  const closing = dbPromise?.then((db) => db.close()).catch(() => {})
   dbPromise = null
+  return Promise.resolve(closing)
 }

@@ -1,6 +1,5 @@
 import { generateDate, makeRng, CURRENT_YEAR } from '../../engine'
 import type { Problem } from '../practice/drill'
-import { unlockedDailyMaxStageIndex } from '../learn/learnGate'
 
 function hashKey(key: string): number {
   let h = 2166136261
@@ -14,15 +13,23 @@ function hashKey(key: string): number {
 const FULL_RANGE = { minYear: 1900, maxYear: 2099 }
 
 /**
+ * The curriculum stage that opens the full Daily year range. Naming it (rather
+ * than hard-coding a prefix count) keeps the gate readable and curriculum-stable:
+ * under sequential gating `completed.includes(DAILY_FULL_RANGE_STAGE)` means the
+ * unbroken completed prefix reached `century`, and it survives stage renumbering.
+ */
+const DAILY_FULL_RANGE_STAGE = 'century'
+
+/**
  * Stage-scoped year range for the Daily Challenge (R7/§7): full 1900–2099 once
- * Practice is unlocked, or once the unbroken completed prefix reaches `century`
- * (count >= 4); otherwise the current year only, so a beginner can still score.
+ * Practice is unlocked, or once the learner has completed the `century` stage;
+ * otherwise the current year only, so a beginner can still score.
  */
 export function dailyRange(
   completed: string[],
   practiceUnlocked: boolean,
 ): { minYear: number; maxYear: number } {
-  const full = practiceUnlocked || unlockedDailyMaxStageIndex(completed) >= 4
+  const full = practiceUnlocked || completed.includes(DAILY_FULL_RANGE_STAGE)
   return full ? FULL_RANGE : { minYear: CURRENT_YEAR, maxYear: CURRENT_YEAR }
 }
 

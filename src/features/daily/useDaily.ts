@@ -29,23 +29,28 @@ export function useDaily() {
   const startRef = useRef(performance.now())
   const persistedRef = useRef(0) // how many of `results` are already saved in the DB
   const countRef = useRef(dates.length) // fixed number of daily problems, set once
+  const rangeRef = useRef<{ minYear: number; maxYear: number } | null>(null) // frozen per day
 
   // Load any completed result, and resume an in-progress run: a mid-challenge
   // reload restores prior answers instead of re-asking — and re-recording — them.
   useEffect(() => {
     let active = true
     void (async () => {
-      const [pr, saved, completed, practiceUnlocked] = await Promise.all([
+      const [pr, saved, completed, practiceUnlocked, storedRange] = await Promise.all([
         getMeta<DailyResult | null>('daily:' + dayKey, null),
         getMeta<Weekday[]>('dailyAnswers:' + dayKey, []),
         getCompleted(),
         getPracticeUnlocked(),
+        getMeta<{ minYear: number; maxYear: number } | null>('dailyRange:' + dayKey, null),
       ])
       if (!active) return
-      // Scope the set to the learner's unlocked stages before resuming. For an
-      // already-unlocked user this equals the full range (same seed), so `ds`
-      // is identical to the initial set — behaviour is unchanged.
-      const range = dailyRange(completed, practiceUnlocked)
+      // Freeze the year range for the whole day. The first persisted answer locks
+      // `storedRange`; a resumed run reads it back and regenerates a byte-identical
+      // date set — so saved guesses re-grade against the SAME dates regardless of
+      // any unlock that widened the range mid-day. Only a fresh run (no stored
+      // range) scopes to the learner's currently-unlocked stages.
+      const range = storedRange ?? dailyRange(completed, practiceUnlocked)
+      rangeRef.current = range
       const ds = dailyDates(dayKey, countRef.current, range)
       setDates(ds)
       if (pr === null && saved.length > 0) {
@@ -91,6 +96,9 @@ export function useDaily() {
           'dailyAnswers:' + dayKey,
           results.map((r) => r.guessed),
         )
+        // Lock the range at the first persisted answer; resume reads it back so a
+        // later unlock can't re-scope (and re-grade) this run against a wider set.
+        if (rangeRef.current) await setMeta('dailyRange:' + dayKey, rangeRef.current)
       }
       if (result) {
         await setMeta('daily:' + dayKey, result)

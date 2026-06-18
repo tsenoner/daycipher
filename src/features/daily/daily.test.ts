@@ -7,12 +7,21 @@ describe('dailyRange', () => {
   it('scopes to the current year when nothing is completed and not unlocked', () => {
     expect(dailyRange([], false)).toEqual({ minYear: CURRENT_YEAR, maxYear: CURRENT_YEAR })
   })
+  it('stays current-year-only while the completed prefix has not reached century', () => {
+    const beforeCentury = CURRICULUM.slice(0, 3).map((s) => s.id) // up to, not incl. century
+    expect(beforeCentury).not.toContain('century')
+    expect(dailyRange(beforeCentury, false)).toEqual({
+      minYear: CURRENT_YEAR,
+      maxYear: CURRENT_YEAR,
+    })
+  })
   it('opens the full range once Practice is unlocked', () => {
     expect(dailyRange([], true)).toEqual({ minYear: 1900, maxYear: 2099 })
   })
-  it('opens the full range once the completed prefix reaches century (>= 4)', () => {
-    const firstFour = CURRICULUM.slice(0, 4).map((s) => s.id)
-    expect(dailyRange(firstFour, false)).toEqual({ minYear: 1900, maxYear: 2099 })
+  it('opens the full range once the completed prefix includes century', () => {
+    const throughCentury = CURRICULUM.slice(0, 4).map((s) => s.id)
+    expect(throughCentury).toContain('century')
+    expect(dailyRange(throughCentury, false)).toEqual({ minYear: 1900, maxYear: 2099 })
   })
 })
 
