@@ -36,6 +36,9 @@ export function CheatSheet() {
       <h3>Weekday numbers</h3>
       <p>Sun 0 · Mon 1 · Tue 2 · Wed 3 · Thu 4 · Fri 5 · Sat 6</p>
 
+      <h3>Leap years</h3>
+      <p>÷4 yes · ÷100 no · ÷400 yes again. (2001–2099: just ÷4.)</p>
+
       <h3>Month anchors</h3>
       <table style={{ borderCollapse: 'collapse', width: '100%' }}>
         <tbody>
@@ -66,11 +69,11 @@ export function CheatSheet() {
 
       <h3>Year doomsday — Odd+11</h3>
       <ol style={{ lineHeight: 1.7, paddingLeft: 20 }}>
-        <li>Last two digits T; if odd, +11</li>
+        <li>Last two digits T; if T is odd, +11</li>
         <li>Halve it</li>
-        <li>If odd, +11</li>
-        <li>7 − (result mod 7)</li>
-        <li>Count forward that many from the century anchor</li>
+        <li>If the result is odd, +11</li>
+        <li>Take 7 − (result mod 7)</li>
+        <li>Count that many days forward from the century anchor</li>
       </ol>
     </div>
   )
