@@ -14,16 +14,30 @@ describe('coveringPick', () => {
 
 describe('leap stage', () => {
   it('covers all four leap-rule classes within the first four problems', () => {
+    const classOf = (y: number): string => {
+      if (y % 4 !== 0) return 'notdiv4'
+      if (y % 100 !== 0) return 'div4not100'
+      if (y % 400 !== 0) return 'div100not400'
+      return 'div400'
+    }
+
     const rng = makeRng(5)
-    const flags = [0, 1, 2, 3].map((index) => {
+    const results = [0, 1, 2, 3].map((index) => {
       const p = nextLessonProblem('leap', rng, { index, runSeed: 99 })
-      const year = Number(p.prompt.replace(/[^\d-]/g, '').match(/-?\d+/)?.[0])
-      return { correct: p.correct, leap: isLeapYear(year) ? 1 : 0 }
+      const isBc = /BC/.test(p.prompt)
+      const magnitude = Number(p.prompt.replace(/[^\d]/g, '').match(/\d+/)?.[0])
+      const year = isBc ? 1 - magnitude : magnitude
+      return { correct: p.correct, year }
     })
-    // Across a covering cycle we must see both leap (1) and non-leap (0) answers.
-    expect(new Set(flags.map((f) => f.correct))).toEqual(new Set([0, 1]))
+
+    // All four leap-rule classes must appear across the covering cycle.
+    const classes = results.map((r) => classOf(r.year))
+    expect(new Set(classes).size).toBe(4)
+
     // Every prompt's stated flag agrees with the engine.
-    for (const f of flags) expect(f.correct).toBe(f.leap)
+    for (const r of results) {
+      expect(r.correct).toBe(isLeapYear(r.year) ? 1 : 0)
+    }
   })
 
   it('reaches century cases beyond the old 1900-2099 pool over many runs', () => {
