@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { summarize, accuracyByDimension, weakest, stepStats } from './stats'
+import { gradeNumber } from '../practice/drill'
 import type { Attempt } from '../../db/db'
 
 const mk = (over: Partial<Attempt>): Attempt => ({
@@ -48,6 +49,13 @@ describe('accuracyByDimension', () => {
   it('groups by weekday', () => {
     const b = accuracyByDimension([mk({ correctWeekday: 1 }), mk({ correctWeekday: 5 })], 'weekday')
     expect(b.map((x) => x.label)).toEqual(['Monday', 'Friday'])
+  })
+  it('skips learn:* rows so a day-of-month is never bucketed as a weekday', () => {
+    // gradeNumber stashes the day-of-month (29) in correctWeekday; the learn guard
+    // must drop it before the `as Weekday` cast — no bucket, no throw.
+    const learn = gradeNumber(29, 29, 'learn:months', 0)
+    const b = accuracyByDimension([learn, mk({ correctWeekday: 1 })], 'weekday')
+    expect(b.map((x) => x.label)).toEqual(['Monday'])
   })
 })
 

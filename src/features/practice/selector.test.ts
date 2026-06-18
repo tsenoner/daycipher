@@ -25,4 +25,13 @@ describe('nextProblem', () => {
     const p = nextProblem([mk({ targetDate: '1850-01-01', correct: false })], () => 0.1)
     expect(p.year).toBeGreaterThanOrEqual(1900)
   })
+  it('ignores learn:* rows so a bogus learn century cannot become the weakest target', () => {
+    // learn:century rows carry a real targetDate but must be filtered before weakest.
+    const learn = Array.from({ length: 8 }, () =>
+      mk({ targetDate: '1750-06-06', correct: false, mode: 'learn:century' }),
+    )
+    const p = nextProblem(learn, () => 0.1)
+    // No practice attempts remain, so weakest is null -> full range, never the 1700s.
+    expect(p.year).toBeGreaterThanOrEqual(1900)
+  })
 })

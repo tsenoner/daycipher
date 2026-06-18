@@ -51,6 +51,7 @@ function dimKeyLabel(a: Attempt, dim: Dimension): { key: string; label: string }
 export function accuracyByDimension(attempts: Attempt[], dim: Dimension): Bucket[] {
   const map = new Map<string, Bucket>()
   for (const a of attempts) {
+    if (a.mode.startsWith('learn:')) continue
     const { key, label } = dimKeyLabel(a, dim)
     let b = map.get(key)
     if (!b) {

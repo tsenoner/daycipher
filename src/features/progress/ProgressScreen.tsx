@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { listAttempts, tallyByDay } from '../../db/attempts'
+import { listAttempts, tallyByDay, practiceAttempts } from '../../db/attempts'
 import { getMeta } from '../../db/meta'
 import { localDayKey } from '../../lib/datekey'
 import { useSettings } from '../../store/settings'
 import { summarize, accuracyByDimension, weakest, stepStats, type Summary } from './stats'
 import { achievements } from './achievements'
+import { getCompleted, getPracticeUnlocked, isPracticeUnlocked } from '../learn/learnGate'
 import { buildHeatmap, type HeatModel } from './heatmap'
 import { Heatmap } from '../../components/Heatmap'
 import type { Attempt } from '../../db/db'
@@ -15,6 +16,8 @@ interface Data {
   heat: HeatModel
   summary: Summary
   streak: { current: number; longest: number }
+  completed: string[]
+  practiceUnlocked: boolean
 }
 
 export function ProgressScreen() {
@@ -24,17 +27,21 @@ export function ProgressScreen() {
   useEffect(() => {
     let active = true
     void (async () => {
-      const [attempts, current, longest] = await Promise.all([
+      const [attempts, current, longest, completed, practiceUnlocked] = await Promise.all([
         listAttempts(),
         getMeta<number>('currentStreak', 0),
         getMeta<number>('longestStreak', 0),
+        getCompleted(),
+        getPracticeUnlocked(),
       ])
       if (!active) return
       setData({
         attempts,
         heat: buildHeatmap(tallyByDay(attempts), localDayKey(), 18, weekStart),
-        summary: summarize(attempts),
+        summary: summarize(practiceAttempts(attempts)),
         streak: { current, longest },
+        completed,
+        practiceUnlocked,
       })
     })()
     return () => {
@@ -45,6 +52,7 @@ export function ProgressScreen() {
   if (!data) return <div className="screen" />
 
   if (data.attempts.length === 0) {
+    const practiceOpen = isPracticeUnlocked(data.completed, data.practiceUnlocked)
     return (
       <div className="screen">
         <h1>Progress</h1>
@@ -60,10 +68,10 @@ export function ProgressScreen() {
         >
           <p className="muted">No drills yet — your stats and activity grid will grow here.</p>
           <Link
-            to="/practice"
+            to={practiceOpen ? '/practice' : '/learn'}
             style={{ color: 'var(--burg)', fontWeight: 700, textDecoration: 'none' }}
           >
-            Start drilling →
+            {practiceOpen ? 'Start drilling →' : 'Start learning →'}
           </Link>
         </div>
       </div>
@@ -71,10 +79,11 @@ export function ProgressScreen() {
   }
 
   const { summary, streak } = data
-  const centuries = accuracyByDimension(data.attempts, 'century')
+  const practice = practiceAttempts(data.attempts)
+  const centuries = accuracyByDimension(practice, 'century')
   const weak = weakest(centuries)
-  const steps = stepStats(data.attempts)
-  const achs = achievements(data.attempts, data.streak.longest, summary)
+  const steps = stepStats(practice)
+  const achs = achievements(data.attempts, data.streak.longest, data.completed, summary)
   const tiles = [
     { n: `${streak.current}`, l: `streak · best ${streak.longest}` },
     { n: `${Math.round(summary.accuracy * 100)}%`, l: 'accuracy' },

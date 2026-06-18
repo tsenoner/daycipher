@@ -1,5 +1,6 @@
 import { generateDate } from '../../engine'
 import type { Attempt } from '../../db/db'
+import { practiceAttempts } from '../../db/attempts'
 import { accuracyByDimension, weakest } from '../progress/stats'
 
 const FULL = { minYear: 1900, maxYear: 2099 }
@@ -12,7 +13,8 @@ const CENTURY: Record<string, { minYear: number; maxYear: number }> = {
 
 /** ~50% of the time, target the weakest century (needs >=5 attempts there); else full range. */
 export function nextProblem(attempts: Attempt[], rng: () => number = Math.random) {
-  const weak = weakest(accuracyByDimension(attempts, 'century'), 5)
+  const practice = practiceAttempts(attempts)
+  const weak = weakest(accuracyByDimension(practice, 'century'), 5)
   if (weak && CENTURY[weak.key] && rng() < 0.5) return generateDate(CENTURY[weak.key], rng)
   return generateDate(FULL, rng)
 }
