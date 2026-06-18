@@ -1,8 +1,19 @@
+import { useEffect, useRef } from 'react'
 import { Link, Outlet } from 'react-router-dom'
 import { BottomNav } from './components/BottomNav'
 import { UpdateToast } from './components/UpdateToast'
+import { runPracticeUnlockMigration } from './features/learn/migration'
 
 export function App() {
+  // Run the one-time grandfather migration once per mount. The guard ref skips
+  // StrictMode's double-invoke; the migration itself is idempotent regardless.
+  const migrated = useRef(false)
+  useEffect(() => {
+    if (migrated.current) return
+    migrated.current = true
+    void runPracticeUnlockMigration()
+  }, [])
+
   return (
     <div className="app-shell">
       <header

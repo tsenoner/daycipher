@@ -240,13 +240,10 @@ if (practiceUnlocked) return                                  // already unlocke
 
 learnDone   = getMeta('learnDone', [])
 attempts    = listAttempts()
-longest     = getMeta('longestStreak', 0)
-lastActive  = getMeta('lastActiveDay', null)
 
 grandfathered =
      learnDone.length > 0                                     // ANY prior old-Learn engagement (widened)
-  || practiceAttempts(attempts).length > 0                    // any real PRACTICE history (excludes learn:* AND daily)
-  || longest > 0 || lastActive != null                        // any streak ever (load-bearing for daily-only users)
+  || practiceAttempts(attempts).length > 0                    // any non-learn:* attempt = practice OR daily history
 
 if (grandfathered) {
   setMeta('practiceUnlocked', true)
@@ -254,18 +251,28 @@ if (grandfathered) {
 }
 ```
 
+> **Correction to the original design (do not re-add the streak clause).** An
+> earlier draft also grandfathered on `longestStreak > 0 || lastActiveDay != null`.
+> That is WRONG once R5 ships: correct *lesson* answers build the streak, so a
+> brand-new user who answers a single lesson question and reloads would have
+> `longestStreak ≥ 1`, trip the streak clause, and unlock Practice — defeating R4.
+> The streak clause is also redundant: any *pre-migration* streak was earned by a
+> practice/daily attempt, and those rows are `Attempt` rows the attempt clause
+> already catches. `practiceAttempts` excludes only `learn:*` (NOT `daily`), so
+> daily history satisfies the attempt clause directly.
+
 ### Every existing-user state, resolved
 
 | State | Covered by | Outcome |
 |---|---|---|
 | **A** Returning power user, hundreds of practice attempts, never did Learn | `practiceAttempts(attempts) > 0` | Unlocked. |
 | **B** Finished old Learn (all 7), or touched any of it | `learnDone.length > 0` (**widened** from "covers all 7") | Unlocked — tutorial-skimmers are NOT re-gated. |
-| **C** Active streak holder, no attempts loaded | `longest > 0 || lastActive != null` | Unlocked. **Annotate "load-bearing for daily-only users — do not remove."** |
-| **D** Daily-only user (`mode='daily'` rows + streak) | Clause C (streak) — not the attempt clause | Unlocked via streak. |
+| **C** Pre-migration streak holder | always had practice/daily `Attempt` rows → `practiceAttempts > 0` | Unlocked via the attempt clause (streak clause unnecessary). |
+| **D** Daily-only user (`mode='daily'` rows) | `daily` rows are kept by `practiceAttempts` → attempt clause | Unlocked. |
 | **E** `onboarded` flag | **deliberately NOT consulted** | It's "dismissed banner," not completion. |
-| **F** Brand-new install (no learnDone, no attempts, no streak) | fails all clauses | **Gated** — the only population R4 bites. Correct. |
-| **G** New user answers a few *lesson* questions, then reloads | attempt clause uses `practiceAttempts` (excludes `learn:*`) | **Stays gated** — critical: `learn:*` rows must NOT grandfather a new user, or R4 dies on the first reload. |
-| **H** New user does a few *Daily* questions, then reloads | Daily excluded from attempt clause; but Daily credits streak → clause C fires | **Unlocked.** *Open decision #1.* |
+| **F** Brand-new install (no learnDone, no attempts) | fails all clauses | **Gated** — a population R4 bites. Correct. |
+| **G** New user answers a few *lesson* questions (builds a lesson streak), then reloads | `practiceAttempts` excludes `learn:*`; learnDone empty; **streak clause removed** | **Stays gated** — the critical fix: neither `learn:*` rows nor the lesson-built streak may grandfather a new user, or R4 dies on the first reload. |
+| **H** New user does a few *Daily* questions, then reloads | `daily` rows satisfy the attempt clause | **Unlocked** (matches confirmed decision #1 — a Daily-engaged newcomer is a real user). |
 
 **Grandfather/derived disagreement:** a grandfathered user's `learnCompleted` may contain stages the live 4-of-5 predicate would call not-done. **The latch always wins** — unlock/lock read `learnCompleted`; the predicate only *writes* it. Cosmetic-only. Do not "reconcile" it.
 
@@ -315,7 +322,7 @@ House conventions: pure-logic test → DB/migration test → hook test → scree
 
 ## 10. Decisions — CONFIRMED by user (2026-06-18)
 
-1. **Daily Challenge as a grandfather signal (state H):** **leave as-is** (default) — a Daily-only newcomer is grandfathered via their streak (clause C). Not flagged for change.
+1. **Daily Challenge as a grandfather signal (state H):** **leave as-is** (default) — a Daily-only newcomer is grandfathered because `daily` rows satisfy the attempt clause (`practiceAttempts` keeps `daily`). Not flagged for change.
 2. **Daily difficulty scaling:** **scale Daily to unlocked stages** — this-year-only until `century` is internalized (`unlockedDailyMaxStageIndex`), then full 1900–2099.
 3. **Stage-7 speed:** **required `≤ SPEED_MS (5000ms)` to complete** (time folded into the stage-7 outcome predicate); sub-2000ms lights an optional badge.
 4. **Per-stage K/M:** **`K=3/M=4` for stages 1–2 (`mod7`, `months`), `K=4/M=5` for stages 3–7.** Completion = rolling "K of last M" (not 3-in-a-row); window slides, no reset.
