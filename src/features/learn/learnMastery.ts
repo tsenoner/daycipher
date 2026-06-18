@@ -14,7 +14,7 @@ const DEFAULT_RULE: StageRule = { K: 4, M: 5 }
 
 /**
  * Per-stage completion thresholds (R6), DERIVED from `CURRICULUM` so the data
- * lives in one place. Stages 1–2 are single-fact on-ramps (3-of-4); the rest use
+ * lives in one place. `mod7` & `months` are single-fact on-ramps (3-of-4); the rest use
  * the default 4-of-5. Window slides — never resets. Built once at module load so
  * each rule object is reference-STABLE per stage: `useLessonDrill` depends on the
  * rule in a `useEffect` dep array, and a fresh object per render would loop it.

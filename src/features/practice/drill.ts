@@ -62,7 +62,7 @@ export function gradeGuided(
 }
 
 /**
- * Grade a bare-number answer (stages 1 `mod7`, 2 `months`). The "weekday" fields
+ * Grade a bare-number answer (the number stages `mod7` and `months`). The "weekday" fields
  * carry the actual number drawn (a weekday 0..6 or a day-of-month 3..29); the row
  * is isolated from weekday-named UI by its `learn:*` mode prefix, never by nulling
  * fields (the `Attempt` type forbids null here). `targetDate` is '' — no real date.
@@ -90,7 +90,7 @@ export function gradeNumber(
 }
 
 /**
- * Grade a raw weekday answer (stage 4 `century` via the 'anchor' dimension). The
+ * Grade a raw weekday answer (the `century` stage via the 'anchor' dimension). The
  * optional `dimension` mirrors the graded weekday into `anchorCorrect`/`yearDoomCorrect`
  * for parity with `gradeGuided`. `targetDate` is '' — no real date is being solved.
  */

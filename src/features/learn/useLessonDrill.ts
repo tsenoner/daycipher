@@ -3,9 +3,11 @@ import {
   centuryAnchor,
   daysInMonth,
   generateDate,
+  isLeapYear,
   mod7,
   monthAnchor,
   pick,
+  pickFrom,
   thisYearDoomsday,
   weekdayOfYMD,
   yearDoomsdayOddEleven,
@@ -20,8 +22,11 @@ import { perStageOutcome, ruleFor, stageOutcomes, stageProgress } from './learnM
 import { getStage } from './curriculum'
 import { getCompleted, markStageComplete } from './learnGate'
 
-/** NumberPad option set for stage 2 (`months`) — the doomsday day-of-month answers. */
+/** NumberPad option set for the `months` stage — the doomsday day-of-month answers. */
 export const ANCHOR_DAYS = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 28, 29]
+
+/** Drives both the answer widget and the feedback formatter; one source for the union. */
+export type AnswerKind = 'number' | 'weekday' | 'boolean'
 
 /**
  * One generated lesson instance for a stage. Carries everything the drill UI needs
@@ -34,21 +39,21 @@ export interface LessonProblem {
   mode: string // `learn:<stageId>`
   prompt: string
   sub?: string
-  /** Drives the answer widget: NumberPad (number) vs WeekdayPicker (weekday). */
-  answerKind: 'number' | 'weekday'
-  /** Explicit NumberPad options (stages 1–2); undefined for weekday stages. */
+  /** Drives the answer widget: NumberPad (number) · WeekdayPicker (weekday) · BooleanPicker (boolean). */
+  answerKind: AnswerKind
+  /** Explicit NumberPad options (the number stages `mod7` & `months`); undefined otherwise. */
   options?: number[]
   /** The known-correct answer value (a weekday 0..6, or a day-of-month). */
   correct: number
-  /** A real date to grade through `gradeProblem` (stages 3, 6, 7); else null. */
+  /** A real date to grade through `gradeProblem` (`thisyear`, `full`, `speed`); else null. */
   date: { year: number; month: number; day: number } | null
-  /** Mirrors the graded weekday into anchorCorrect/yearDoomCorrect (stages 4, 5). */
+  /** Mirrors the graded weekday into anchorCorrect/yearDoomCorrect (`century`, `year`). */
   dimension?: 'anchor' | 'yearDoom'
-  /** Stage 7 is timed; its outcome folds `durationMs <= SPEED_MS`. */
+  /** The timed `speed` stage folds `durationMs <= SPEED_MS` into its outcome. */
   timed: boolean
 }
 
-// Weight the three centuries a learner actually meets higher (§4 stage 4).
+// Weight the three centuries a learner actually meets higher (§4, `century` stage).
 const CENTURY_WEIGHTS = [1700, 1800, 1800, 1900, 1900, 1900, 2000, 2000, 2000, 2100]
 
 /**
@@ -103,6 +108,18 @@ export function nextLessonProblem(stageId: string, rng: () => number): LessonPro
         timed,
       }
     }
+    case 'leap': {
+      const year = leapDrillYear(rng)
+      return {
+        stageId,
+        mode,
+        prompt: `Is ${year} a leap year?`,
+        answerKind: 'boolean',
+        correct: isLeapYear(year) ? 1 : 0,
+        date: null,
+        timed,
+      }
+    }
     case 'thisyear': {
       const d = generateDate({ minYear: CURRENT_YEAR, maxYear: CURRENT_YEAR }, rng)
       return {
@@ -117,7 +134,7 @@ export function nextLessonProblem(stageId: string, rng: () => number): LessonPro
       }
     }
     case 'century': {
-      const year = CENTURY_WEIGHTS[pick(rng, 0, CENTURY_WEIGHTS.length - 1)]
+      const year = pickFrom(rng, CENTURY_WEIGHTS)
       return {
         stageId,
         mode,
@@ -164,7 +181,7 @@ export function nextLessonProblem(stageId: string, rng: () => number): LessonPro
   }
 }
 
-/** A leap-year January/February date — the recurring trap drilled in stage 6 (§4). */
+/** A leap-year January/February date — the recurring trap drilled in the `full` stage (§4). */
 function leapJanFebDate(rng: () => number): { year: number; month: number; day: number } {
   // Leap years in 1900–2099 are exactly the multiples of 4 (1900 is not a leap year).
   const year = 1904 + 4 * pick(rng, 0, 48)
@@ -173,10 +190,22 @@ function leapJanFebDate(rng: () => number): { year: number; month: number; day: 
   return { year, month, day }
 }
 
+// Years that exercise the ÷100 / ÷400 rules, mixed with ordinary years, so a
+// guesser who ignores the century rule fails the leap stage (§ leap).
+const LEAP_DRILL_YEARS = [
+  1600, 1700, 1800, 1900, 2000, 2100, 2200, 2400, // century edge cases
+  2024, 2020, 1996, 2008, 2025, 2023, 2026, 1997, // ordinary: some ÷4, some not
+]
+
+function leapDrillYear(rng: () => number): number {
+  return pickFrom(rng, LEAP_DRILL_YEARS)
+}
+
 /**
  * Grade a guessed answer for `p` into a real `Attempt` row, dispatching to the
- * right grader per stage (§4). Stages 1–2 grade a bare number; 3/6/7 grade a real
- * date; 4/5 grade a weekday with its dimension; 7 additionally marks the row timed.
+ * right grader per stage (§4). Number/boolean stages (`mod7`, `leap`, `months`) grade a
+ * bare value; `thisyear`/`full`/`speed` grade a real date; `century`/`year` grade a weekday
+ * with its dimension; the timed `speed` stage additionally marks the row timed.
  */
 export function gradeLesson(
   p: LessonProblem,
@@ -184,7 +213,7 @@ export function gradeLesson(
   durationMs: number,
   timestamp: number = Date.now(),
 ): Attempt {
-  if (p.answerKind === 'number') {
+  if (p.answerKind === 'number' || p.answerKind === 'boolean') {
     return gradeNumber(p.correct, guess, p.mode, durationMs, timestamp)
   }
   if (p.date) {
@@ -211,6 +240,8 @@ export interface LessonDrillOptions {
   rng?: () => number
   /** Inject the answer duration (default: wall-clock); used to drive stage-7 timing in tests. */
   durationMs?: number
+  /** Practice-again: fresh in-session window, never latches completion, logs `:practice` rows. */
+  practice?: boolean
 }
 
 /**
@@ -222,7 +253,7 @@ export interface LessonDrillOptions {
  * recomputed from the prior log plus `results` on demand; a double-apply can't corrupt it.
  */
 export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
-  const { rng = Math.random, durationMs } = opts
+  const { rng = Math.random, durationMs, practice = false } = opts
   // The stage is fixed for a mounted drill; hold injected knobs in refs so the
   // answer callback stays identity-stable across renders.
   const rngRef = useRef(rng)
@@ -239,7 +270,7 @@ export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
   const [feedback, setFeedback] = useState<{
     correct: boolean
     answer: number
-    answerKind: 'number' | 'weekday'
+    answerKind: AnswerKind
   } | null>(null)
   // Mirror the live problem in a ref so `answer` can grade against it without a
   // stale closure and without nesting a state setter inside another updater.
@@ -256,6 +287,16 @@ export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
   useEffect(() => {
     let active = true
     void (async () => {
+      if (practice) {
+        // Practice-again: never resume prior outcomes, never latch. The window is
+        // session-only, so `done` starts false and the drill keeps serving problems.
+        if (!active) return
+        latchedRef.current = false
+        setPriorOutcomes([])
+        setProblem(nextLessonProblem(stageId, rngRef.current))
+        startRef.current = performance.now()
+        return
+      }
       const [all, completed] = await Promise.all([listAttempts(), getCompleted()])
       if (!active) return
       const outcomes = stageOutcomes(all, stageId)
@@ -273,7 +314,7 @@ export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
     return () => {
       active = false
     }
-  }, [stageId, rule])
+  }, [stageId, rule, practice])
 
   // Memoize so the window only recomputes when its inputs change — `rule` is a
   // stable per-stage object (derived map), so these stay referentially steady.
@@ -294,15 +335,18 @@ export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
     const done = progress.done
     void (async () => {
       for (const r of fresh) {
-        if (r.attempt.correct) await recordAttempt(r.attempt)
-        else await addAttempt(r.attempt)
+        const row = practice ? { ...r.attempt, mode: `${r.attempt.mode}:practice` } : r.attempt
+        if (row.correct) await recordAttempt(row)
+        else await addAttempt(row)
       }
-      if (done && !latchedRef.current) {
+      // Practice never completes a stage — only the first DONE transition of a
+      // real mastery run latches.
+      if (!practice && done && !latchedRef.current) {
         latchedRef.current = true
         await markStageComplete(stageId)
       }
     })()
-  }, [results, priorOutcomes, progress.done, stageId])
+  }, [results, priorOutcomes, progress.done, stageId, practice])
 
   const answer = useCallback(
     (value: number, injectedMs?: number) => {

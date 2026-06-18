@@ -27,6 +27,10 @@ export const daysInMonth = (year: number, month: number): number => {
 export const pick = (rng: () => number, min: number, max: number): number =>
   min + Math.floor(rng() * (max - min + 1))
 
+/** Uniformly draw one element of a non-empty array, drawn from `rng`. */
+export const pickFrom = <T>(rng: () => number, arr: readonly T[]): T =>
+  arr[pick(rng, 0, arr.length - 1)]
+
 export function generateDate(
   c: GenerateConstraints,
   rng: () => number = Math.random,

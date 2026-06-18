@@ -138,10 +138,10 @@ describe('stageProgress', () => {
 })
 
 describe('STAGE_RULES', () => {
-  it('stages 1–2 are K=3/M=4, stages 3–7 are K=4/M=5', () => {
+  it('on-ramp stages are K=3/M=4, the rest are K=4/M=5', () => {
     expect(STAGE_RULES.mod7).toEqual({ K: 3, M: 4 })
     expect(STAGE_RULES.months).toEqual({ K: 3, M: 4 })
-    for (const id of ['thisyear', 'century', 'year', 'full', 'speed']) {
+    for (const id of ['leap', 'thisyear', 'century', 'year', 'full', 'speed']) {
       expect(STAGE_RULES[id]).toEqual({ K: 4, M: 5 })
     }
   })

@@ -18,7 +18,7 @@ const mk = (over: Partial<Attempt>): Attempt => ({
 })
 const has = (a: ReturnType<typeof achievements>, id: string) => a.find((x) => x.id === id)!.earned
 
-const ALL_STAGES = ['mod7', 'months', 'thisyear', 'century', 'year', 'full', 'speed']
+const ALL_STAGES = ['mod7', 'leap', 'months', 'thisyear', 'century', 'year', 'full', 'speed']
 
 describe('achievements', () => {
   it('nothing earned with no data', () => {
@@ -50,8 +50,9 @@ describe('achievements', () => {
     expect(has(a, 'first')).toBe(false)
     expect(has(a, 'ten')).toBe(false)
   })
-  it('internalized earned only when all 7 stages are completed', () => {
+  it('internalized earned only when every stage is completed', () => {
     expect(has(achievements([], 0, ALL_STAGES), 'internalized')).toBe(true)
-    expect(has(achievements([], 0, ALL_STAGES.slice(0, 6)), 'internalized')).toBe(false)
+    // One short of complete must NOT earn it — probe the actual boundary.
+    expect(has(achievements([], 0, ALL_STAGES.slice(0, -1)), 'internalized')).toBe(false)
   })
 })

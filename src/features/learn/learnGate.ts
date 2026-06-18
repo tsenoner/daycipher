@@ -31,14 +31,14 @@ export function getCompleted(): Promise<string[]> {
   return getMeta<string[]>('learnCompleted', [])
 }
 
-/** The one-shot Practice unlock latch (set by migration or by completing all 7). */
+/** The one-shot Practice unlock latch (set by migration or by completing every stage). */
 export function getPracticeUnlocked(): Promise<boolean> {
   return getMeta<boolean>('practiceUnlocked', false)
 }
 
 /**
- * Latch a stage into `learnCompleted` (sticky union, idempotent) and, once all 7
- * are present, flip the one-shot `practiceUnlocked`. The only writer of
+ * Latch a stage into `learnCompleted` (sticky union, idempotent) and, once every
+ * stage is present, flip the one-shot `practiceUnlocked`. The only writer of
  * `learnCompleted` is this mastery gate — never the legacy "Mark complete" button.
  *
  * The read-modify-write runs in ONE readwrite transaction (mirroring

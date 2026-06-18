@@ -1,4 +1,16 @@
 import type { Block } from '../features/learn/curriculum'
+import { CURRENT_YEAR, thisYearDoomsday } from '../engine'
+import { weekdayName } from '../lib/format'
+
+// Resolved once at module load (CURRENT_YEAR is itself a module-load constant),
+// so interpolate() doesn't recompute the year's doomsday per block per render.
+const THIS_YEAR = String(CURRENT_YEAR)
+const THIS_YEAR_DOOMSDAY = weekdayName(thisYearDoomsday())
+
+/** Replace runtime tokens so "this year" facts never go stale in the copy. */
+function interpolate(text: string): string {
+  return text.replaceAll('{thisYear}', THIS_YEAR).replaceAll('{thisYearDoomsday}', THIS_YEAR_DOOMSDAY)
+}
 
 export function LessonBlocks({ blocks }: { blocks: Block[] }) {
   return (
@@ -8,20 +20,20 @@ export function LessonBlocks({ blocks }: { blocks: Block[] }) {
           case 'h':
             return (
               <h3 key={i} style={{ marginTop: 20 }}>
-                {b.text}
+                {interpolate(b.text)}
               </h3>
             )
           case 'p':
             return (
               <p key={i} style={{ lineHeight: 1.6 }}>
-                {b.text}
+                {interpolate(b.text)}
               </p>
             )
           case 'list':
             return (
               <ul key={i} style={{ lineHeight: 1.7, paddingLeft: 20 }}>
                 {b.items.map((it, j) => (
-                  <li key={j}>{it}</li>
+                  <li key={j}>{interpolate(it)}</li>
                 ))}
               </ul>
             )
@@ -38,7 +50,7 @@ export function LessonBlocks({ blocks }: { blocks: Block[] }) {
                   fontWeight: 600,
                 }}
               >
-                💡 {b.text}
+                💡 {interpolate(b.text)}
               </div>
             )
           case 'example':
