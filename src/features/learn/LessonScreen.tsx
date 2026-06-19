@@ -12,6 +12,7 @@ import { ruleFor } from './learnMastery'
 import type { Weekday } from '../../engine'
 import { getCompleted, isStageUnlocked } from './learnGate'
 import { isDone } from './learnProgress'
+import { DEV_UNLOCK_ALL } from '../../lib/devFlags'
 
 const LAST_STAGE_ID = CURRICULUM[CURRICULUM.length - 1].id
 
@@ -35,7 +36,8 @@ export function LessonScreen() {
 
   // Redirect away from a locked stage once we know the completed set. Done in an
   // effect so navigation never runs during render.
-  const locked = stage != null && completed != null && !isStageUnlocked(stage.id, completed)
+  const locked =
+    !DEV_UNLOCK_ALL && stage != null && completed != null && !isStageUnlocked(stage.id, completed)
   const stageDone = stage != null && completed != null && isDone(stage.id, completed)
   useEffect(() => {
     // Send a locked stage back to the Learn map (not into an arbitrary earlier

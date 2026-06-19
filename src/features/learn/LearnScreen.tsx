@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { CURRICULUM } from './curriculum'
 import { getDone, isDone } from './learnProgress'
 import { isStageUnlocked } from './learnGate'
+import { DEV_UNLOCK_ALL } from '../../lib/devFlags'
 
 const cardStyle = {
   display: 'block',
@@ -42,7 +43,7 @@ export function LearnScreen() {
       </div>
       <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
         {CURRICULUM.map((s) => {
-          const unlocked = isStageUnlocked(s.id, done)
+          const unlocked = DEV_UNLOCK_ALL || isStageUnlocked(s.id, done)
           const stageDone = isDone(s.id, done)
 
           if (!unlocked) {

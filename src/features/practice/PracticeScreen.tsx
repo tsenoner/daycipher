@@ -4,6 +4,7 @@ import { GuidedSolve } from './GuidedSolve'
 import { Speedrun } from './Speedrun'
 import { PracticeLocked } from './PracticeLocked'
 import { getCompleted, getPracticeUnlocked, isPracticeUnlocked } from '../learn/learnGate'
+import { DEV_UNLOCK_ALL } from '../../lib/devFlags'
 
 type Mode = 'quick' | 'guided' | 'speed'
 const LABELS: Record<Mode, string> = { quick: 'Quick', guided: 'Guided', speed: 'Speedrun' }
@@ -31,7 +32,7 @@ export function PracticeScreen() {
     return <div className="screen" />
   }
 
-  if (!isPracticeUnlocked(completed, practiceUnlocked)) {
+  if (!DEV_UNLOCK_ALL && !isPracticeUnlocked(completed, practiceUnlocked)) {
     return (
       <div className="screen">
         <PracticeLocked completed={completed} />
