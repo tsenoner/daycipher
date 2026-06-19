@@ -30,4 +30,21 @@ describe('App shell', () => {
       padding: 'calc(12px + env(safe-area-inset-top)) 16px 12px',
     })
   })
+
+  it('pins the bottom nav structurally instead of position: fixed', () => {
+    // Regression guard: the tab bar must be a flex child of the shell (scroll lives in
+    // .app-main), not position: fixed over a body scroll — which visibly jumps on iOS
+    // when switching screens. jsdom can't compute layout, so assert the contract:
+    // a scrollable <main> wraps the routed screen and the nav is not position: fixed.
+    const router = createMemoryRouter(
+      [{ path: '/', element: <App />, children: [{ index: true, element: <TodayScreen /> }] }],
+      { initialEntries: ['/'] },
+    )
+    render(<RouterProvider router={router} />)
+    const main = screen.getByRole('main')
+    expect(main).toHaveClass('app-main')
+    expect(screen.getByRole('navigation', { name: 'Primary' })).not.toHaveStyle({
+      position: 'fixed',
+    })
+  })
 })

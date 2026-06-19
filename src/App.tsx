@@ -18,6 +18,9 @@ export function App() {
     <div className="app-shell">
       <header
         style={{
+          // Fixed-size flex child pinned to the top of the shell column; it must not
+          // shrink so it (and the wordmark) never shift as the middle region scrolls.
+          flexShrink: 0,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -41,7 +44,11 @@ export function App() {
           ⚙
         </Link>
       </header>
-      <Outlet />
+      {/* Only this middle region scrolls; the header and nav stay structurally pinned,
+          so the bottom tabs never move or repaint-jump when switching screens (iOS PWA). */}
+      <main className="app-main">
+        <Outlet />
+      </main>
       <BottomNav />
       <UpdateToast />
     </div>
