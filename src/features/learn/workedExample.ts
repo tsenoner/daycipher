@@ -1,17 +1,23 @@
 import {
   explain,
+  centuryOf,
   daysInMonth,
   pick,
   warpYear,
+  generateWideDate,
   CURRENT_YEAR,
   type StepTrace,
   type Weekday,
 } from '../../engine'
-import { monthName, weekdayName, formatYear } from '../../lib/format'
+import { monthName, weekdayName, formatYear, formatCentury } from '../../lib/format'
 import type { ExampleCheck } from './curriculum'
 
 export const WORKED_STAGES = ['thisyear', 'year', 'full'] as const
 export type WorkedStage = (typeof WORKED_STAGES)[number]
+
+const WORKED_STAGE_SET = new Set<string>(WORKED_STAGES)
+/** Type-guard for stages that support a generated "Show another" example. */
+export const isWorkedStage = (id: string): id is WorkedStage => WORKED_STAGE_SET.has(id)
 
 export interface GeneratedExample {
   date: string
@@ -22,12 +28,15 @@ export interface GeneratedExample {
 
 /** The century-anchor line: recalled for taught centuries, computed for exotic ones. */
 function anchorStep(year: number, anchor: Weekday): string {
-  const century = Math.floor(year / 100) * 100
+  const century = centuryOf(year)
   if (century >= 1700 && century <= 2100) {
-    return `The ${century}s anchor is ${weekdayName(anchor)}`
+    return `The ${formatCentury(century)} anchor is ${weekdayName(anchor)}`
   }
-  const c = Math.floor(year / 100)
-  return `Century anchor: (5 × (${c} mod 4) + 2) mod 7 = ${weekdayName(anchor)}`
+  const c = century / 100 // = Math.floor(year / 100)
+  // Show the normalized residue so the arithmetic holds for BC years (negative c, where a
+  // raw "c mod 4" would read negative and not reproduce the stated anchor).
+  const q = ((c % 4) + 4) % 4
+  return `Century anchor: 5 × (${c} mod 4 = ${q}) + 2 → ${weekdayName(anchor)}`
 }
 
 /** The Odd+11 substeps as display lines. */
@@ -41,11 +50,13 @@ function oddElevenSteps(t: StepTrace): string[] {
   ]
 }
 
-/** The "step forward from the month anchor" lines (forward 1..6, casting out sevens). */
+/** The "step from the month anchor to the target day" lines (cast out sevens to a 0..6 step). */
 function offsetStep(t: StepTrace, day: number): string[] {
   const forward = (((day - t.monthAnchorDay) % 7) + 7) % 7
+  const gap = day - t.monthAnchorDay
+  const rel = gap >= 0 ? `${gap} day(s) after` : `${-gap} day(s) before`
   return [
-    `From the ${t.monthAnchorDay}th, step ${forward} day(s) forward to the ${day}th (cast out sevens)`,
+    `The ${day}th is ${rel} the ${t.monthAnchorDay}th — cast out sevens to a +${forward} step`,
     `${weekdayName(t.monthAnchorWeekday)} + ${forward} → ${weekdayName(t.result)}`,
   ]
 }
@@ -91,18 +102,19 @@ export function generateWorkedExample(stage: WorkedStage, rng: () => number): Ge
       check: { kind: 'yearDoom', year },
     }
   }
-  // thisyear / full: reject a zero offset so "step forward, cast out 7" is visible.
-  const baseYear = stage === 'thisyear' ? CURRENT_YEAR : warpYear(rng())
+  // thisyear / full: prefer a non-zero offset so "step from the anchor, cast out 7" is visible.
+  const draw = () => (stage === 'thisyear' ? dateInYear(CURRENT_YEAR, rng) : generateWideDate(rng))
   for (let tries = 0; tries < 25; tries++) {
-    const year = stage === 'thisyear' ? baseYear : warpYear(rng())
-    const month = pick(rng, 1, 12)
-    const day = pick(rng, 1, daysInMonth(year, month))
-    if (explain(year, month, day).offset !== 0) return datedExample(stage, year, month, day)
+    const d = draw()
+    if (explain(d.year, d.month, d.day).offset !== 0) return datedExample(stage, d.year, d.month, d.day)
   }
-  // Fallback: accept whatever the last draw was.
-  const year = stage === 'thisyear' ? baseYear : warpYear(rng())
+  const d = draw() // fallback: accept whatever the last draw is
+  return datedExample(stage, d.year, d.month, d.day)
+}
+
+/** A uniform month/day within a fixed year (the `thisyear` worked-example draw). */
+function dateInYear(year: number, rng: () => number): { year: number; month: number; day: number } {
   const month = pick(rng, 1, 12)
-  const day = pick(rng, 1, daysInMonth(year, month))
-  return datedExample(stage, year, month, day)
+  return { year, month, day: pick(rng, 1, daysInMonth(year, month)) }
 }
 

@@ -36,7 +36,12 @@ export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
   const rngRef = useRef(rng)
   const durationRef = useRef(durationMs)
   durationRef.current = durationMs
-  const runSeedRef = useRef<number>(opts.runSeed ?? Math.floor(Math.random() * 0x7fffffff))
+  // Lazy one-time seed: compute Math.random() only on the first render, not every render
+  // (a bare useRef(Math.random()) re-evaluates the arg each render and throws it away).
+  const runSeedRef = useRef<number>()
+  if (runSeedRef.current === undefined) {
+    runSeedRef.current = opts.runSeed ?? Math.floor(Math.random() * 0x7fffffff)
+  }
   const servedRef = useRef(0) // per-mount count of problems served (the ctx index source)
 
   // Prior `learn:<stage>` outcomes (oldest-first), loaded once from the log. The

@@ -59,3 +59,19 @@ export function warpYear(u: number, opts: WarpYearOpts = {}): number {
   const raw = center + scale * Math.tan(Math.PI * (clamped - 0.5))
   return Math.min(max, Math.max(min, Math.round(raw)))
 }
+
+/**
+ * A full-range proleptic date: a `warpYear` year (centered on relatable years with a
+ * long tail to the BC / far-future extremes) plus a uniform month and a valid day.
+ * Shared by Practice and the lessons so their "wide" distribution can't drift apart.
+ */
+export function generateWideDate(rng: () => number = Math.random): {
+  year: number
+  month: number
+  day: number
+} {
+  const year = warpYear(rng())
+  const month = pick(rng, 1, 12)
+  const day = pick(rng, 1, daysInMonth(year, month))
+  return { year, month, day }
+}

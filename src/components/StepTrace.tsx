@@ -1,5 +1,5 @@
-import { monthName, weekdayName } from '../lib/format'
-import type { StepTrace as Trace } from '../engine'
+import { monthName, weekdayName, formatYear, formatCentury } from '../lib/format'
+import { centuryOf, type StepTrace as Trace } from '../engine'
 
 interface StepTraceProps {
   trace: Trace
@@ -7,10 +7,9 @@ interface StepTraceProps {
 }
 
 export function StepTrace({ trace, defaultOpen = false }: StepTraceProps) {
-  const century = Math.floor(trace.year / 100) * 100
   const rows: Array<{ k: string; v: string; good?: boolean }> = [
-    { k: `${century}s anchor`, v: weekdayName(trace.centuryAnchor) },
-    { k: `${trace.year} doomsday (Odd+11)`, v: weekdayName(trace.yearDoomsday) },
+    { k: `${formatCentury(centuryOf(trace.year))} anchor`, v: weekdayName(trace.centuryAnchor) },
+    { k: `${formatYear(trace.year)} doomsday (Odd+11)`, v: weekdayName(trace.yearDoomsday) },
     {
       k: `${monthName(trace.month)} anchor → the ${trace.monthAnchorDay}th`,
       v: weekdayName(trace.monthAnchorWeekday),

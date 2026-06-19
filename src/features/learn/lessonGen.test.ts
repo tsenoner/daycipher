@@ -44,7 +44,10 @@ describe('leap stage', () => {
     const years = new Set<number>()
     for (let s = 0; s < 200; s++) {
       const p = nextLessonProblem('leap', makeRng(s), { index: 0, runSeed: s })
-      years.add(Number(p.prompt.replace(/[^\d-]/g, '').match(/-?\d+/)?.[0]))
+      // formatYear renders BC as "<n> BC" (no minus), so recover the sign from the era.
+      const isBc = /BC/.test(p.prompt)
+      const mag = Number(p.prompt.replace(/[^\d]/g, '').match(/\d+/)?.[0])
+      years.add(isBc ? 1 - mag : mag)
     }
     // The wide distribution must produce at least one year outside 1900-2099.
     expect([...years].some((y) => y < 1900 || y > 2099)).toBe(true)

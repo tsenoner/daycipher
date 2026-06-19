@@ -18,6 +18,14 @@ const MONTHS = [
 /** Human label for an astronomical year: y <= 0 -> "<1-y> BC", else the plain year. */
 export const formatYear = (year: number): string => (year <= 0 ? `${1 - year} BC` : String(year))
 
+/**
+ * Human label for a century block keyed by its astronomical start year:
+ * 1900 -> "1900s", 0 -> "1–99 AD" (the block spans 1 BC plus 1–99 AD, overwhelmingly AD),
+ * -100 -> "101 BC" (via the era formatter).
+ */
+export const formatCentury = (century: number): string =>
+  century > 0 ? `${century}s` : century === 0 ? '1–99 AD' : formatYear(century)
+
 export function formatDate(year: number, month: number, day: number): string {
   return `${day} ${MONTHS[month - 1]} ${formatYear(year)}`
 }

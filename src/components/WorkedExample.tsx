@@ -2,9 +2,8 @@ import { useState } from 'react'
 import type { Block } from '../features/learn/curriculum'
 import {
   generateWorkedExample,
-  WORKED_STAGES,
+  isWorkedStage,
   type GeneratedExample,
-  type WorkedStage,
 } from '../features/learn/workedExample'
 
 type Hero = Extract<Block, { kind: 'example' }>
@@ -42,7 +41,7 @@ export function WorkedExample({
   hero: Hero
   rng?: () => number
 }) {
-  const supported = (WORKED_STAGES as readonly string[]).includes(stageId)
+  const supported = isWorkedStage(stageId)
   const [extra, setExtra] = useState<GeneratedExample | null>(null)
 
   const shown = extra ?? hero
@@ -53,7 +52,9 @@ export function WorkedExample({
         <div style={{ display: 'flex', gap: 16 }}>
           <button
             type="button"
-            onClick={() => setExtra(generateWorkedExample(stageId as WorkedStage, rng))}
+            onClick={() => {
+              if (isWorkedStage(stageId)) setExtra(generateWorkedExample(stageId, rng))
+            }}
             style={{
               background: 'none',
               border: 0,

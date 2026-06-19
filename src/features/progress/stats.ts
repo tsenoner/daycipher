@@ -1,5 +1,5 @@
 import type { Attempt } from '../../db/db'
-import { weekdayName, formatYear } from '../../lib/format'
+import { weekdayName, formatCentury } from '../../lib/format'
 import { centuryOf, type Weekday } from '../../engine'
 
 export interface Summary {
@@ -37,15 +37,6 @@ export interface Bucket {
   accuracy: number
 }
 
-/** Human label for a century block keyed by its astronomical start year. */
-function centuryLabel(century: number): string {
-  if (century > 0) return `${century}s` // AD blocks: "1900s"
-  // Century 0 spans astronomical years 0–99 (= 1 BC plus 1–99 AD) — overwhelmingly AD,
-  // so label it as the first AD century rather than the lone "1 BC" start year.
-  if (century === 0) return '1–99 AD'
-  return formatYear(century) // BC blocks read via the era formatter: "101 BC"
-}
-
 function dimKeyLabel(a: Attempt, dim: Dimension): { key: string; label: string } {
   if (dim === 'weekday') {
     const w = a.correctWeekday as Weekday
@@ -57,7 +48,7 @@ function dimKeyLabel(a: Attempt, dim: Dimension): { key: string; label: string }
   const year = Number(a.targetDate.slice(0, -6))
   if (!Number.isFinite(year) || a.targetDate === '') return { key: 'unknown', label: 'Unknown' }
   const century = centuryOf(year)
-  return { key: String(century), label: centuryLabel(century) }
+  return { key: String(century), label: formatCentury(century) }
 }
 
 export function accuracyByDimension(attempts: Attempt[], dim: Dimension): Bucket[] {

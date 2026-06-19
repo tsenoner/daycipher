@@ -217,10 +217,15 @@ export function nextLessonProblem(
     }
     case 'full':
     case 'speed': {
-      // ~20% leap Jan/Feb dates (the recurring trap), else a wide proleptic date.
+      // `speed` is timed (answers must land within SPEED_MS), so keep it on the
+      // relatable modern range where recall is feasible. `full` is untimed and goes
+      // wide — ~20% leap Jan/Feb dates (the recurring trap), else a wide proleptic date.
       let year: number
       let month: number
-      if (stageId === 'full' && rng() < 0.2) {
+      if (stageId === 'speed') {
+        year = pick(rng, 1900, 2099)
+        month = pick(rng, 1, 12)
+      } else if (rng() < 0.2) {
         year = nearestLeapYear(warpYear(rng()))
         month = pick(rng, 1, 2)
       } else {
