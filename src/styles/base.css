@@ -12,10 +12,6 @@ body,
 #root {
   height: 100%;
 }
-html {
-  /* Keep focused elements clear of the sticky bottom nav when scrolled into view. */
-  scroll-padding-bottom: calc(64px + env(safe-area-inset-bottom));
-}
 body {
   margin: 0;
   background: var(--paper);
@@ -54,13 +50,31 @@ button {
 .app-shell {
   max-width: 540px;
   margin: 0 auto;
-  min-height: 100%;
+  /* Own exactly the VISIBLE viewport so the header and bottom nav are fixed-size flex
+     children and only .app-main scrolls — this keeps the tab bar structurally pinned
+     (no position: fixed over a body scroll, which jumps on iOS). Use dvh, not height:100%
+     or 100vh: with the nav now in-flow it must track the dynamic viewport, otherwise a
+     non-standalone mobile browser's URL bar pushes the nav below the visible fold. */
+  height: 100vh; /* fallback for browsers without dynamic viewport units */
+  height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+}
+.app-main {
+  flex: 1;
+  /* min-height: 0 lets the flex child shrink below its content so it can scroll. */
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Don't let an over-scroll chain to the body (avoids rubber-band revealing the page edge). */
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
 }
 .screen {
-  flex: 1;
+  /* Grow to fill a short screen (preserves top-aligned layouts) but never shrink below
+     content, so a long screen overflows .app-main and scrolls instead of being clipped. */
+  flex: 1 0 auto;
   padding: 16px;
 }
 .visually-hidden {

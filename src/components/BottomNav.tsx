@@ -35,17 +35,17 @@ export function BottomNav() {
     <nav
       aria-label="Primary"
       style={{
-        position: 'fixed',
-        left: 0,
-        right: 0,
-        bottom: 0,
+        // A fixed-size flex child at the bottom of the shell column — NOT position: fixed.
+        // It spans the shell's width and stays put; switching screens scrolls only
+        // .app-main, so the tab bar never moves or repaint-jumps (iOS PWA).
+        flexShrink: 0,
         display: 'flex',
         justifyContent: 'space-around',
         background: 'var(--card)',
         borderTop: '1px solid var(--line)',
+        // Lift the tappable labels above the iOS home indicator; the bar background
+        // still fills down to the physical bottom edge.
         paddingBottom: 'env(safe-area-inset-bottom)',
-        maxWidth: 540,
-        margin: '0 auto',
       }}
     >
       {tabs.map((t) => (
@@ -57,7 +57,7 @@ export function BottomNav() {
             flex: 1,
             textAlign: 'center',
             padding: '12px 0',
-            minHeight: 56,
+            minHeight: 'var(--tap)',
             textDecoration: 'none',
             fontWeight: 600,
             color: isActive ? 'var(--burg)' : 'var(--muted)',
