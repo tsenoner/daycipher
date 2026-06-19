@@ -21,7 +21,12 @@ export function App() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '12px 16px',
+          // Push the wordmark/gear clear of the iOS status-bar clock/notch in the
+          // installed PWA. The inset is on padding-top only, so the header background
+          // and bottom border still reach the physical top edge (no gap above it).
+          // env(safe-area-inset-top) resolves to 0 off-notch, so desktop/Android are
+          // unaffected — the header keeps its original 12px top padding there.
+          padding: 'calc(12px + env(safe-area-inset-top)) 16px 12px',
           borderBottom: '1px solid var(--line)',
         }}
       >
