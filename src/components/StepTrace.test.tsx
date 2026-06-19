@@ -12,4 +12,10 @@ describe('StepTrace', () => {
     expect(screen.getAllByText('Friday').length).toBeGreaterThanOrEqual(1) // year doomsday + result
     expect(screen.getByText(/March anchor/)).toBeInTheDocument()
   })
+
+  it('labels BC years/centuries via the era formatter, not raw negatives', () => {
+    render(<StepTrace trace={explain(-44, 3, 14)} defaultOpen />)
+    expect(screen.getByText(/101 BC anchor/)).toBeInTheDocument() // century -100, not "-100s"
+    expect(screen.getByText(/45 BC doomsday/)).toBeInTheDocument() // year -44, not "-44"
+  })
 })

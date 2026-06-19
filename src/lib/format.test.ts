@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { formatDate, weekdayShort, weekdayName, orderedWeekdays, monthName } from './format'
+import {
+  formatDate,
+  formatYear,
+  formatCentury,
+  weekdayShort,
+  weekdayName,
+  orderedWeekdays,
+  monthName,
+} from './format'
 
 describe('format', () => {
   it('formatDate -> "14 March 1986"', () => {
@@ -18,5 +26,26 @@ describe('format', () => {
   it('monthName', () => {
     expect(monthName(3)).toBe('March')
     expect(monthName(12)).toBe('December')
+  })
+})
+
+describe('era-aware year/date formatting', () => {
+  it('labels BC for astronomical years <= 0', () => {
+    expect(formatYear(2005)).toBe('2005')
+    expect(formatYear(1)).toBe('1')
+    expect(formatYear(0)).toBe('1 BC')
+    expect(formatYear(-1)).toBe('2 BC')
+    expect(formatYear(-1199)).toBe('1200 BC')
+  })
+
+  it('formatDate renders the era label', () => {
+    expect(formatDate(2030, 12, 25)).toBe('25 December 2030')
+    expect(formatDate(-1199, 3, 14)).toBe('14 March 1200 BC')
+  })
+
+  it('formatCentury labels century blocks by their astronomical start year', () => {
+    expect(formatCentury(1900)).toBe('1900s')
+    expect(formatCentury(0)).toBe('1–99 AD') // 1 BC + 1–99 AD, labelled as the first AD century
+    expect(formatCentury(-100)).toBe('101 BC')
   })
 })

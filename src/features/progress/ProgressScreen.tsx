@@ -7,6 +7,7 @@ import { useSettings } from '../../store/settings'
 import { summarize, accuracyByDimension, weakest, stepStats, type Summary } from './stats'
 import { achievements } from './achievements'
 import { getCompleted, getPracticeUnlocked, isPracticeUnlocked } from '../learn/learnGate'
+import { isDrillableCentury } from '../practice/selector'
 import { buildHeatmap, type HeatModel } from './heatmap'
 import { Heatmap } from '../../components/Heatmap'
 import type { Attempt } from '../../db/db'
@@ -84,7 +85,9 @@ export function ProgressScreen() {
   }
 
   const { summary, streak } = data
-  const centuries = accuracyByDimension(practice, 'century')
+  // Scope the century breakdown to the centuries Practice can actually re-drill, so the
+  // list stays bounded under the wide proleptic range and "drill it" is always honoured.
+  const centuries = accuracyByDimension(practice, 'century').filter((b) => isDrillableCentury(b.key))
   const weak = weakest(centuries)
   const steps = stepStats(practice)
   const achs = achievements(data.attempts, data.streak.longest, data.completed, summary)
@@ -134,7 +137,7 @@ export function ProgressScreen() {
           key={b.key}
           style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, fontSize: 13 }}
         >
-          <span style={{ width: 54, color: 'var(--muted)' }}>{b.label}</span>
+          <span style={{ width: 64, color: 'var(--muted)', whiteSpace: 'nowrap' }}>{b.label}</span>
           <span
             style={{
               flex: 1,

@@ -1,5 +1,5 @@
 import type { Attempt } from '../../db/db'
-import { weekdayName } from '../../lib/format'
+import { weekdayName, formatCentury } from '../../lib/format'
 import { centuryOf, type Weekday } from '../../engine'
 
 export interface Summary {
@@ -42,15 +42,20 @@ function dimKeyLabel(a: Attempt, dim: Dimension): { key: string; label: string }
     const w = a.correctWeekday as Weekday
     return { key: String(w), label: weekdayName(w) }
   }
-  const year = Number(a.targetDate.slice(0, 4))
-  if (!Number.isFinite(year)) return { key: 'unknown', label: 'Unknown' }
+  // targetDate is `${year}-MM-DD` with 2-digit MM/DD, so the year is everything
+  // before the trailing "-MM-DD". slice(0,-6) (not slice(0,4)) is robust to the
+  // wide range now reaching Practice: negative (BC) and 1-3 digit years parse right.
+  const year = Number(a.targetDate.slice(0, -6))
+  if (!Number.isFinite(year) || a.targetDate === '') return { key: 'unknown', label: 'Unknown' }
   const century = centuryOf(year)
-  return { key: String(century), label: `${century}s` }
+  return { key: String(century), label: formatCentury(century) }
 }
 
 export function accuracyByDimension(attempts: Attempt[], dim: Dimension): Bucket[] {
   const map = new Map<string, Bucket>()
   for (const a of attempts) {
+    // Skip learn:* rows — they are lesson reps, not practice (and gradeNumber stashes
+    // a day-of-month in correctWeekday, which must not be bucketed as a weekday).
     if (a.mode.startsWith('learn:')) continue
     const { key, label } = dimKeyLabel(a, dim)
     let b = map.get(key)

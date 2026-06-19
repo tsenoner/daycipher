@@ -14,7 +14,7 @@ const blocks: Block[] = [
 
 describe('LessonBlocks', () => {
   it('renders each block kind', () => {
-    render(<LessonBlocks blocks={blocks} />)
+    render(<LessonBlocks blocks={blocks} stageId="full" />)
     expect(screen.getByText('Intro paragraph.')).toBeInTheDocument()
     expect(screen.getByText(/Remember this rhyme/)).toBeInTheDocument()
     expect(screen.getByText('alpha')).toBeInTheDocument()
@@ -25,7 +25,7 @@ describe('LessonBlocks', () => {
 
   describe('LessonBlocks token interpolation', () => {
     it('replaces {thisYear} and {thisYearDoomsday} in paragraph text', () => {
-      render(<LessonBlocks blocks={[{ kind: 'p', text: 'For {thisYear} it is {thisYearDoomsday}.' }]} />)
+      render(<LessonBlocks blocks={[{ kind: 'p', text: 'For {thisYear} it is {thisYearDoomsday}.' }]} stageId="full" />)
       const expected = `For ${CURRENT_YEAR} it is ${weekdayName(thisYearDoomsday())}.`
       expect(screen.getByText(expected)).toBeInTheDocument()
     })

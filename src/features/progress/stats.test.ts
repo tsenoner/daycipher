@@ -50,6 +50,19 @@ describe('accuracyByDimension', () => {
     const b = accuracyByDimension([mk({ correctWeekday: 1 }), mk({ correctWeekday: 5 })], 'weekday')
     expect(b.map((x) => x.label)).toEqual(['Monday', 'Friday'])
   })
+  it('parses wide-range years robustly (short AD and BC), not via slice(0,4)', () => {
+    // A 3-digit year would have broken slice(0,4) ("750-" -> NaN -> Unknown).
+    const ad = accuracyByDimension([mk({ targetDate: '750-03-14' })], 'century')
+    expect(ad).toHaveLength(1)
+    expect(ad[0]).toMatchObject({ key: '700', label: '700s' })
+    // A BC (negative astronomical) year buckets to a BC-labelled century.
+    const bc = accuracyByDimension([mk({ targetDate: '-44-03-15' })], 'century')
+    expect(bc[0]).toMatchObject({ key: '-100', label: '101 BC' })
+    expect(bc[0].label).not.toBe('Unknown')
+    // First-century-AD years (1–99) live in century 0 — labelled AD, never "1 BC".
+    const early = accuracyByDimension([mk({ targetDate: '47-03-14' })], 'century')
+    expect(early[0]).toMatchObject({ key: '0', label: '1–99 AD' })
+  })
   it('skips learn:* rows so a day-of-month is never bucketed as a weekday', () => {
     // gradeNumber stashes the day-of-month (29) in correctWeekday; the learn guard
     // must drop it before the `as Weekday` cast — no bucket, no throw.

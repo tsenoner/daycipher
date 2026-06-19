@@ -1,6 +1,7 @@
 import type { Block } from '../features/learn/curriculum'
 import { CURRENT_YEAR, thisYearDoomsday } from '../engine'
 import { weekdayName } from '../lib/format'
+import { WorkedExample } from './WorkedExample'
 
 // Resolved once at module load (CURRENT_YEAR is itself a module-load constant),
 // so interpolate() doesn't recompute the year's doomsday per block per render.
@@ -12,7 +13,7 @@ function interpolate(text: string): string {
   return text.replaceAll('{thisYear}', THIS_YEAR).replaceAll('{thisYearDoomsday}', THIS_YEAR_DOOMSDAY)
 }
 
-export function LessonBlocks({ blocks }: { blocks: Block[] }) {
+export function LessonBlocks({ blocks, stageId }: { blocks: Block[]; stageId: string }) {
   return (
     <div>
       {blocks.map((b, i) => {
@@ -54,28 +55,7 @@ export function LessonBlocks({ blocks }: { blocks: Block[] }) {
               </div>
             )
           case 'example':
-            return (
-              <div
-                key={i}
-                style={{
-                  background: 'var(--card)',
-                  border: '1px solid var(--line)',
-                  borderRadius: 'var(--radius)',
-                  padding: 14,
-                  margin: '12px 0',
-                }}
-              >
-                <div className="serif" style={{ fontSize: 18, fontWeight: 600 }}>
-                  {b.date}
-                </div>
-                <ol style={{ lineHeight: 1.7, paddingLeft: 20, marginTop: 8 }}>
-                  {b.steps.map((s, j) => (
-                    <li key={j}>{s}</li>
-                  ))}
-                </ol>
-                <div style={{ marginTop: 8, fontWeight: 700, color: 'var(--green)' }}>→ {b.answer}</div>
-              </div>
-            )
+            return <WorkedExample key={i} stageId={stageId} hero={b} />
         }
       })}
     </div>

@@ -40,3 +40,38 @@ export function generateDate(
   const day = pick(rng, 1, daysInMonth(year, month))
   return { year, month, day }
 }
+
+export interface WarpYearOpts {
+  center?: number
+  scale?: number
+  min?: number
+  max?: number
+}
+
+/**
+ * Map a uniform u∈[0,1) to an integer year via the Cauchy inverse-CDF: dense near
+ * `center`, heavy symmetric tails that reach `min`/`max` (then clamp). Monotonic, so it
+ * preserves the spread of whatever stream feeds it. Years are astronomical (0 = 1 BC).
+ */
+export function warpYear(u: number, opts: WarpYearOpts = {}): number {
+  const { center = 2050, scale = 180, min = -9998, max = 9999 } = opts
+  const clamped = Math.min(Math.max(u, 1e-9), 1 - 1e-9)
+  const raw = center + scale * Math.tan(Math.PI * (clamped - 0.5))
+  return Math.min(max, Math.max(min, Math.round(raw)))
+}
+
+/**
+ * A full-range proleptic date: a `warpYear` year (centered on relatable years with a
+ * long tail to the BC / far-future extremes) plus a uniform month and a valid day.
+ * Shared by Practice and the lessons so their "wide" distribution can't drift apart.
+ */
+export function generateWideDate(rng: () => number = Math.random): {
+  year: number
+  month: number
+  day: number
+} {
+  const year = warpYear(rng())
+  const month = pick(rng, 1, 12)
+  const day = pick(rng, 1, daysInMonth(year, month))
+  return { year, month, day }
+}
