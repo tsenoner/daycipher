@@ -192,8 +192,15 @@ and silently return wrong answers. Fixes:
 - Shuffled-bag / low-discrepancy sampling on every stage (dropped — marginal over short
   windows, and stateful). Without-replacement is kept only for `leap`/`century`.
 - Weakness-targeting / spaced-repetition in the lesson drill (Practice covers that).
-- Widening the Daily/Practice ranges or the `century`/`thisyear` stages.
+- Widening the Daily range or the `century`/`thisyear` stages.
 - Worked examples for stages that don't currently have one.
+
+**Follow-up (2026-06-19):** Practice (`selector.ts`) was widened to the same full
+proleptic range (centered + long tail via `warpYear`); its century weakness-targeting
+still uses the taught 1700–2099 buckets. This required `stats.ts` to parse the year
+from `targetDate` via `slice(0, -6)` (robust to BC/short years) instead of `slice(0,4)`.
+A dev-only `DEV_UNLOCK_ALL` (`src/lib/devFlags.ts`, `MODE === 'development'`) unlocks
+every Learn stage and Practice in the `vite dev` server (off in tests/production).
 
 ## Build order
 
