@@ -39,8 +39,11 @@ export interface Bucket {
 
 /** Human label for a century block keyed by its astronomical start year. */
 function centuryLabel(century: number): string {
-  // AD blocks read "1900s"; BC / year-0 blocks read via the era formatter ("101 BC").
-  return century > 0 ? `${century}s` : formatYear(century)
+  if (century > 0) return `${century}s` // AD blocks: "1900s"
+  // Century 0 spans astronomical years 0–99 (= 1 BC plus 1–99 AD) — overwhelmingly AD,
+  // so label it as the first AD century rather than the lone "1 BC" start year.
+  if (century === 0) return '1–99 AD'
+  return formatYear(century) // BC blocks read via the era formatter: "101 BC"
 }
 
 function dimKeyLabel(a: Attempt, dim: Dimension): { key: string; label: string } {

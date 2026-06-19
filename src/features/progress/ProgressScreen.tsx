@@ -134,7 +134,7 @@ export function ProgressScreen() {
           key={b.key}
           style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, fontSize: 13 }}
         >
-          <span style={{ width: 54, color: 'var(--muted)' }}>{b.label}</span>
+          <span style={{ width: 64, color: 'var(--muted)', whiteSpace: 'nowrap' }}>{b.label}</span>
           <span
             style={{
               flex: 1,

@@ -59,6 +59,9 @@ describe('accuracyByDimension', () => {
     const bc = accuracyByDimension([mk({ targetDate: '-44-03-15' })], 'century')
     expect(bc[0]).toMatchObject({ key: '-100', label: '101 BC' })
     expect(bc[0].label).not.toBe('Unknown')
+    // First-century-AD years (1–99) live in century 0 — labelled AD, never "1 BC".
+    const early = accuracyByDimension([mk({ targetDate: '47-03-14' })], 'century')
+    expect(early[0]).toMatchObject({ key: '0', label: '1–99 AD' })
   })
   it('skips learn:* rows so a day-of-month is never bucketed as a weekday', () => {
     // gradeNumber stashes the day-of-month (29) in correctWeekday; the learn guard
