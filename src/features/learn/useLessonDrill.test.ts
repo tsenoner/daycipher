@@ -90,11 +90,11 @@ describe('gradeLesson', () => {
     expect(a.timed).toBe(false)
   })
 
-  it('stage 7 (speed) writes a timed row carrying durationMs', () => {
-    const p = nextLessonProblem('speed', makeRng(5))
+  it('the final `full` stage writes an untimed dated row carrying durationMs', () => {
+    const p = nextLessonProblem('full', makeRng(5))
     const a = gradeLesson(p, p.correct, 1234, 10)
-    expect(a.mode).toBe('learn:speed')
-    expect(a.timed).toBe(true)
+    expect(a.mode).toBe('learn:full')
+    expect(a.timed).toBe(false)
     expect(a.durationMs).toBe(1234)
     expect(a.correct).toBe(true)
   })
@@ -171,19 +171,36 @@ describe('useLessonDrill', () => {
     await waitFor(() => expect(result.current.done).toBe(true))
   })
 
-  it('stage 7 (speed) requires answers within SPEED_MS to count toward completion', async () => {
+  it('slow-but-correct answers on the final `full` stage still internalize it', async () => {
     const { result } = renderHook(() =>
-      useLessonDrill('speed', { rng: makeRng(13), durationMs: 9999 }),
+      useLessonDrill('full', { rng: makeRng(13), durationMs: 999_999 }),
     )
     await waitFor(() => expect(result.current.current).not.toBeNull())
 
-    // Five fast-but-too-slow correct answers: correct rows, but none count (>SPEED_MS).
+    // Five deliberately slow correct answers — with no speed gate they all count.
     for (let i = 0; i < 5; i++) await answerCorrect(result)
-    expect(result.current.done).toBe(false)
-
-    // Five answers within the speed budget now internalize the stage.
-    for (let i = 0; i < 5; i++) await answerCorrect(result, 1000)
     await waitFor(() => expect(result.current.done).toBe(true))
+  })
+
+  it('finishing the last stage (full) latches every stage and unlocks Practice', async () => {
+    const { CURRICULUM } = await import('./curriculum')
+    const { markStageComplete } = await import('./learnGate')
+    // Internalize the first six stages so only `full` (the new last stage) remains.
+    for (const s of CURRICULUM.slice(0, -1)) await markStageComplete(s.id)
+
+    const { result } = renderHook(() => useLessonDrill('full', { rng: makeRng(31) }))
+    await waitFor(() => expect(result.current.current).not.toBeNull())
+    for (let i = 0; i < 5; i++) await answerCorrect(result)
+    await waitFor(() => expect(result.current.done).toBe(true))
+
+    // Completing `full` (the last stage) unions it in and flips the latch — every
+    // curriculum id is now present regardless of insertion order.
+    await waitFor(async () =>
+      expect(new Set(await getMeta<string[]>('learnCompleted', []))).toEqual(
+        new Set(CURRICULUM.map((s) => s.id)),
+      ),
+    )
+    await waitFor(async () => expect(await getMeta<boolean>('practiceUnlocked', false)).toBe(true))
   })
 
   it('resumes derived progress from the persisted log on remount (StrictMode-safe)', async () => {

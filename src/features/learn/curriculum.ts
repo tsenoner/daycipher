@@ -19,8 +19,6 @@ export interface Stage {
   k?: number
   /** Mastery window M ("K of the last M"); defaults to 5 when unset. */
   m?: number
-  /** Whether the stage's outcome additionally requires a fast timed answer; defaults to false. */
-  timed?: boolean
 }
 
 export const CURRICULUM: Stage[] = [
@@ -237,35 +235,6 @@ export const CURRICULUM: Stage[] = [
       {
         kind: 'p',
         text: 'If your date is in January or February of a leap year, slide the anchor one day later (Jan 4, Feb 29) before you step.',
-      },
-    ],
-  },
-  {
-    id: 'speed',
-    n: 8,
-    title: 'Getting fast',
-    goal: 'Shift from computing to recalling — toward sub-5-second answers.',
-    timed: true,
-    blocks: [
-      {
-        kind: 'p',
-        text: 'Accuracy first. Once you’re reliably right, speed comes from recalling instead of recomputing.',
-      },
-      {
-        kind: 'list',
-        items: [
-          'The 12 month anchors, cold',
-          'The 4 century anchors',
-          'The year-doomsdays for the years you meet most',
-        ],
-      },
-      {
-        kind: 'p',
-        text: 'Lean on the shortcuts: anything that adds to 7 becomes 0, and +6 is the same as −1. Count forward, never back.',
-      },
-      {
-        kind: 'p',
-        text: 'Drill daily — even five problems keeps the streak and the skill alive. Aim for under 5 seconds, then under 2, the way Conway did.',
       },
     ],
   },

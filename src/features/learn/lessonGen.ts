@@ -17,7 +17,6 @@ import {
 import { gradeNumber, gradeProblem, gradeWeekday } from '../practice/drill'
 import type { Attempt } from '../../db/db'
 import { formatYear, monthName, weekdayName } from '../../lib/format'
-import { getStage } from './curriculum'
 
 /** Fisher–Yates shuffle of a copy, driven by `rng`. */
 function shuffle<T>(arr: readonly T[], rng: () => number): T[] {
@@ -67,7 +66,7 @@ export type AnswerKind = 'number' | 'weekday' | 'boolean'
 /**
  * One generated lesson instance for a stage. Carries everything the drill UI needs
  * to render (`prompt`, `answerKind`, `options`) and everything `gradeLesson` needs
- * to grade (`correct`, plus `mode`/`date`/`dimension`/`timed`). Forward-only — no
+ * to grade (`correct`, plus `mode`/`date`/`dimension`). Forward-only — no
  * reverse items (§4): surface variety comes from the randomized forward generator.
  */
 export interface LessonProblem {
@@ -81,12 +80,10 @@ export interface LessonProblem {
   options?: number[]
   /** The known-correct answer value (a weekday 0..6, or a day-of-month). */
   correct: number
-  /** A real date to grade through `gradeProblem` (`thisyear`, `full`, `speed`); else null. */
+  /** A real date to grade through `gradeProblem` (`thisyear`, `full`); else null. */
   date: { year: number; month: number; day: number } | null
   /** Mirrors the graded weekday into anchorCorrect/yearDoomCorrect (`century`, `year`). */
   dimension?: 'anchor' | 'yearDoom'
-  /** The timed `speed` stage folds `durationMs <= SPEED_MS` into its outcome. */
-  timed: boolean
 }
 
 const TAUGHT_CENTURIES: readonly number[] = [1700, 1800, 1900, 2000, 2100]
@@ -117,7 +114,6 @@ export function nextLessonProblem(
   ctx: LessonCtx = {},
 ): LessonProblem {
   const mode = `learn:${stageId}`
-  const timed = getStage(stageId)?.timed ?? false
   switch (stageId) {
     case 'mod7': {
       // Either "cast out sevens" on one number, or an addend pair (mod 7).
@@ -131,7 +127,6 @@ export function nextLessonProblem(
           options: [0, 1, 2, 3, 4, 5, 6],
           correct: mod7(n),
           date: null,
-          timed,
         }
       }
       const a = pick(rng, 2, 9)
@@ -144,7 +139,6 @@ export function nextLessonProblem(
         options: [0, 1, 2, 3, 4, 5, 6],
         correct: mod7(a + b),
         date: null,
-        timed,
       }
     }
     case 'months': {
@@ -160,7 +154,6 @@ export function nextLessonProblem(
         options: ANCHOR_DAYS,
         correct: monthAnchor(month, leap),
         date: null,
-        timed,
       }
     }
     case 'leap': {
@@ -173,7 +166,6 @@ export function nextLessonProblem(
         answerKind: 'boolean',
         correct: isLeapYear(year) ? 1 : 0,
         date: null,
-        timed,
       }
     }
     case 'thisyear': {
@@ -186,7 +178,6 @@ export function nextLessonProblem(
         answerKind: 'weekday',
         correct: weekdayOfYMD(d.year, d.month, d.day),
         date: d,
-        timed,
       }
     }
     case 'century': {
@@ -199,7 +190,6 @@ export function nextLessonProblem(
         correct: centuryAnchor(year),
         date: null,
         dimension: 'anchor',
-        timed,
       }
     }
     case 'year': {
@@ -212,20 +202,14 @@ export function nextLessonProblem(
         correct: yearDoomsdayOddEleven(year),
         date: null,
         dimension: 'yearDoom',
-        timed,
       }
     }
-    case 'full':
-    case 'speed': {
-      // `speed` is timed (answers must land within SPEED_MS), so keep it on the
-      // relatable modern range where recall is feasible. `full` is untimed and goes
-      // wide — ~20% leap Jan/Feb dates (the recurring trap), else a wide proleptic date.
+    case 'full': {
+      // The terminal accuracy stage goes wide — ~20% leap Jan/Feb dates (the
+      // recurring trap), else a wide proleptic date across the supported range.
       let year: number
       let month: number
-      if (stageId === 'speed') {
-        year = pick(rng, 1900, 2099)
-        month = pick(rng, 1, 12)
-      } else if (rng() < 0.2) {
+      if (rng() < 0.2) {
         year = nearestLeapYear(warpYear(rng()))
         month = pick(rng, 1, 2)
       } else {
@@ -240,7 +224,6 @@ export function nextLessonProblem(
         answerKind: 'weekday',
         correct: weekdayOfYMD(year, month, day),
         date: { year, month, day },
-        timed,
       }
     }
     default:
@@ -251,8 +234,8 @@ export function nextLessonProblem(
 /**
  * Grade a guessed answer for `p` into a real `Attempt` row, dispatching to the
  * right grader per stage (§4). Number/boolean stages (`mod7`, `leap`, `months`) grade a
- * bare value; `thisyear`/`full`/`speed` grade a real date; `century`/`year` grade a weekday
- * with its dimension; the timed `speed` stage additionally marks the row timed.
+ * bare value; `thisyear`/`full` grade a real date; `century`/`year` grade a weekday
+ * with its dimension. Every stage is accuracy-only — no row is marked timed.
  */
 export function gradeLesson(
   p: LessonProblem,
@@ -264,8 +247,7 @@ export function gradeLesson(
     return gradeNumber(p.correct, guess, p.mode, durationMs, timestamp)
   }
   if (p.date) {
-    const a = gradeProblem(p.date, guess as Weekday, durationMs, p.mode, timestamp)
-    return p.timed ? { ...a, timed: true } : a
+    return gradeProblem(p.date, guess as Weekday, durationMs, p.mode, timestamp)
   }
   return gradeWeekday(
     p.correct as Weekday,

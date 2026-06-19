@@ -85,7 +85,7 @@ describe('wide year/full stages', () => {
     expect([...years].some((y) => y < 1900 || y > 2099)).toBe(true)
   })
 
-  it('full produces valid, engine-correct dated problems incl. BC', () => {
+  it('full produces valid, engine-correct, untimed dated problems incl. BC', () => {
     let sawWide = false
     for (let s = 0; s < 300; s++) {
       const p = nextLessonProblem('full', makeRng(s))
@@ -97,6 +97,10 @@ describe('wide year/full stages', () => {
       if (year < 1900 || year > 2099) sawWide = true
     }
     expect(sawWide).toBe(true)
+  })
+
+  it('the removed `speed` stage is no longer a valid lesson stage', () => {
+    expect(() => nextLessonProblem('speed', makeRng(1))).toThrow(RangeError)
   })
 })
 

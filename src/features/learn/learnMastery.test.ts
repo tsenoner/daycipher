@@ -5,7 +5,6 @@ import {
   stageOutcomes,
   stageProgress,
   isStageDone,
-  SPEED_MS,
 } from './learnMastery'
 import type { Attempt } from '../../db/db'
 
@@ -32,27 +31,19 @@ const rows = (stageId: string, pattern: boolean[]): Attempt[] =>
         mode: `learn:${stageId}`,
         correct,
         timestamp: i,
-        timed: stageId === 'speed',
-        durationMs: stageId === 'speed' ? 1000 : 0,
       }),
     )
     .reverse() // listAttempts returns newest-first
 
 describe('perStageOutcome', () => {
-  it('stages 1–6: outcome is just attempt.correct', () => {
+  it('every stage: outcome is just attempt.correct', () => {
     expect(perStageOutcome(mk({ mode: 'learn:full', correct: true }), 'full')).toBe(true)
     expect(perStageOutcome(mk({ mode: 'learn:full', correct: false }), 'full')).toBe(false)
   })
 
-  it('stage 7: correct AND timed AND fast enough', () => {
-    const fast = mk({ mode: 'learn:speed', correct: true, timed: true, durationMs: SPEED_MS })
-    const slow = mk({ mode: 'learn:speed', correct: true, timed: true, durationMs: SPEED_MS + 1 })
-    const untimed = mk({ mode: 'learn:speed', correct: true, timed: false, durationMs: 100 })
-    const wrong = mk({ mode: 'learn:speed', correct: false, timed: true, durationMs: 100 })
-    expect(perStageOutcome(fast, 'speed')).toBe(true)
-    expect(perStageOutcome(slow, 'speed')).toBe(false)
-    expect(perStageOutcome(untimed, 'speed')).toBe(false)
-    expect(perStageOutcome(wrong, 'speed')).toBe(false)
+  it('the final `full` stage is untimed: a correct-but-slow answer still counts', () => {
+    const slow = mk({ mode: 'learn:full', correct: true, durationMs: 999_999 })
+    expect(perStageOutcome(slow, 'full')).toBe(true)
   })
 })
 
@@ -67,12 +58,12 @@ describe('stageOutcomes', () => {
     expect(stageOutcomes(mixed, 'months')).toEqual([false, false])
   })
 
-  it('folds the timed budget for the timed stage (speed)', () => {
-    const speedRows = [true, true].map((correct, i) =>
-      mk({ mode: 'learn:speed', correct, timed: true, durationMs: SPEED_MS + 50, timestamp: i }),
+  it('does not penalize slow answers on the final `full` stage', () => {
+    const fullRows = [true, true].map((correct, i) =>
+      mk({ mode: 'learn:full', correct, durationMs: 999_999, timestamp: i }),
     )
-    // Correct but too slow → all outcomes false despite correct rows.
-    expect(stageOutcomes(speedRows.reverse(), 'speed')).toEqual([false, false])
+    // Correct rows count regardless of how long they took — no speed gate.
+    expect(stageOutcomes(fullRows.reverse(), 'full')).toEqual([true, true])
   })
 })
 
@@ -141,7 +132,7 @@ describe('STAGE_RULES', () => {
   it('on-ramp stages are K=3/M=4, the rest are K=4/M=5', () => {
     expect(STAGE_RULES.mod7).toEqual({ K: 3, M: 4 })
     expect(STAGE_RULES.months).toEqual({ K: 3, M: 4 })
-    for (const id of ['leap', 'thisyear', 'century', 'year', 'full', 'speed']) {
+    for (const id of ['leap', 'thisyear', 'century', 'year', 'full']) {
       expect(STAGE_RULES[id]).toEqual({ K: 4, M: 5 })
     }
   })
@@ -168,10 +159,10 @@ describe('isStageDone', () => {
     )
   })
 
-  it('speed: slow-but-correct rows do not count toward K', () => {
+  it('full: slow-but-correct rows still count toward K (no speed gate)', () => {
     const slowRows = [true, true, true, true, true].map((correct, i) =>
-      mk({ mode: 'learn:speed', correct, timed: true, durationMs: SPEED_MS + 50, timestamp: i }),
+      mk({ mode: 'learn:full', correct, durationMs: 999_999, timestamp: i }),
     )
-    expect(isStageDone(slowRows.reverse(), 'speed')).toBe(false)
+    expect(isStageDone(slowRows.reverse(), 'full')).toBe(true)
   })
 })

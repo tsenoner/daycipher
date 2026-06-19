@@ -13,7 +13,7 @@ interface Answered {
 export interface LessonDrillOptions {
   /** Deterministic RNG for the instance stream (default `Math.random`). */
   rng?: () => number
-  /** Inject the answer duration (default: wall-clock); used to drive stage-7 timing in tests. */
+  /** Inject the recorded answer duration (default: wall-clock); used in tests. */
   durationMs?: number
   /** Practice-again: fresh in-session window, never latches completion, logs `:practice` rows. */
   practice?: boolean
@@ -96,8 +96,9 @@ export function useLessonDrill(stageId: string, opts: LessonDrillOptions = {}) {
       latchedRef.current = done
       setPriorOutcomes(outcomes)
       setProblem(serve())
-      // Stage 7 (and any timed stage) times from mount: prime the clock here so the
-      // first measurement excludes the async load. Later reps reset it in `answer`.
+      // Prime the clock at mount so the first rep's recorded `durationMs` (kept for
+      // stats only — never gates mastery) excludes the async load. Later reps reset
+      // it in `answer`.
       startRef.current = performance.now()
       // Self-heal: a stage already DONE in the log but missing from `learnCompleted`
       // (e.g. an effect lost to a crash) re-latches its completion. Idempotent.

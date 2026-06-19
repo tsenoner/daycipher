@@ -46,7 +46,7 @@ describe('LessonScreen', () => {
   })
 
   it('redirects away from a locked stage', async () => {
-    // `full` (stage 6) is locked with an empty completed set → redirect, lesson hidden.
+    // `full` (the last stage) is locked with an empty completed set → redirect, lesson hidden.
     renderAt('/learn/full')
     expect(await screen.findByText('Learn list')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Any date, end to end' })).toBeNull()
@@ -77,5 +77,36 @@ describe('LessonScreen', () => {
     await userEvent.click(await screen.findByRole('button', { name: /Practice again/ }))
     expect(await screen.findByRole('group', { name: /Choose the number/ })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Done/ })).toBeInTheDocument()
+  })
+
+  it('shows the Practice-unlocked link after finishing the last stage (full)', async () => {
+    const { CURRICULUM } = await import('./curriculum')
+    const { markStageComplete } = await import('./learnGate')
+    const { addAttempt } = await import('../../db/attempts')
+    // Unlock `full` (the new last stage) by completing every prior stage, but leave
+    // `full` itself out of learnCompleted so the screen offers "Start exercises".
+    for (const s of CURRICULUM.slice(0, -1)) await markStageComplete(s.id)
+    // Seed the log so the live `full` window is already mastered on load. The drill
+    // then loads `done`, latches `full`, and renders the last-stage unlock link.
+    for (let i = 0; i < 5; i++) {
+      await addAttempt({
+        timestamp: i,
+        targetDate: '1969-07-20',
+        correctWeekday: 0,
+        guessedWeekday: 0,
+        correct: true,
+        durationMs: 999_999,
+        mode: 'learn:full',
+        anchorCorrect: null,
+        yearDoomCorrect: null,
+        offsetCorrect: null,
+        timed: false,
+      })
+    }
+
+    renderAt('/learn/full')
+    await userEvent.click(await screen.findByRole('button', { name: /Start exercises/ }))
+
+    expect(await screen.findByRole('link', { name: /Practice unlocked/ })).toBeInTheDocument()
   })
 })
