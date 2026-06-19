@@ -1,14 +1,11 @@
 import type { Attempt } from '../../db/db'
-import { CURRICULUM, getStage } from './curriculum'
+import { CURRICULUM } from './curriculum'
 
 /** A stage is internalized at "K of the last M" correct outcomes. */
 export interface StageRule {
   K: number
   M: number
 }
-
-/** A timed stage only credits answers solved within this many ms. */
-export const SPEED_MS = 5000
 
 const DEFAULT_RULE: StageRule = { K: 4, M: 5 }
 
@@ -28,15 +25,11 @@ export function ruleFor(stageId: string): StageRule {
 }
 
 /**
- * The boolean fed to the sliding window for one attempt. Non-timed stages use raw
- * correctness; a timed stage (driven by `Stage.timed`) additionally requires a
- * timed answer within `SPEED_MS`.
+ * The boolean fed to the sliding window for one attempt. Every stage is
+ * accuracy-only: a rep counts iff it was correct, regardless of how long it took.
+ * (`stageId` is retained for a stable signature and future per-stage rules.)
  */
-export function perStageOutcome(a: Attempt, stageId: string): boolean {
-  const timed = getStage(stageId)?.timed ?? false
-  if (timed) {
-    return a.correct && a.timed && a.durationMs <= SPEED_MS
-  }
+export function perStageOutcome(a: Attempt, _stageId: string): boolean {
   return a.correct
 }
 

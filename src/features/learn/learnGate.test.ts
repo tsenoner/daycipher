@@ -38,6 +38,11 @@ describe('isPracticeUnlocked', () => {
   it('opens when every stage is completed', () => {
     expect(isPracticeUnlocked(ALL, false)).toBe(true)
   })
+  it('opens once the 7 accuracy stages ending on `full` are completed', () => {
+    expect(ALL).toHaveLength(7)
+    expect(ALL[ALL.length - 1]).toBe('full')
+    expect(isPracticeUnlocked(ALL, false)).toBe(true)
+  })
   it('stays locked while any stage is missing and no latch', () => {
     expect(isPracticeUnlocked(ALL.slice(0, -1), false)).toBe(false)
   })

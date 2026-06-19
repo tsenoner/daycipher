@@ -4,10 +4,15 @@ import { weekdayOfYMD, yearDoomsdayOddEleven } from '../../engine'
 import { weekdayName } from '../../lib/format'
 
 describe('curriculum', () => {
-  it('has 8 stages with unique ids and ascending n', () => {
-    expect(CURRICULUM).toHaveLength(8)
-    expect(new Set(CURRICULUM.map((s) => s.id)).size).toBe(8)
-    expect(CURRICULUM.map((s) => s.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8])
+  it('has 7 stages with unique ids and ascending n', () => {
+    expect(CURRICULUM).toHaveLength(7)
+    expect(new Set(CURRICULUM.map((s) => s.id)).size).toBe(7)
+    expect(CURRICULUM.map((s) => s.n)).toEqual([1, 2, 3, 4, 5, 6, 7])
+  })
+  it('ends on the accuracy stage `full` — no timed speed gate', () => {
+    expect(CURRICULUM[CURRICULUM.length - 1].id).toBe('full')
+    expect(getStage('speed')).toBeUndefined()
+    expect(CURRICULUM.some((s) => 'timed' in s)).toBe(false)
   })
   it('teaches leap-year determination as its own stage', () => {
     expect(getStage('leap')?.title).toBe('Leap years')

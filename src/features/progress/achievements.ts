@@ -51,7 +51,7 @@ export function achievements(
     {
       id: 'internalized',
       label: 'Curriculum Complete',
-      desc: 'Internalize all 8 learn stages',
+      desc: 'Internalize all 7 learn stages',
       earned: CURRICULUM.every((s) => completed.includes(s.id)),
     },
   ]
