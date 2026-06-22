@@ -1,4 +1,5 @@
 import { generateDate, generateWideDate } from '../../engine'
+import { formatYear } from '../../lib/format'
 
 export interface LevelDef {
   /** Stable id (never the array index). */
@@ -9,8 +10,14 @@ export interface LevelDef {
   range: { minYear: number; maxYear: number } | null
 }
 
+const RECENT_RANGE = { minYear: 1700, maxYear: 2100 }
+
 export const LEVELS: readonly LevelDef[] = [
-  { id: 'recent', label: 'Recent (1700–2100)', range: { minYear: 1700, maxYear: 2100 } },
+  {
+    id: 'recent',
+    label: `Recent (${formatYear(RECENT_RANGE.minYear)}–${formatYear(RECENT_RANGE.maxYear)})`,
+    range: RECENT_RANGE,
+  },
   { id: 'ad', label: 'All AD years', range: { minYear: 1, maxYear: 9999 } },
   { id: 'full', label: 'Full range', range: null },
 ]
@@ -38,10 +45,12 @@ export function generateForLevel(
   return def.range ? generateDate(def.range, rng) : generateWideDate(rng)
 }
 
+/** Canonical level-test length; the (later) test runner draws this many problems. */
 export const LEVEL_TEST_SIZE = 10
+/** Correct answers needed to pass a level test. */
 export const LEVEL_TEST_PASS = 9
 
-/** Level-test pass rule: at least 9 of 10 correct. */
+/** Level-test pass rule: at least LEVEL_TEST_PASS of LEVEL_TEST_SIZE correct. */
 export function gradeLevelTest(correctCount: number): boolean {
   return correctCount >= LEVEL_TEST_PASS
 }
@@ -69,14 +78,23 @@ export function ao5(solves: SpeedSolve[]): number | null {
 
 export type Tier = 0 | 1 | 2 | 3 // none, bronze, silver, gold
 
-export const TIER_LABELS: Record<Tier, string> = { 0: '—', 1: 'Bronze', 2: 'Silver', 3: 'Gold' }
-export const TIER_BADGES: Record<Tier, string> = { 0: '', 1: '🥉', 2: '🥈', 3: '🥇' }
+/**
+ * Single source of truth for the speed tiers, best first. `maxMs` is the
+ * exclusive Ao5 ceiling (ms) to earn the tier; the `none` row (Infinity) catches
+ * the rest. Threshold, label and badge travel together so a tier is one edit.
+ */
+export const SPEED_TIERS: readonly { tier: Tier; label: string; badge: string; maxMs: number }[] = [
+  { tier: 3, label: 'Gold', badge: '🥇', maxMs: 2000 },
+  { tier: 2, label: 'Silver', badge: '🥈', maxMs: 5000 },
+  { tier: 1, label: 'Bronze', badge: '🥉', maxMs: 10000 },
+  { tier: 0, label: '—', badge: '', maxMs: Infinity },
+]
+
+export const TIER_LABELS = Object.fromEntries(SPEED_TIERS.map((t) => [t.tier, t.label])) as Record<Tier, string>
+export const TIER_BADGES = Object.fromEntries(SPEED_TIERS.map((t) => [t.tier, t.badge])) as Record<Tier, string>
 
 /** Map an Ao5 time (ms, or null = DNF) to a speed tier. */
 export function tierForAo5(ms: number | null): Tier {
   if (ms === null) return 0
-  if (ms < 2000) return 3
-  if (ms < 5000) return 2
-  if (ms < 10000) return 1
-  return 0
+  return SPEED_TIERS.find((t) => ms < t.maxMs)?.tier ?? 0
 }

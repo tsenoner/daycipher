@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   LEVELS, MAX_LEVEL, clampLevel, nextTakeableLevel, generateForLevel,
-  gradeLevelTest, ao5, tierForAo5,
+  gradeLevelTest, ao5, tierForAo5, TIER_LABELS, TIER_BADGES,
 } from './levels'
 
 describe('levels table', () => {
@@ -31,11 +31,9 @@ describe('nextTakeableLevel', () => {
 })
 
 describe('generateForLevel', () => {
-  const rng = () => 0.5
-  it('keeps level 0 inside 1700–2100', () => {
-    const d = generateForLevel(0, rng)
-    expect(d.year).toBeGreaterThanOrEqual(1700)
-    expect(d.year).toBeLessThanOrEqual(2100)
+  it('pins level 0 to the 1700–2100 endpoints', () => {
+    expect(generateForLevel(0, () => 0).year).toBe(1700)
+    expect(generateForLevel(0, () => 0.999).year).toBe(2100)
   })
   it('level 1 can exceed 2100 (1–9999 AD)', () => {
     const d = generateForLevel(1, () => 0.99)
@@ -49,6 +47,7 @@ describe('generateForLevel', () => {
 
 describe('gradeLevelTest', () => {
   it('passes at >= 9 of 10', () => {
+    expect(gradeLevelTest(0)).toBe(false)
     expect(gradeLevelTest(8)).toBe(false)
     expect(gradeLevelTest(9)).toBe(true)
     expect(gradeLevelTest(10)).toBe(true)
@@ -66,13 +65,17 @@ describe('ao5', () => {
   it('is DNF (null) with two or more wrong solves', () => {
     expect(ao5([ok(1000), ok(2000), ok(3000), { ms: 1, correct: false }, { ms: 2, correct: false }])).toBeNull()
   })
-  it('returns null when not exactly 5 solves', () => {
+  it('returns null with fewer than 5 solves', () => {
     expect(ao5([ok(1000), ok(2000)])).toBeNull()
+  })
+  it('returns null with more than 5 solves', () => {
+    expect(ao5([ok(1000), ok(2000), ok(3000), ok(4000), ok(5000), ok(6000)])).toBeNull()
   })
 })
 
 describe('tierForAo5', () => {
   it('maps ms to bronze/silver/gold with exclusive bounds', () => {
+    expect(tierForAo5(0)).toBe(3)
     expect(tierForAo5(1999)).toBe(3)
     expect(tierForAo5(2000)).toBe(2)
     expect(tierForAo5(4999)).toBe(2)
@@ -80,5 +83,9 @@ describe('tierForAo5', () => {
     expect(tierForAo5(9999)).toBe(1)
     expect(tierForAo5(10000)).toBe(0)
     expect(tierForAo5(null)).toBe(0)
+  })
+  it('derives labels and badges for every tier from the table', () => {
+    expect(TIER_LABELS).toEqual({ 0: '—', 1: 'Bronze', 2: 'Silver', 3: 'Gold' })
+    expect(TIER_BADGES).toEqual({ 0: '', 1: '🥉', 2: '🥈', 3: '🥇' })
   })
 })
