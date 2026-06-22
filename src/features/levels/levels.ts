@@ -10,7 +10,8 @@ export interface LevelDef {
   range: { minYear: number; maxYear: number } | null
 }
 
-const RECENT_RANGE = { minYear: 1700, maxYear: 2100 }
+/** The base teaching range — Level 0, and the range Learn's capstone stays within. */
+export const RECENT_RANGE = { minYear: 1700, maxYear: 2100 }
 
 export const LEVELS: readonly LevelDef[] = [
   {

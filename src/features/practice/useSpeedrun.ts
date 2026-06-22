@@ -59,7 +59,7 @@ export function useSpeedrun() {
     const now = performance.now()
     deadlineRef.current = now + DURATION * 1000
     questionStartRef.current = now
-    setProblem(nextProblem(attemptsRef.current, Math.random, levelRef.current))
+    setProblem(nextProblem(attemptsRef.current, levelRef.current))
     setPhase('running')
   // levelRef and attemptsRef are stable ref objects — no re-render needed when they update.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -76,7 +76,7 @@ export function useSpeedrun() {
       attemptsRef.current = [attempt, ...attemptsRef.current]
       setTotal((t) => t + 1)
       if (attempt.correct) setCorrect((c) => c + 1)
-      setProblem(nextProblem(attemptsRef.current, Math.random, levelRef.current))
+      setProblem(nextProblem(attemptsRef.current, levelRef.current))
     },
     // levelRef and attemptsRef are stable ref objects — no re-render needed when they update.
     // eslint-disable-next-line react-hooks/exhaustive-deps

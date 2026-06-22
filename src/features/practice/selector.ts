@@ -23,8 +23,8 @@ export const isDrillableCentury = (key: string): boolean => key in CENTURY
  */
 export function nextProblem(
   attempts: Attempt[],
-  rng: () => number = Math.random,
   level = 0,
+  rng: () => number = Math.random,
 ) {
   const practice = practiceAttempts(attempts)
   const centuries = accuracyByDimension(practice, 'century').filter((b) => isDrillableCentury(b.key))

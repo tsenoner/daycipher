@@ -18,7 +18,7 @@ export function useGuided() {
   const attemptsRef = useRef<Attempt[]>([])
   const levelRef = useUnlockedLevel()
   const [state, setState] = useState<GuidedState>(() => ({
-    problem: nextProblem([], Math.random, levelRef.current),
+    problem: nextProblem([], levelRef.current),
     step: 0,
     picks: {},
     attempt: null,
@@ -62,7 +62,7 @@ export function useGuided() {
   )
 
   const next = useCallback(() => {
-    setState({ problem: nextProblem(attemptsRef.current, Math.random, levelRef.current), step: 0, picks: {}, attempt: null })
+    setState({ problem: nextProblem(attemptsRef.current, levelRef.current), step: 0, picks: {}, attempt: null })
     setStartedAt(performance.now())
   // levelRef and attemptsRef are stable ref objects — no re-render needed when they update.
   // eslint-disable-next-line react-hooks/exhaustive-deps

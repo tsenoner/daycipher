@@ -14,6 +14,7 @@ import {
   CURRENT_YEAR,
   type Weekday,
 } from '../../engine'
+import { RECENT_RANGE } from '../levels/levels'
 import { gradeNumber, gradeProblem, gradeWeekday } from '../practice/drill'
 import type { Attempt } from '../../db/db'
 import { formatYear, monthName, weekdayName } from '../../lib/format'
@@ -205,16 +206,17 @@ export function nextLessonProblem(
       }
     }
     case 'full': {
-      // Learn stays at the base teaching range 1700–2100 (range expansion lives in
+      // Learn stays at the base teaching range RECENT_RANGE (range expansion lives in
       // Levels/Practice, not the curriculum) — ~20% leap Jan/Feb dates (the trap),
       // else a uniform base-range date.
+      const { minYear, maxYear } = RECENT_RANGE
       let year: number
       let month: number
       if (rng() < 0.2) {
-        year = nearestLeapYear(pick(rng, 1700, 2100))
+        year = nearestLeapYear(pick(rng, minYear, maxYear))
         month = pick(rng, 1, 2)
       } else {
-        year = pick(rng, 1700, 2100)
+        year = pick(rng, minYear, maxYear)
         month = pick(rng, 1, 12)
       }
       const day = pick(rng, 1, daysInMonth(year, month))
