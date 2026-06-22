@@ -4,17 +4,20 @@ import { PrimaryButton, secondaryButtonStyle } from '../../components/PrimaryBut
 import { SolveScreen } from '../../components/SolveScreen'
 import { formatDate } from '../../lib/format'
 import { useSettings } from '../../store/settings'
-import { unlockAudio } from '../../feedback/feedback'
+import { unlockAudio, playFeedback } from '../../feedback/feedback'
 import { weekdayOfYMD, type Weekday } from '../../engine'
 import { LEVELS, nextTakeableLevel, TIER_BADGES, TIER_LABELS, type Tier } from './levels'
 import { useLevelTest } from './useLevelTest'
 import { useUnlockedLevelState } from './useUnlockedLevel'
-import { useSpeedChallenge, useSpeedBestTier } from './useSpeedChallenge'
+import { useSpeedChallenge, useSpeedBest } from './useSpeedChallenge'
+
+const formatAo5 = (ms: number) => `${(ms / 1000).toFixed(2)}s`
 
 function LevelTest({ target, onDone }: { target: number; onDone: (unlockedTo: number | null) => void }) {
   const { problem, index, total, correctCount, phase, guessed, passed, answer, next } =
     useLevelTest(target)
   const weekStart = useSettings((s) => s.weekStart)
+  const soundEnabled = useSettings((s) => s.soundEnabled)
 
   if (phase === 'done') {
     return (
@@ -30,9 +33,13 @@ function LevelTest({ target, onDone }: { target: number; onDone: (unlockedTo: nu
     )
   }
 
+  // Computed once and reused by both the feedback chime and the picker reveal,
+  // so the component never recomputes the engine result per render.
+  const correctWeekday = weekdayOfYMD(problem.year, problem.month, problem.day)
   const onPick = (w: Weekday) => {
     if (phase !== 'answering') return
     unlockAudio()
+    playFeedback(w === correctWeekday, { sound: soundEnabled }) // chime/haptic, like QuickDrill
     answer(w) // ✓/✕ reveal is handled by WeekdayPicker once `phase` is graded
   }
 
@@ -45,7 +52,7 @@ function LevelTest({ target, onDone }: { target: number; onDone: (unlockedTo: nu
             weekStart={weekStart}
             graded={phase === 'graded'}
             guessed={guessed}
-            correct={phase === 'graded' ? weekdayOfYMD(problem.year, problem.month, problem.day) : null}
+            correct={phase === 'graded' ? correctWeekday : null}
             onPick={onPick}
           />
           {phase === 'graded' && (
@@ -71,7 +78,7 @@ function LevelTest({ target, onDone }: { target: number; onDone: (unlockedTo: nu
   )
 }
 
-function SpeedChallenge({ onDone }: { onDone: (earnedTier: Tier) => void }) {
+function SpeedChallenge({ onDone }: { onDone: (earnedTier: Tier, earnedMs: number | null) => void }) {
   const { phase, problem, count, total, result, tier, start, answer } = useSpeedChallenge()
   const weekStart = useSettings((s) => s.weekStart)
 
@@ -92,7 +99,7 @@ function SpeedChallenge({ onDone }: { onDone: (earnedTier: Tier) => void }) {
         >
           Start
         </PrimaryButton>
-        <PrimaryButton style={secondaryButtonStyle} onClick={() => onDone(tier)}>
+        <PrimaryButton style={secondaryButtonStyle} onClick={() => onDone(tier, null)}>
           Back
         </PrimaryButton>
       </div>
@@ -109,7 +116,7 @@ function SpeedChallenge({ onDone }: { onDone: (earnedTier: Tier) => void }) {
           {tier > 0 ? `${TIER_BADGES[tier]} ${TIER_LABELS[tier]}` : 'No tier — keep going!'}
         </p>
         <PrimaryButton onClick={start}>Again</PrimaryButton>
-        <PrimaryButton style={secondaryButtonStyle} onClick={() => onDone(tier)}>
+        <PrimaryButton style={secondaryButtonStyle} onClick={() => onDone(tier, result)}>
           Done
         </PrimaryButton>
       </div>
@@ -138,7 +145,7 @@ export function LevelsScreen() {
   const [level, raiseLevel] = useUnlockedLevelState()
   const [testing, setTesting] = useState<number | null>(null)
   const [speed, setSpeed] = useState(false)
-  const [bestTier, raiseBestTier] = useSpeedBestTier()
+  const { tier: bestTier, bestMs, record: recordBest } = useSpeedBest()
 
   if (testing !== null) {
     return (
@@ -160,11 +167,11 @@ export function LevelsScreen() {
     return (
       <div className="screen">
         <SpeedChallenge
-          onDone={(earnedTier) => {
+          onDone={(earnedTier, earnedMs) => {
             setSpeed(false)
-            // Reflect a just-earned tier immediately — monotonic, no read-back race
-            // against useSpeedChallenge's async best-tier write.
-            raiseBestTier(earnedTier)
+            // Reflect a just-earned tier + time immediately — monotonic, no read-back
+            // race against useSpeedChallenge's async best-tier/best-Ao5 writes.
+            recordBest(earnedTier, earnedMs)
           }}
         />
       </div>
@@ -209,7 +216,9 @@ export function LevelsScreen() {
         <p style={{ marginTop: 16, fontWeight: 600 }}>Full range unlocked 🎉</p>
       )}
       <PrimaryButton style={secondaryButtonStyle} onClick={() => setSpeed(true)}>
-        {`Speed challenge${bestTier > 0 ? ` · best ${TIER_BADGES[bestTier]}` : ''} →`}
+        {`Speed challenge${
+          bestMs !== null ? ` · best ${formatAo5(bestMs)}${bestTier > 0 ? ` ${TIER_BADGES[bestTier]}` : ''}` : ''
+        } →`}
       </PrimaryButton>
     </div>
   )

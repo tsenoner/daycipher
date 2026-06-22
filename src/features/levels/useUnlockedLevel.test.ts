@@ -5,9 +5,14 @@ import { _resetDbForTests } from '../../db/db'
 import { setMeta } from '../../db/meta'
 
 describe('useUnlockedLevel', () => {
-  beforeEach(() => {
-    _resetDbForTests()
-    indexedDB.deleteDatabase('daycipher')
+  beforeEach(async () => {
+    // Await the close, then the delete, so a prior test's unlockedLevel write
+    // can't leak into the next test (the un-awaited form races, per _resetDbForTests).
+    await _resetDbForTests()
+    await new Promise<void>((resolve) => {
+      const req = indexedDB.deleteDatabase('daycipher')
+      req.onsuccess = req.onerror = req.onblocked = () => resolve()
+    })
   })
 
   it('defaults to 0, then resolves to the stored (clamped) level', async () => {

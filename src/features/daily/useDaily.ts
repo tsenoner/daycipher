@@ -20,8 +20,9 @@ interface Answered {
 }
 
 export function useDaily() {
-  // Freeze the day for the whole session so the puzzle set, the result key, and
-  // the streak credit all agree even if the user crosses local midnight mid-run.
+  // Freeze the day for the whole session so the puzzle set and the result key
+  // agree even if the user crosses local midnight mid-run. (Streak credit is
+  // separate — recordAttempt credits each answer's own day, see below.)
   const [dayKey] = useState(() => localDayKey())
   const [dates, setDates] = useState<Problem[]>(() => dailyDates(dayKey))
   const [results, setResults] = useState<Answered[]>([])
@@ -82,7 +83,7 @@ export function useDaily() {
     const fresh = results.slice(persistedRef.current)
     // Persist when there are new answers, OR when a fully-answered run was
     // resumed before its finalize write landed (fresh is empty but prior is
-    // still null) — otherwise that completed day would never be credited.
+    // still null) — otherwise that completed run's result would never be saved.
     if (fresh.length === 0 && !(complete && prior === null)) return
     persistedRef.current = results.length
     const result = complete

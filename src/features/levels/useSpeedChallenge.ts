@@ -101,23 +101,40 @@ export function useSpeedChallenge(opts: SpeedChallengeOptions = {}) {
   }
 }
 
+export interface SpeedBest {
+  /** Highest tier earned (monotonic). */
+  tier: Tier
+  /** Best (lowest) Ao5 in ms, or null if no run has completed. */
+  bestMs: number | null
+  /** Reflect a just-finished run immediately — raises the tier, lowers the time. */
+  record: (tier: Tier, ms: number | null) => void
+}
+
 /**
- * Loads `meta.speedBestTier` into state (re-rendering when it resolves) and
- * returns a `raise(t)` to reflect a just-earned tier immediately — monotonic,
- * mirroring useUnlockedLevelState. Speed is non-gating, so this only drives the
- * badge display.
+ * Loads `meta.speedBestTier` + `meta.speedBestAo5` into state (re-rendering when
+ * they resolve) and returns `record(tier, ms)` to reflect a just-finished run
+ * immediately — monotonic (max tier, min time), so it never round-trips through a
+ * not-yet-committed write. Speed is non-gating; this only drives the badge/time
+ * display.
  */
-export function useSpeedBestTier(): [Tier, (t: Tier) => void] {
+export function useSpeedBest(): SpeedBest {
   const [tier, setTier] = useState<Tier>(0)
-  const raise = useCallback((t: Tier) => setTier((prev) => (t > prev ? t : prev)), [])
+  const [bestMs, setBestMs] = useState<number | null>(null)
+  const record = useCallback((t: Tier, ms: number | null) => {
+    setTier((prev) => (t > prev ? t : prev))
+    if (ms !== null) setBestMs((prev) => (prev === null || ms < prev ? ms : prev))
+  }, [])
   useEffect(() => {
     let active = true
-    void getMeta<number>('speedBestTier', 0).then((t) => {
-      if (active) raise(t as Tier)
+    void Promise.all([
+      getMeta<number>('speedBestTier', 0),
+      getMeta<number | null>('speedBestAo5', null),
+    ]).then(([t, ms]) => {
+      if (active) record(t as Tier, ms)
     })
     return () => {
       active = false
     }
-  }, [raise])
-  return [tier, raise]
+  }, [record])
+  return { tier, bestMs, record }
 }
