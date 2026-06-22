@@ -12,7 +12,9 @@ type Phase = 'ready' | 'running' | 'over'
 
 export function useSpeedrun() {
   const attemptsRef = useRef<Attempt[]>([])
-  const levelRef = useUnlockedLevel()
+  // Speedrun's first problem is generated in the user-triggered start(), which runs
+  // after the level read resolves, so it only needs the live ref (no regen).
+  const { ref: levelRef } = useUnlockedLevel()
   const deadlineRef = useRef(0)
   const questionStartRef = useRef(0)
   const [phase, setPhase] = useState<Phase>('ready')

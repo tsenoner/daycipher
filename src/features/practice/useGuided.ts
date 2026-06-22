@@ -16,7 +16,7 @@ interface GuidedState {
 
 export function useGuided() {
   const attemptsRef = useRef<Attempt[]>([])
-  const levelRef = useUnlockedLevel()
+  const { ref: levelRef, level, loaded } = useUnlockedLevel()
   const [state, setState] = useState<GuidedState>(() => ({
     problem: nextProblem([], levelRef.current),
     step: 0,
@@ -34,6 +34,21 @@ export function useGuided() {
       active = false
     }
   }, [])
+
+  // The lazy seed above drew problem #1 while the unlocked level was still the
+  // default 0. Once it resolves, regenerate the first problem at the real level —
+  // but only when it differs from the seed (skip 0, so default users see no swap)
+  // and only while the first problem is still untouched. Fires at most once.
+  const firstRegen = useRef(false)
+  useEffect(() => {
+    if (!loaded || firstRegen.current) return
+    firstRegen.current = true
+    if (level === 0) return
+    const fresh = nextProblem(attemptsRef.current, level)
+    setState((s) =>
+      s.step === 0 && Object.keys(s.picks).length === 0 && s.attempt === null ? { ...s, problem: fresh } : s,
+    )
+  }, [loaded, level])
 
   // Persist the graded attempt and feed it to the adaptive selector. Keyed on
   // the attempt so it runs once per solve, and never inside the state updater

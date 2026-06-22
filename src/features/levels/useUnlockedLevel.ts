@@ -1,23 +1,41 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { type MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
 import { getMeta } from '../../db/meta'
 import { clampLevel } from './levels'
 
 /** The single source of truth for reading the clamped unlocked level from meta. */
 const loadUnlockedLevel = () => getMeta<number>('unlockedLevel', 0).then(clampLevel)
 
-/** Loads `meta.unlockedLevel` into a ref (default 0 until resolved). */
-export function useUnlockedLevel() {
+export interface UnlockedLevel {
+  /** Live value for imperative reads (e.g. generating the next problem). */
+  ref: MutableRefObject<number>
+  /** Resolved level (0 until the DB read lands); re-renders when it resolves. */
+  level: number
+  /** True once `meta.unlockedLevel` has been read. */
+  loaded: boolean
+}
+
+/**
+ * Loads `meta.unlockedLevel` into a live ref plus resolved state. The ref serves
+ * imperative reads (next-problem generation); `level`/`loaded` let a consumer
+ * regenerate a problem it seeded at the default level before the read resolved.
+ */
+export function useUnlockedLevel(): UnlockedLevel {
   const ref = useRef(0)
+  const [level, setLevel] = useState(0)
+  const [loaded, setLoaded] = useState(false)
   useEffect(() => {
     let active = true
     void loadUnlockedLevel().then((l) => {
-      if (active) ref.current = l
+      if (!active) return
+      ref.current = l
+      setLevel(l)
+      setLoaded(true)
     })
     return () => {
       active = false
     }
   }, [])
-  return ref
+  return { ref, level, loaded }
 }
 
 /**
