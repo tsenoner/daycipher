@@ -11,6 +11,22 @@ export async function setMeta(key: string, value: unknown): Promise<void> {
   await db.put('meta', { key, value })
 }
 
+/**
+ * Monotonically raise a numeric meta value to at least `value`, read-modify-write
+ * in a single transaction so concurrent writers (or a StrictMode double-effect)
+ * can't lost-update. Returns the resulting value.
+ */
+export async function raiseMeta(key: string, value: number): Promise<number> {
+  const db = await getDb()
+  const tx = db.transaction('meta', 'readwrite')
+  const store = tx.objectStore('meta')
+  const rec = await store.get(key)
+  const next = Math.max(rec ? (rec.value as number) : 0, value)
+  await store.put({ key, value: next })
+  await tx.done
+  return next
+}
+
 const dayDiff = (a: string, b: string): number =>
   Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000)
 

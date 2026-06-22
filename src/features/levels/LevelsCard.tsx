@@ -1,20 +1,10 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getMeta } from '../../db/meta'
-import { LEVELS, MAX_LEVEL, clampLevel } from './levels'
+import { LEVELS, MAX_LEVEL } from './levels'
+import { useUnlockedLevelState } from './useUnlockedLevel'
 
 /** Entry card on the Practice tab → /levels. */
 export function LevelsCard() {
-  const [level, setLevel] = useState(0)
-  useEffect(() => {
-    let active = true
-    void getMeta<number>('unlockedLevel', 0).then((l) => {
-      if (active) setLevel(clampLevel(l))
-    })
-    return () => {
-      active = false
-    }
-  }, [])
+  const [level] = useUnlockedLevelState()
 
   return (
     <Link

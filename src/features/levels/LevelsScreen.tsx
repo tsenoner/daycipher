@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { WeekdayPicker } from '../../components/WeekdayPicker'
 import { formatDate } from '../../lib/format'
 import { useSettings } from '../../store/settings'
 import { unlockAudio } from '../../feedback/feedback'
-import { getMeta } from '../../db/meta'
-import { type Weekday } from '../../engine'
-import { LEVELS, clampLevel, nextTakeableLevel } from './levels'
+import { weekdayOfYMD, type Weekday } from '../../engine'
+import { LEVELS, nextTakeableLevel } from './levels'
 import { useLevelTest } from './useLevelTest'
+import { useUnlockedLevelState } from './useUnlockedLevel'
 
 const btn = {
   marginTop: 16,
@@ -20,8 +20,8 @@ const btn = {
   fontSize: 16,
 } as const
 
-function LevelTest({ target, onDone }: { target: number; onDone: () => void }) {
-  const { problem, index, total, correctCount, phase, guessed, attempt, passed, answer, next } =
+function LevelTest({ target, onDone }: { target: number; onDone: (unlockedTo: number | null) => void }) {
+  const { problem, index, total, correctCount, phase, guessed, passed, answer, next } =
     useLevelTest(target)
   const weekStart = useSettings((s) => s.weekStart)
 
@@ -32,7 +32,7 @@ function LevelTest({ target, onDone }: { target: number; onDone: () => void }) {
           {passed ? `Unlocked: ${LEVELS[target].label} 🎉` : `${correctCount}/${total} — not yet`}
         </div>
         <p className="muted">{passed ? 'New range added to Practice.' : 'Need 9 of 10. Try again.'}</p>
-        <button type="button" style={btn} onClick={onDone}>
+        <button type="button" style={btn} onClick={() => onDone(passed ? target : null)}>
           {passed ? 'Done' : 'Back'}
         </button>
       </div>
@@ -42,7 +42,7 @@ function LevelTest({ target, onDone }: { target: number; onDone: () => void }) {
   const onPick = (w: Weekday) => {
     if (phase !== 'answering') return
     unlockAudio()
-    answer(w) // grading + ✓/✕ reveal is handled by WeekdayPicker via `attempt`
+    answer(w) // ✓/✕ reveal is handled by WeekdayPicker once `phase` is graded
   }
 
   return (
@@ -63,7 +63,7 @@ function LevelTest({ target, onDone }: { target: number; onDone: () => void }) {
           weekStart={weekStart}
           graded={phase === 'graded'}
           guessed={guessed}
-          correct={(attempt?.correctWeekday ?? null) as Weekday | null}
+          correct={phase === 'graded' ? weekdayOfYMD(problem.year, problem.month, problem.day) : null}
           onPick={onPick}
         />
         {phase === 'graded' && (
@@ -77,28 +77,19 @@ function LevelTest({ target, onDone }: { target: number; onDone: () => void }) {
 }
 
 export function LevelsScreen() {
-  const [level, setLevel] = useState(0)
+  const [level, raiseLevel] = useUnlockedLevelState()
   const [testing, setTesting] = useState<number | null>(null)
-  const [reloadKey, setReloadKey] = useState(0)
-
-  useEffect(() => {
-    let active = true
-    void getMeta<number>('unlockedLevel', 0).then((l) => {
-      if (active) setLevel(clampLevel(l))
-    })
-    return () => {
-      active = false
-    }
-  }, [reloadKey])
 
   if (testing !== null) {
     return (
       <div className="screen">
         <LevelTest
           target={testing}
-          onDone={() => {
+          onDone={(unlockedTo) => {
             setTesting(null)
-            setReloadKey((k) => k + 1)
+            // Reflect a pass immediately from the known result — no read-back race
+            // against useLevelTest's async unlock write.
+            if (unlockedTo !== null) raiseLevel(unlockedTo)
           }}
         />
       </div>

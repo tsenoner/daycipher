@@ -30,9 +30,12 @@ export function isLearnAttempt(a: Attempt): boolean {
   return a.mode.startsWith('learn:')
 }
 
+/** Graded, streak-credited reps that are NOT "practice" for stats. One source of truth. */
+const CHALLENGE_MODES = new Set(['level:test', 'speed:challenge'])
+
 /** Level-test / speed-challenge reps — graded & streak-credited, but not "practice" for stats. */
 export function isChallengeAttempt(a: Attempt): boolean {
-  return a.mode === 'level:test' || a.mode === 'speed:challenge'
+  return CHALLENGE_MODES.has(a.mode)
 }
 
 /**

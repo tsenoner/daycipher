@@ -15,6 +15,8 @@ const base = {
   timed: false,
 } as const
 
+const mk = (mode: string): Attempt => ({ ...base, timestamp: 1, mode })
+
 describe('attempts', () => {
   beforeEach(async () => {
     _resetDbForTests()
@@ -39,8 +41,6 @@ describe('attempts', () => {
 })
 
 describe('learn-attempt filters', () => {
-  const mk = (mode: string): Attempt => ({ ...base, timestamp: 1, mode })
-
   it('isLearnAttempt is true only for learn:* modes', () => {
     expect(isLearnAttempt(mk('learn:mod7'))).toBe(true)
     expect(isLearnAttempt(mk('learn:speed'))).toBe(true)
@@ -55,17 +55,12 @@ describe('learn-attempt filters', () => {
   })
 })
 
-const mkChallenge = (mode: string): Attempt => ({
-  mode, correct: true, timestamp: 0, targetDate: '', correctWeekday: 0, guessedWeekday: 0,
-  durationMs: 0, anchorCorrect: null, yearDoomCorrect: null, offsetCorrect: null, timed: false,
-})
-
 describe('challenge attempts are excluded from practice stats', () => {
   it('drops level:test and speed:challenge, keeps quick/guided/speedrun/daily', () => {
-    expect(isChallengeAttempt(mkChallenge('level:test'))).toBe(true)
-    expect(isChallengeAttempt(mkChallenge('speed:challenge'))).toBe(true)
-    expect(isChallengeAttempt(mkChallenge('quick'))).toBe(false)
-    const kept = practiceAttempts([mkChallenge('quick'), mkChallenge('level:test'), mkChallenge('speed:challenge'), mkChallenge('daily')])
+    expect(isChallengeAttempt(mk('level:test'))).toBe(true)
+    expect(isChallengeAttempt(mk('speed:challenge'))).toBe(true)
+    expect(isChallengeAttempt(mk('quick'))).toBe(false)
+    const kept = practiceAttempts([mk('quick'), mk('level:test'), mk('speed:challenge'), mk('daily')])
     expect(kept.map((a) => a.mode)).toEqual(['quick', 'daily'])
   })
 })

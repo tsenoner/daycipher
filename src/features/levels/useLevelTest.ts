@@ -3,7 +3,7 @@ import type { Weekday } from '../../engine'
 import { gradeProblem, type Problem } from '../practice/drill'
 import type { Attempt } from '../../db/db'
 import { recordAttempt } from '../../db/attempts'
-import { getMeta, setMeta } from '../../db/meta'
+import { raiseMeta } from '../../db/meta'
 import { clampLevel, generateForLevel, gradeLevelTest, LEVEL_TEST_SIZE } from './levels'
 
 type Phase = 'answering' | 'graded' | 'done'
@@ -48,13 +48,10 @@ export function useLevelTest(targetLevel: number, opts: LevelTestOptions = {}) {
     if (state.attempt) void recordAttempt(state.attempt)
   }, [state.attempt])
 
-  // On a passing finish, raise the unlocked level (monotonic, idempotent).
+  // On a passing finish, raise the unlocked level (atomic monotonic max — safe
+  // against a StrictMode double-effect or a concurrent writer).
   useEffect(() => {
-    if (state.phase === 'done' && state.passed) {
-      void getMeta<number>('unlockedLevel', 0).then((cur) =>
-        setMeta('unlockedLevel', Math.max(clampLevel(cur), target)),
-      )
-    }
+    if (state.phase === 'done' && state.passed) void raiseMeta('unlockedLevel', target)
   }, [state.phase, state.passed, target])
 
   const answer = useCallback(
@@ -77,6 +74,7 @@ export function useLevelTest(targetLevel: number, opts: LevelTestOptions = {}) {
 
   const next = useCallback(() => {
     setState((s) => {
+      if (s.phase !== 'graded') return s
       const nextIndex = s.index + 1
       if (nextIndex >= LEVEL_TEST_SIZE) {
         return { ...s, phase: 'done', passed: gradeLevelTest(s.correctCount), attempt: null }
@@ -97,8 +95,7 @@ export function useLevelTest(targetLevel: number, opts: LevelTestOptions = {}) {
     index: state.index,
     correctCount: state.correctCount,
     phase: state.phase,
-    guessed: state.guessed as Weekday | null,
-    attempt: state.attempt,
+    guessed: state.guessed,
     passed: state.passed,
     total: LEVEL_TEST_SIZE,
     answer,
