@@ -3,6 +3,7 @@ import { QuickDrill } from './QuickDrill'
 import { GuidedSolve } from './GuidedSolve'
 import { Speedrun } from './Speedrun'
 import { PracticeLocked } from './PracticeLocked'
+import { LevelsCard } from '../levels/LevelsCard'
 import { getCompleted, getPracticeUnlocked, isPracticeUnlocked } from '../learn/learnGate'
 import { DEV_UNLOCK_ALL } from '../../lib/devFlags'
 
@@ -42,6 +43,7 @@ export function PracticeScreen() {
 
   return (
     <div>
+      <LevelsCard />
       <div style={{ display: 'flex', gap: 8, padding: '12px 16px 0' }}>
         {(['quick', 'guided', 'speed'] as Mode[]).map((m) => (
           <button

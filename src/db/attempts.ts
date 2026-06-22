@@ -30,12 +30,17 @@ export function isLearnAttempt(a: Attempt): boolean {
   return a.mode.startsWith('learn:')
 }
 
+/** Level-test / speed-challenge reps — graded & streak-credited, but not "practice" for stats. */
+export function isChallengeAttempt(a: Attempt): boolean {
+  return a.mode === 'level:test' || a.mode === 'speed:challenge'
+}
+
 /**
- * Drop `learn:*` rows so lesson reps never inflate "solved"/accuracy or steer the
- * adaptive picker. Daily rows are kept — a Daily solve is a genuine full solve.
+ * Drop `learn:*` reps and challenge reps so neither inflates "solved"/accuracy nor
+ * steers the adaptive picker. Daily rows are kept — a Daily solve is a genuine solve.
  */
 export function practiceAttempts(all: Attempt[]): Attempt[] {
-  return all.filter((a) => !isLearnAttempt(a))
+  return all.filter((a) => !isLearnAttempt(a) && !isChallengeAttempt(a))
 }
 
 /** Map of local-day -> attempt count for an already-loaded set of attempts. */

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { addAttempt, listAttempts, countByDay, isLearnAttempt, practiceAttempts } from './attempts'
+import { addAttempt, listAttempts, countByDay, isLearnAttempt, practiceAttempts, isChallengeAttempt } from './attempts'
 import { _resetDbForTests, type Attempt } from './db'
 
 const base = {
@@ -52,5 +52,20 @@ describe('learn-attempt filters', () => {
   it('practiceAttempts drops learn:* rows and keeps the rest', () => {
     const rows = [mk('quick'), mk('learn:mod7'), mk('daily'), mk('learn:century')]
     expect(practiceAttempts(rows).map((a) => a.mode)).toEqual(['quick', 'daily'])
+  })
+})
+
+const mkChallenge = (mode: string): Attempt => ({
+  mode, correct: true, timestamp: 0, targetDate: '', correctWeekday: 0, guessedWeekday: 0,
+  durationMs: 0, anchorCorrect: null, yearDoomCorrect: null, offsetCorrect: null, timed: false,
+})
+
+describe('challenge attempts are excluded from practice stats', () => {
+  it('drops level:test and speed:challenge, keeps quick/guided/speedrun/daily', () => {
+    expect(isChallengeAttempt(mkChallenge('level:test'))).toBe(true)
+    expect(isChallengeAttempt(mkChallenge('speed:challenge'))).toBe(true)
+    expect(isChallengeAttempt(mkChallenge('quick'))).toBe(false)
+    const kept = practiceAttempts([mkChallenge('quick'), mkChallenge('level:test'), mkChallenge('speed:challenge'), mkChallenge('daily')])
+    expect(kept.map((a) => a.mode)).toEqual(['quick', 'daily'])
   })
 })
