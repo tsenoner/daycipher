@@ -18,9 +18,14 @@ function play(result: { current: ReturnType<typeof useLevelTest> }, correct: boo
 }
 
 describe('useLevelTest', () => {
-  beforeEach(() => {
-    _resetDbForTests()
-    indexedDB.deleteDatabase('daycipher')
+  beforeEach(async () => {
+    // Await the close, then the delete, so a prior test's unlock write can't
+    // leak into the next test (the un-awaited form races, per _resetDbForTests).
+    await _resetDbForTests()
+    await new Promise<void>((resolve) => {
+      const req = indexedDB.deleteDatabase('daycipher')
+      req.onsuccess = req.onerror = req.onblocked = () => resolve()
+    })
   })
 
   it('unlocks the target level on 9/10', async () => {

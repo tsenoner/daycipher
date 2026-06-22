@@ -97,5 +97,7 @@ export const TIER_BADGES = Object.fromEntries(SPEED_TIERS.map((t) => [t.tier, t.
 /** Map an Ao5 time (ms, or null = DNF) to a speed tier. */
 export function tierForAo5(ms: number | null): Tier {
   if (ms === null) return 0
+  // The `none` row (maxMs: Infinity) always matches a finite ms, so `find` never
+  // returns undefined here — the `?? 0` only satisfies its Tier | undefined type.
   return SPEED_TIERS.find((t) => ms < t.maxMs)?.tier ?? 0
 }
