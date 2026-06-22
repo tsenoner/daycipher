@@ -1,5 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { addAttempt, listAttempts, countByDay, isLearnAttempt, practiceAttempts, isChallengeAttempt } from './attempts'
+import {
+  addAttempt,
+  listAttempts,
+  countByDay,
+  isLearnAttempt,
+  practiceAttempts,
+  isChallengeAttempt,
+  recordAttempt,
+} from './attempts'
+import { getMeta } from './meta'
 import { _resetDbForTests, type Attempt } from './db'
 
 const base = {
@@ -62,5 +71,21 @@ describe('challenge attempts are excluded from practice stats', () => {
     expect(isChallengeAttempt(mk('quick'))).toBe(false)
     const kept = practiceAttempts([mk('quick'), mk('level:test'), mk('speed:challenge'), mk('daily')])
     expect(kept.map((a) => a.mode)).toEqual(['quick', 'daily'])
+  })
+})
+
+describe('recordAttempt credits the streak only on a correct answer', () => {
+  beforeEach(async () => {
+    _resetDbForTests()
+    indexedDB.deleteDatabase('daycipher')
+  })
+
+  it('a wrong attempt is stored but does not keep the streak alive; a correct one does', async () => {
+    await recordAttempt({ ...mk('quick'), correct: false })
+    expect(await listAttempts()).toHaveLength(1) // still recorded for accuracy/picker
+    expect(await getMeta('currentStreak', 0)).toBe(0) // but no streak credit
+
+    await recordAttempt({ ...mk('quick'), correct: true })
+    expect(await getMeta('currentStreak', 0)).toBe(1)
   })
 })

@@ -8,13 +8,14 @@ export async function addAttempt(a: Attempt): Promise<number> {
 }
 
 /**
- * Persist a graded attempt and credit the day toward the practice streak.
- * Single place every mode (quick, guided, speedrun, daily) goes through so the
- * "save + streak" pair can't drift apart per mode.
+ * Persist a graded attempt and, only when it's CORRECT, credit the day toward
+ * the practice streak — the streak rewards actually getting dates right, not just
+ * opening the app. A wrong attempt is still stored (it counts for accuracy and
+ * steers the picker); it just doesn't keep the streak alive.
  */
 export async function recordAttempt(a: Attempt): Promise<number> {
   const id = await addAttempt(a)
-  await recordPracticeDay(localDayKey(a.timestamp))
+  if (a.correct) await recordPracticeDay(localDayKey(a.timestamp))
   return id
 }
 
