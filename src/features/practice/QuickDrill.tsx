@@ -1,6 +1,8 @@
 import { useDrill } from './useDrill'
 import { WeekdayPicker } from '../../components/WeekdayPicker'
 import { StepTrace } from '../../components/StepTrace'
+import { PrimaryButton } from '../../components/PrimaryButton'
+import { SolveScreen } from '../../components/SolveScreen'
 import { formatDate, weekdayName } from '../../lib/format'
 import { weekdayOfYMD, explain, type Weekday } from '../../engine'
 import { useSettings } from '../../store/settings'
@@ -21,7 +23,45 @@ export function QuickDrill() {
   }
 
   return (
-    <div className="screen" style={{ display: 'flex', flexDirection: 'column', minHeight: '70vh' }}>
+    <SolveScreen
+      className="screen"
+      minHeight="70vh"
+      footer={
+        <>
+          {graded && attempt && (
+            <p
+              role="status"
+              style={{
+                textAlign: 'center',
+                fontWeight: 700,
+                color: attempt.correct ? 'var(--green)' : 'var(--burg)',
+              }}
+            >
+              {attempt.correct
+                ? `✓ Correct — ${weekdayName(correctWeekday)} · ${(attempt.durationMs / 1000).toFixed(1)}s`
+                : `✕ Not quite — it's ${weekdayName(correctWeekday)}`}
+            </p>
+          )}
+
+          <WeekdayPicker
+            weekStart={weekStart}
+            graded={graded}
+            guessed={guessed}
+            correct={graded ? correctWeekday : null}
+            onPick={onPick}
+          />
+
+          {graded && (
+            <StepTrace
+              trace={explain(problem.year, problem.month, problem.day)}
+              defaultOpen={!attempt?.correct}
+            />
+          )}
+
+          {graded && <PrimaryButton onClick={next}>Next →</PrimaryButton>}
+        </>
+      }
+    >
       <div style={{ textAlign: 'center', marginTop: 8 }}>
         <div
           className="muted"
@@ -33,58 +73,6 @@ export function QuickDrill() {
           {formatDate(problem.year, problem.month, problem.day)}
         </div>
       </div>
-
-      <div style={{ marginTop: 'auto', paddingTop: 24 }}>
-        {graded && attempt && (
-          <p
-            role="status"
-            style={{
-              textAlign: 'center',
-              fontWeight: 700,
-              color: attempt.correct ? 'var(--green)' : 'var(--burg)',
-            }}
-          >
-            {attempt.correct
-              ? `✓ Correct — ${weekdayName(correctWeekday)} · ${(attempt.durationMs / 1000).toFixed(1)}s`
-              : `✕ Not quite — it's ${weekdayName(correctWeekday)}`}
-          </p>
-        )}
-
-        <WeekdayPicker
-          weekStart={weekStart}
-          graded={graded}
-          guessed={guessed}
-          correct={graded ? correctWeekday : null}
-          onPick={onPick}
-        />
-
-        {graded && (
-          <StepTrace
-            trace={explain(problem.year, problem.month, problem.day)}
-            defaultOpen={!attempt?.correct}
-          />
-        )}
-
-        {graded && (
-          <button
-            type="button"
-            onClick={next}
-            style={{
-              marginTop: 16,
-              width: '100%',
-              minHeight: 'var(--tap)',
-              border: 0,
-              borderRadius: 12,
-              background: 'var(--burg)',
-              color: '#fff',
-              fontWeight: 700,
-              fontSize: 16,
-            }}
-          >
-            Next →
-          </button>
-        )}
-      </div>
-    </div>
+    </SolveScreen>
   )
 }

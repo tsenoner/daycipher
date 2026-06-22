@@ -1,21 +1,11 @@
 import { useSpeedrun } from './useSpeedrun'
 import { WeekdayPicker } from '../../components/WeekdayPicker'
+import { PrimaryButton } from '../../components/PrimaryButton'
+import { SolveScreen } from '../../components/SolveScreen'
 import { formatDate } from '../../lib/format'
 import { useSettings } from '../../store/settings'
 import { unlockAudio } from '../../feedback/feedback'
 import type { Weekday } from '../../engine'
-
-const btn = {
-  marginTop: 16,
-  minHeight: 'var(--tap)',
-  width: '100%',
-  border: 0,
-  borderRadius: 12,
-  background: 'var(--burg)',
-  color: '#fff',
-  fontWeight: 700,
-  fontSize: 16,
-} as const
 
 export function Speedrun() {
   const { phase, problem, correct, total, timeLeft, best, start, answer } = useSpeedrun()
@@ -29,16 +19,14 @@ export function Speedrun() {
         <p className="muted">
           Best: <strong>{best}</strong>
         </p>
-        <button
-          type="button"
+        <PrimaryButton
           onClick={() => {
             unlockAudio()
             start()
           }}
-          style={btn}
         >
           Start
-        </button>
+        </PrimaryButton>
       </div>
     )
   }
@@ -53,15 +41,17 @@ export function Speedrun() {
         <p className="muted">
           of {total} · best {best}
         </p>
-        <button type="button" onClick={start} style={btn}>
-          Play again
-        </button>
+        <PrimaryButton onClick={start}>Play again</PrimaryButton>
       </div>
     )
   }
 
   return (
-    <div className="screen" style={{ display: 'flex', flexDirection: 'column', minHeight: '62vh' }}>
+    <SolveScreen
+      className="screen"
+      minHeight="62vh"
+      footer={<WeekdayPicker weekStart={weekStart} graded={false} onPick={(w: Weekday) => answer(w)} />}
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
         <span className="tabnums">⏱ {timeLeft}s</span>
         <span className="tabnums">
@@ -73,9 +63,6 @@ export function Speedrun() {
           {problem && formatDate(problem.year, problem.month, problem.day)}
         </div>
       </div>
-      <div style={{ marginTop: 'auto', paddingTop: 24 }}>
-        <WeekdayPicker weekStart={weekStart} graded={false} onPick={(w: Weekday) => answer(w)} />
-      </div>
-    </div>
+    </SolveScreen>
   )
 }

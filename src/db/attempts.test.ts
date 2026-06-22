@@ -1,5 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { addAttempt, listAttempts, countByDay, isLearnAttempt, practiceAttempts } from './attempts'
+import {
+  addAttempt,
+  listAttempts,
+  countByDay,
+  isLearnAttempt,
+  practiceAttempts,
+  isChallengeAttempt,
+  recordAttempt,
+} from './attempts'
+import { getMeta } from './meta'
 import { _resetDbForTests, type Attempt } from './db'
 
 const base = {
@@ -14,6 +23,8 @@ const base = {
   offsetCorrect: null,
   timed: false,
 } as const
+
+const mk = (mode: string): Attempt => ({ ...base, timestamp: 1, mode })
 
 describe('attempts', () => {
   beforeEach(async () => {
@@ -39,8 +50,6 @@ describe('attempts', () => {
 })
 
 describe('learn-attempt filters', () => {
-  const mk = (mode: string): Attempt => ({ ...base, timestamp: 1, mode })
-
   it('isLearnAttempt is true only for learn:* modes', () => {
     expect(isLearnAttempt(mk('learn:mod7'))).toBe(true)
     expect(isLearnAttempt(mk('learn:speed'))).toBe(true)
@@ -52,5 +61,31 @@ describe('learn-attempt filters', () => {
   it('practiceAttempts drops learn:* rows and keeps the rest', () => {
     const rows = [mk('quick'), mk('learn:mod7'), mk('daily'), mk('learn:century')]
     expect(practiceAttempts(rows).map((a) => a.mode)).toEqual(['quick', 'daily'])
+  })
+})
+
+describe('challenge attempts are excluded from practice stats', () => {
+  it('drops level:test and speed:challenge, keeps quick/guided/speedrun/daily', () => {
+    expect(isChallengeAttempt(mk('level:test'))).toBe(true)
+    expect(isChallengeAttempt(mk('speed:challenge'))).toBe(true)
+    expect(isChallengeAttempt(mk('quick'))).toBe(false)
+    const kept = practiceAttempts([mk('quick'), mk('level:test'), mk('speed:challenge'), mk('daily')])
+    expect(kept.map((a) => a.mode)).toEqual(['quick', 'daily'])
+  })
+})
+
+describe('recordAttempt credits the streak only on a correct answer', () => {
+  beforeEach(async () => {
+    _resetDbForTests()
+    indexedDB.deleteDatabase('daycipher')
+  })
+
+  it('a wrong attempt is stored but does not keep the streak alive; a correct one does', async () => {
+    await recordAttempt({ ...mk('quick'), correct: false })
+    expect(await listAttempts()).toHaveLength(1) // still recorded for accuracy/picker
+    expect(await getMeta('currentStreak', 0)).toBe(0) // but no streak credit
+
+    await recordAttempt({ ...mk('quick'), correct: true })
+    expect(await getMeta('currentStreak', 0)).toBe(1)
   })
 })

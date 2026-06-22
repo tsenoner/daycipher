@@ -8,13 +8,14 @@ export async function addAttempt(a: Attempt): Promise<number> {
 }
 
 /**
- * Persist a graded attempt and credit the day toward the practice streak.
- * Single place every mode (quick, guided, speedrun, daily) goes through so the
- * "save + streak" pair can't drift apart per mode.
+ * Persist a graded attempt and, only when it's CORRECT, credit the day toward
+ * the practice streak — the streak rewards actually getting dates right, not just
+ * opening the app. A wrong attempt is still stored (it counts for accuracy and
+ * steers the picker); it just doesn't keep the streak alive.
  */
 export async function recordAttempt(a: Attempt): Promise<number> {
   const id = await addAttempt(a)
-  await recordPracticeDay(localDayKey(a.timestamp))
+  if (a.correct) await recordPracticeDay(localDayKey(a.timestamp))
   return id
 }
 
@@ -30,12 +31,20 @@ export function isLearnAttempt(a: Attempt): boolean {
   return a.mode.startsWith('learn:')
 }
 
+/** Graded, streak-credited reps that are NOT "practice" for stats. One source of truth. */
+const CHALLENGE_MODES = new Set(['level:test', 'speed:challenge'])
+
+/** Level-test / speed-challenge reps — graded & streak-credited, but not "practice" for stats. */
+export function isChallengeAttempt(a: Attempt): boolean {
+  return CHALLENGE_MODES.has(a.mode)
+}
+
 /**
- * Drop `learn:*` rows so lesson reps never inflate "solved"/accuracy or steer the
- * adaptive picker. Daily rows are kept — a Daily solve is a genuine full solve.
+ * Drop `learn:*` reps and challenge reps so neither inflates "solved"/accuracy nor
+ * steers the adaptive picker. Daily rows are kept — a Daily solve is a genuine solve.
  */
 export function practiceAttempts(all: Attempt[]): Attempt[] {
-  return all.filter((a) => !isLearnAttempt(a))
+  return all.filter((a) => !isLearnAttempt(a) && !isChallengeAttempt(a))
 }
 
 /** Map of local-day -> attempt count for an already-loaded set of attempts. */

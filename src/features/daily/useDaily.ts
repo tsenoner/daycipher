@@ -3,8 +3,8 @@ import { type Weekday } from '../../engine'
 import { dailyDates, dailyRange } from './daily'
 import { gradeProblem, type Problem } from '../practice/drill'
 import type { Attempt } from '../../db/db'
-import { addAttempt } from '../../db/attempts'
-import { getMeta, setMeta, recordPracticeDay } from '../../db/meta'
+import { recordAttempt } from '../../db/attempts'
+import { getMeta, setMeta } from '../../db/meta'
 import { getCompleted, getPracticeUnlocked } from '../learn/learnGate'
 import { localDayKey } from '../../lib/datekey'
 
@@ -90,7 +90,9 @@ export function useDaily() {
       : null
     if (result) setPrior(result)
     void (async () => {
-      for (const r of fresh) await addAttempt(r.attempt)
+      // recordAttempt persists each answer and credits the day for correct reps,
+      // so a single correct answer keeps the streak alive — no need to finish the set.
+      for (const r of fresh) await recordAttempt(r.attempt)
       if (fresh.length > 0) {
         await setMeta(
           'dailyAnswers:' + dayKey,
@@ -100,10 +102,7 @@ export function useDaily() {
         // later unlock can't re-scope (and re-grade) this run against a wider set.
         if (rangeRef.current) await setMeta('dailyRange:' + dayKey, rangeRef.current)
       }
-      if (result) {
-        await setMeta('daily:' + dayKey, result)
-        await recordPracticeDay(dayKey)
-      }
+      if (result) await setMeta('daily:' + dayKey, result)
     })()
   }, [results, prior, dates, dayKey])
 

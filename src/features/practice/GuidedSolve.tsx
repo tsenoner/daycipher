@@ -1,6 +1,8 @@
 import { useGuided } from './useGuided'
 import { WeekdayPicker } from '../../components/WeekdayPicker'
 import { StepTrace } from '../../components/StepTrace'
+import { PrimaryButton } from '../../components/PrimaryButton'
+import { SolveScreen } from '../../components/SolveScreen'
 import { formatDate, weekdayName } from '../../lib/format'
 import { explain, type Weekday } from '../../engine'
 import { useSettings } from '../../store/settings'
@@ -58,7 +60,33 @@ export function GuidedSolve() {
   }
 
   return (
-    <div className="screen" style={{ display: 'flex', flexDirection: 'column', minHeight: '62vh' }}>
+    <SolveScreen
+      className="screen"
+      minHeight="62vh"
+      footerPadTop={20}
+      footer={
+        <>
+          {!graded && (
+            <>
+              <div style={{ textAlign: 'center', marginBottom: 10, fontWeight: 600 }}>{PROMPTS[step]}</div>
+              <WeekdayPicker weekStart={weekStart} graded={false} onPick={onPick} />
+            </>
+          )}
+          {graded && attempt && (
+            <>
+              <p
+                role="status"
+                style={{ textAlign: 'center', fontWeight: 700, color: attempt.correct ? 'var(--green)' : 'var(--burg)' }}
+              >
+                {attempt.correct ? `✓ Correct — ${weekdayName(trace.result)}` : `✕ It's ${weekdayName(trace.result)}`}
+              </p>
+              <StepTrace trace={trace} defaultOpen />
+              <PrimaryButton onClick={next}>Next →</PrimaryButton>
+            </>
+          )}
+        </>
+      }
+    >
       <div style={{ textAlign: 'center', marginTop: 8 }}>
         <div className="muted" style={{ fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase' }}>
           Guided solve
@@ -73,43 +101,6 @@ export function GuidedSolve() {
         <PickRow label="Year's doomsday" value={picks.yearDoom} truth={trace.yearDoomsday} />
         <PickRow label="Weekday" value={picks.final} truth={trace.result} />
       </div>
-
-      <div style={{ marginTop: 'auto', paddingTop: 20 }}>
-        {!graded && (
-          <>
-            <div style={{ textAlign: 'center', marginBottom: 10, fontWeight: 600 }}>{PROMPTS[step]}</div>
-            <WeekdayPicker weekStart={weekStart} graded={false} onPick={onPick} />
-          </>
-        )}
-        {graded && attempt && (
-          <>
-            <p
-              role="status"
-              style={{ textAlign: 'center', fontWeight: 700, color: attempt.correct ? 'var(--green)' : 'var(--burg)' }}
-            >
-              {attempt.correct ? `✓ Correct — ${weekdayName(trace.result)}` : `✕ It's ${weekdayName(trace.result)}`}
-            </p>
-            <StepTrace trace={trace} defaultOpen />
-            <button
-              type="button"
-              onClick={next}
-              style={{
-                marginTop: 16,
-                width: '100%',
-                minHeight: 'var(--tap)',
-                border: 0,
-                borderRadius: 12,
-                background: 'var(--burg)',
-                color: '#fff',
-                fontWeight: 700,
-                fontSize: 16,
-              }}
-            >
-              Next →
-            </button>
-          </>
-        )}
-      </div>
-    </div>
+    </SolveScreen>
   )
 }

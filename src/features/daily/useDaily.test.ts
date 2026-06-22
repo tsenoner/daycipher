@@ -2,8 +2,10 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { useDaily } from './useDaily'
 import { dailyDates, dailyRange } from './daily'
-import { listAttempts } from '../../db/attempts'
+import { gradeProblem } from '../practice/drill'
+import { listAttempts, recordAttempt } from '../../db/attempts'
 import { getMeta, setMeta } from '../../db/meta'
+import { weekdayOfYMD } from '../../engine'
 import { localDayKey } from '../../lib/datekey'
 import { _resetDbForTests } from '../../db/db'
 import { markStageComplete } from '../learn/learnGate'
@@ -27,9 +29,12 @@ describe('useDaily', () => {
     await waitFor(() => expect(first.result.current.prior).not.toBeUndefined())
     const total = first.result.current.dates.length
 
-    // Answer the first two questions, then confirm both are persisted.
-    await act(async () => first.result.current.answer(0))
-    await act(async () => first.result.current.answer(0))
+    // Answer the first two questions correctly (a correct answer is what keeps
+    // the streak alive), then confirm both are persisted.
+    for (let i = 0; i < 2; i++) {
+      const d = first.result.current.current!
+      await act(async () => first.result.current.answer(weekdayOfYMD(d.year, d.month, d.day)))
+    }
     await waitFor(async () =>
       expect((await getMeta<number[]>('dailyAnswers:' + key, [])).length).toBe(2),
     )
@@ -41,9 +46,10 @@ describe('useDaily', () => {
     const second = renderHook(() => useDaily())
     await waitFor(() => expect(second.result.current.index).toBe(2)) // resumed, not restarted
 
-    // Finish the remaining questions.
+    // Finish the remaining questions correctly, so the completed set scores > 0.
     for (let i = 2; i < total; i++) {
-      await act(async () => second.result.current.answer(0))
+      const d = second.result.current.current!
+      await act(async () => second.result.current.answer(weekdayOfYMD(d.year, d.month, d.day)))
     }
     await waitFor(() => expect(second.result.current.prior).toMatchObject({ total }))
 
@@ -93,19 +99,27 @@ describe('useDaily', () => {
 
   it('finalizes a fully-answered run resumed before its finalize write landed', async () => {
     const key = localDayKey()
-    const total = dailyDates(key).length
-    // Simulate a prior session that saved every answer but was interrupted
-    // before writing the completion result or crediting the practice streak.
+    // The gated (fresh-learner) set the hook resumes against.
+    const dates = dailyDates(key, 5, dailyRange([], false))
+    const total = dates.length
+    // Simulate a prior session that recorded every answer (correctly — so each
+    // already credited the streak) and saved them, but was interrupted before
+    // writing the completion result.
+    for (const d of dates) {
+      await recordAttempt(gradeProblem(d, weekdayOfYMD(d.year, d.month, d.day), 0, 'daily'))
+    }
     await setMeta(
       'dailyAnswers:' + key,
-      Array.from({ length: total }, () => 0),
+      dates.map((d) => weekdayOfYMD(d.year, d.month, d.day)),
     )
 
     const r = renderHook(() => useDaily())
     await waitFor(() => expect(r.result.current.prior).toMatchObject({ total }))
 
-    // The resumed-complete run is now finalized: result persisted and day credited.
+    // The resumed-complete run is now finalized: result persisted...
     expect(await getMeta('daily:' + key, null)).not.toBeNull()
+    // ...and the day stays credited (each correct answer credited it during the
+    // original session; the resume must not need to re-credit).
     expect(await getMeta<number>('currentStreak', 0)).toBeGreaterThanOrEqual(1)
   })
 })

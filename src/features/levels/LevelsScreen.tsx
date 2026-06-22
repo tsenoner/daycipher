@@ -1,0 +1,132 @@
+import { useState } from 'react'
+import { WeekdayPicker } from '../../components/WeekdayPicker'
+import { PrimaryButton } from '../../components/PrimaryButton'
+import { SolveScreen } from '../../components/SolveScreen'
+import { formatDate } from '../../lib/format'
+import { useSettings } from '../../store/settings'
+import { unlockAudio } from '../../feedback/feedback'
+import { weekdayOfYMD, type Weekday } from '../../engine'
+import { LEVELS, nextTakeableLevel } from './levels'
+import { useLevelTest } from './useLevelTest'
+import { useUnlockedLevelState } from './useUnlockedLevel'
+
+function LevelTest({ target, onDone }: { target: number; onDone: (unlockedTo: number | null) => void }) {
+  const { problem, index, total, correctCount, phase, guessed, passed, answer, next } =
+    useLevelTest(target)
+  const weekStart = useSettings((s) => s.weekStart)
+
+  if (phase === 'done') {
+    return (
+      <div style={{ textAlign: 'center', marginTop: 24 }}>
+        <div className="serif" style={{ fontSize: 28, fontWeight: 600 }}>
+          {passed ? `Unlocked: ${LEVELS[target].label} 🎉` : `${correctCount}/${total} — not yet`}
+        </div>
+        <p className="muted">{passed ? 'New range added to Practice.' : 'Need 9 of 10. Try again.'}</p>
+        <PrimaryButton onClick={() => onDone(passed ? target : null)}>
+          {passed ? 'Done' : 'Back'}
+        </PrimaryButton>
+      </div>
+    )
+  }
+
+  const onPick = (w: Weekday) => {
+    if (phase !== 'answering') return
+    unlockAudio()
+    answer(w) // ✓/✕ reveal is handled by WeekdayPicker once `phase` is graded
+  }
+
+  return (
+    <SolveScreen
+      minHeight="100%"
+      footer={
+        <>
+          <WeekdayPicker
+            weekStart={weekStart}
+            graded={phase === 'graded'}
+            guessed={guessed}
+            correct={phase === 'graded' ? weekdayOfYMD(problem.year, problem.month, problem.day) : null}
+            onPick={onPick}
+          />
+          {phase === 'graded' && (
+            <PrimaryButton onClick={next}>
+              {index + 1 >= total ? 'See result →' : 'Next →'}
+            </PrimaryButton>
+          )}
+        </>
+      }
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
+        <span className="tabnums">
+          {index + 1}/{total}
+        </span>
+        <span className="tabnums">✓ {correctCount}</span>
+      </div>
+      <div style={{ textAlign: 'center', marginTop: 16 }}>
+        <div className="serif" style={{ fontSize: 28, fontWeight: 600 }}>
+          {formatDate(problem.year, problem.month, problem.day)}
+        </div>
+      </div>
+    </SolveScreen>
+  )
+}
+
+export function LevelsScreen() {
+  const [level, raiseLevel] = useUnlockedLevelState()
+  const [testing, setTesting] = useState<number | null>(null)
+
+  if (testing !== null) {
+    return (
+      <div className="screen">
+        <LevelTest
+          target={testing}
+          onDone={(unlockedTo) => {
+            setTesting(null)
+            // Reflect a pass immediately from the known result — no read-back race
+            // against useLevelTest's async unlock write.
+            if (unlockedTo !== null) raiseLevel(unlockedTo)
+          }}
+        />
+      </div>
+    )
+  }
+
+  const takeable = nextTakeableLevel(level)
+  return (
+    <div className="screen">
+      <h1>Levels</h1>
+      <p className="muted">Widen the years you practice. Pass a Level test (9/10) to unlock the next range.</p>
+      <ol style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {LEVELS.map((def, i) => {
+          const unlocked = i <= level
+          return (
+            <li
+              key={def.id}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: 12,
+                borderRadius: 12,
+                border: `1px solid ${i === level ? 'var(--burg)' : 'var(--line)'}`,
+                background: 'var(--card)',
+                opacity: unlocked ? 1 : 0.6,
+              }}
+            >
+              <span style={{ fontWeight: 600 }}>
+                Level {i}: {def.label}
+              </span>
+              <span className="muted">{unlocked ? '✓ unlocked' : i === takeable ? 'next' : '🔒'}</span>
+            </li>
+          )
+        })}
+      </ol>
+      {takeable !== null ? (
+        <PrimaryButton onClick={() => setTesting(takeable)}>
+          Take the Level {takeable} test →
+        </PrimaryButton>
+      ) : (
+        <p style={{ marginTop: 16, fontWeight: 600 }}>Full range unlocked 🎉</p>
+      )}
+    </div>
+  )
+}
