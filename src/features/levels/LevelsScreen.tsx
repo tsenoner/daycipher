@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { WeekdayPicker } from '../../components/WeekdayPicker'
+import { PrimaryButton } from '../../components/PrimaryButton'
+import { SolveScreen } from '../../components/SolveScreen'
 import { formatDate } from '../../lib/format'
 import { useSettings } from '../../store/settings'
 import { unlockAudio } from '../../feedback/feedback'
@@ -7,18 +9,6 @@ import { weekdayOfYMD, type Weekday } from '../../engine'
 import { LEVELS, nextTakeableLevel } from './levels'
 import { useLevelTest } from './useLevelTest'
 import { useUnlockedLevelState } from './useUnlockedLevel'
-
-const btn = {
-  marginTop: 16,
-  width: '100%',
-  minHeight: 'var(--tap)',
-  border: 0,
-  borderRadius: 12,
-  background: 'var(--burg)',
-  color: '#fff',
-  fontWeight: 700,
-  fontSize: 16,
-} as const
 
 function LevelTest({ target, onDone }: { target: number; onDone: (unlockedTo: number | null) => void }) {
   const { problem, index, total, correctCount, phase, guessed, passed, answer, next } =
@@ -32,9 +22,9 @@ function LevelTest({ target, onDone }: { target: number; onDone: (unlockedTo: nu
           {passed ? `Unlocked: ${LEVELS[target].label} 🎉` : `${correctCount}/${total} — not yet`}
         </div>
         <p className="muted">{passed ? 'New range added to Practice.' : 'Need 9 of 10. Try again.'}</p>
-        <button type="button" style={btn} onClick={() => onDone(passed ? target : null)}>
+        <PrimaryButton onClick={() => onDone(passed ? target : null)}>
           {passed ? 'Done' : 'Back'}
-        </button>
+        </PrimaryButton>
       </div>
     )
   }
@@ -46,7 +36,25 @@ function LevelTest({ target, onDone }: { target: number; onDone: (unlockedTo: nu
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
+    <SolveScreen
+      minHeight="100%"
+      footer={
+        <>
+          <WeekdayPicker
+            weekStart={weekStart}
+            graded={phase === 'graded'}
+            guessed={guessed}
+            correct={phase === 'graded' ? weekdayOfYMD(problem.year, problem.month, problem.day) : null}
+            onPick={onPick}
+          />
+          {phase === 'graded' && (
+            <PrimaryButton onClick={next}>
+              {index + 1 >= total ? 'See result →' : 'Next →'}
+            </PrimaryButton>
+          )}
+        </>
+      }
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
         <span className="tabnums">
           {index + 1}/{total}
@@ -58,21 +66,7 @@ function LevelTest({ target, onDone }: { target: number; onDone: (unlockedTo: nu
           {formatDate(problem.year, problem.month, problem.day)}
         </div>
       </div>
-      <div style={{ marginTop: 'auto', paddingTop: 24 }}>
-        <WeekdayPicker
-          weekStart={weekStart}
-          graded={phase === 'graded'}
-          guessed={guessed}
-          correct={phase === 'graded' ? weekdayOfYMD(problem.year, problem.month, problem.day) : null}
-          onPick={onPick}
-        />
-        {phase === 'graded' && (
-          <button type="button" style={btn} onClick={next}>
-            {index + 1 >= total ? 'See result →' : 'Next →'}
-          </button>
-        )}
-      </div>
-    </div>
+    </SolveScreen>
   )
 }
 
@@ -127,9 +121,9 @@ export function LevelsScreen() {
         })}
       </ol>
       {takeable !== null ? (
-        <button type="button" style={btn} onClick={() => setTesting(takeable)}>
+        <PrimaryButton onClick={() => setTesting(takeable)}>
           Take the Level {takeable} test →
-        </button>
+        </PrimaryButton>
       ) : (
         <p style={{ marginTop: 16, fontWeight: 600 }}>Full range unlocked 🎉</p>
       )}

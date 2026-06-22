@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useDaily } from './useDaily'
 import { WeekdayPicker } from '../../components/WeekdayPicker'
+import { SolveScreen } from '../../components/SolveScreen'
 import { formatDate, weekdayName } from '../../lib/format'
 import { weekdayOfYMD, type Weekday } from '../../engine'
 import { useSettings } from '../../store/settings'
@@ -95,7 +96,11 @@ export function DailyChallenge() {
   }
 
   return (
-    <div className="screen" style={{ display: 'flex', flexDirection: 'column', minHeight: '62vh' }}>
+    <SolveScreen
+      className="screen"
+      minHeight="62vh"
+      footer={<WeekdayPicker weekStart={weekStart} graded={false} onPick={(w: Weekday) => answer(w)} />}
+    >
       <Link to="/" style={{ color: 'var(--muted)', textDecoration: 'none' }}>
         ← Today
       </Link>
@@ -110,9 +115,6 @@ export function DailyChallenge() {
           {current && formatDate(current.year, current.month, current.day)}
         </div>
       </div>
-      <div style={{ marginTop: 'auto', paddingTop: 24 }}>
-        <WeekdayPicker weekStart={weekStart} graded={false} onPick={(w: Weekday) => answer(w)} />
-      </div>
-    </div>
+    </SolveScreen>
   )
 }
