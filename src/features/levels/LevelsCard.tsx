@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom'
-import { LEVELS, MAX_LEVEL } from './levels'
+import { LEVELS, MAX_LEVEL, TIER_BADGES } from './levels'
 import { useUnlockedLevelState } from './useUnlockedLevel'
+import { useSpeedBestTier } from './useSpeedChallenge'
 
 /** Entry card on the Practice tab → /levels. */
 export function LevelsCard() {
   const [level] = useUnlockedLevelState()
+  const [tier] = useSpeedBestTier()
 
   return (
     <Link
@@ -30,7 +32,7 @@ export function LevelsCard() {
           {LEVELS[level].label} · Level {level} of {MAX_LEVEL}
         </span>
       </span>
-      <span style={{ color: 'var(--burg)', fontWeight: 700 }}>→</span>
+      <span style={{ color: 'var(--burg)', fontWeight: 700 }}>{tier > 0 ? `${TIER_BADGES[tier]} →` : '→'}</span>
     </Link>
   )
 }

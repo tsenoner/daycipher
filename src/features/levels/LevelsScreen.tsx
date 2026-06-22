@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { WeekdayPicker } from '../../components/WeekdayPicker'
-import { PrimaryButton } from '../../components/PrimaryButton'
+import { PrimaryButton, secondaryButtonStyle } from '../../components/PrimaryButton'
 import { SolveScreen } from '../../components/SolveScreen'
 import { formatDate } from '../../lib/format'
 import { useSettings } from '../../store/settings'
 import { unlockAudio } from '../../feedback/feedback'
 import { weekdayOfYMD, type Weekday } from '../../engine'
-import { LEVELS, nextTakeableLevel } from './levels'
+import { LEVELS, nextTakeableLevel, TIER_BADGES, TIER_LABELS, type Tier } from './levels'
 import { useLevelTest } from './useLevelTest'
 import { useUnlockedLevelState } from './useUnlockedLevel'
+import { useSpeedChallenge, useSpeedBestTier } from './useSpeedChallenge'
 
 function LevelTest({ target, onDone }: { target: number; onDone: (unlockedTo: number | null) => void }) {
   const { problem, index, total, correctCount, phase, guessed, passed, answer, next } =
@@ -70,9 +71,74 @@ function LevelTest({ target, onDone }: { target: number; onDone: (unlockedTo: nu
   )
 }
 
+function SpeedChallenge({ onDone }: { onDone: (earnedTier: Tier) => void }) {
+  const { phase, problem, count, total, result, tier, start, answer } = useSpeedChallenge()
+  const weekStart = useSettings((s) => s.weekStart)
+
+  if (phase === 'ready') {
+    return (
+      <div style={{ textAlign: 'center', marginTop: 24 }}>
+        <h1>Speed (Ao5)</h1>
+        <p className="muted">
+          5 solves; we drop your fastest and slowest and average the rest. Lean on the shortcuts:
+          anything that adds to 7 is 0, and +6 is −1. Aim for under 5 seconds — then under 2, like
+          Conway.
+        </p>
+        <PrimaryButton
+          onClick={() => {
+            unlockAudio()
+            start()
+          }}
+        >
+          Start
+        </PrimaryButton>
+        <PrimaryButton style={secondaryButtonStyle} onClick={() => onDone(tier)}>
+          Back
+        </PrimaryButton>
+      </div>
+    )
+  }
+
+  if (phase === 'done') {
+    return (
+      <div style={{ textAlign: 'center', marginTop: 24 }}>
+        <div className="serif" style={{ fontSize: 28, fontWeight: 600 }}>
+          {result === null ? 'DNF' : `${(result / 1000).toFixed(2)}s`}
+        </div>
+        <p className="muted">
+          {tier > 0 ? `${TIER_BADGES[tier]} ${TIER_LABELS[tier]}` : 'No tier — keep going!'}
+        </p>
+        <PrimaryButton onClick={start}>Again</PrimaryButton>
+        <PrimaryButton style={secondaryButtonStyle} onClick={() => onDone(tier)}>
+          Done
+        </PrimaryButton>
+      </div>
+    )
+  }
+
+  // phase === 'solving'
+  return (
+    <SolveScreen
+      minHeight="100%"
+      footer={<WeekdayPicker weekStart={weekStart} graded={false} onPick={(w) => answer(w)} />}
+    >
+      <div style={{ fontWeight: 600 }} className="tabnums">
+        {count + 1}/{total}
+      </div>
+      <div style={{ textAlign: 'center', marginTop: 16 }}>
+        <div className="serif" style={{ fontSize: 28, fontWeight: 600 }}>
+          {problem && formatDate(problem.year, problem.month, problem.day)}
+        </div>
+      </div>
+    </SolveScreen>
+  )
+}
+
 export function LevelsScreen() {
   const [level, raiseLevel] = useUnlockedLevelState()
   const [testing, setTesting] = useState<number | null>(null)
+  const [speed, setSpeed] = useState(false)
+  const [bestTier, raiseBestTier] = useSpeedBestTier()
 
   if (testing !== null) {
     return (
@@ -84,6 +150,21 @@ export function LevelsScreen() {
             // Reflect a pass immediately from the known result — no read-back race
             // against useLevelTest's async unlock write.
             if (unlockedTo !== null) raiseLevel(unlockedTo)
+          }}
+        />
+      </div>
+    )
+  }
+
+  if (speed) {
+    return (
+      <div className="screen">
+        <SpeedChallenge
+          onDone={(earnedTier) => {
+            setSpeed(false)
+            // Reflect a just-earned tier immediately — monotonic, no read-back race
+            // against useSpeedChallenge's async best-tier write.
+            raiseBestTier(earnedTier)
           }}
         />
       </div>
@@ -127,6 +208,9 @@ export function LevelsScreen() {
       ) : (
         <p style={{ marginTop: 16, fontWeight: 600 }}>Full range unlocked 🎉</p>
       )}
+      <PrimaryButton style={secondaryButtonStyle} onClick={() => setSpeed(true)}>
+        {`Speed challenge${bestTier > 0 ? ` · best ${TIER_BADGES[bestTier]}` : ''} →`}
+      </PrimaryButton>
     </div>
   )
 }

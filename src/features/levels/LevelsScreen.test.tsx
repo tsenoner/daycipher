@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { LevelsScreen } from './LevelsScreen'
 import { _resetDbForTests } from '../../db/db'
@@ -28,5 +29,16 @@ describe('LevelsScreen', () => {
       </MemoryRouter>,
     )
     await waitFor(() => expect(screen.getByText(/Full range unlocked/)).toBeInTheDocument())
+  })
+
+  it('opens the speed challenge', async () => {
+    render(
+      <MemoryRouter>
+        <LevelsScreen />
+      </MemoryRouter>,
+    )
+    await waitFor(() => expect(screen.getByRole('button', { name: /Speed challenge/ })).toBeInTheDocument())
+    await userEvent.click(screen.getByRole('button', { name: /Speed challenge/ }))
+    expect(screen.getByRole('heading', { name: /Speed \(Ao5\)/ })).toBeInTheDocument()
   })
 })

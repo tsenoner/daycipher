@@ -27,6 +27,22 @@ export async function raiseMeta(key: string, value: number): Promise<number> {
   return next
 }
 
+/**
+ * Monotonically lower a numeric meta value to at most `value` (the min-wins twin
+ * of {@link raiseMeta}), read-modify-write in a single transaction. The first
+ * write seeds `value` directly (no zero sentinel). Returns the resulting value.
+ */
+export async function lowerMeta(key: string, value: number): Promise<number> {
+  const db = await getDb()
+  const tx = db.transaction('meta', 'readwrite')
+  const store = tx.objectStore('meta')
+  const rec = await store.get(key)
+  const next = rec ? Math.min(rec.value as number, value) : value
+  await store.put({ key, value: next })
+  await tx.done
+  return next
+}
+
 const dayDiff = (a: string, b: string): number =>
   Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000)
 
