@@ -85,8 +85,7 @@ describe('wide year/full stages', () => {
     expect([...years].some((y) => y < 1900 || y > 2099)).toBe(true)
   })
 
-  it('full produces valid, engine-correct, untimed dated problems incl. BC', () => {
-    let sawWide = false
+  it('full produces valid, engine-correct, untimed dated problems', () => {
     for (let s = 0; s < 300; s++) {
       const p = nextLessonProblem('full', makeRng(s))
       expect(p.date).not.toBeNull()
@@ -94,9 +93,16 @@ describe('wide year/full stages', () => {
       expect(day).toBeGreaterThanOrEqual(1)
       expect(day).toBeLessThanOrEqual(daysInMonth(year, month))
       expect(p.correct).toBe(weekdayOfYMD(year, month, day))
-      if (year < 1900 || year > 2099) sawWide = true
     }
-    expect(sawWide).toBe(true)
+  })
+
+  it('full stage stays within 1700–2100', () => {
+    for (let i = 0; i < 40; i++) {
+      const p = nextLessonProblem('full', () => (i + 0.5) / 40)
+      expect(p.date).not.toBeNull()
+      expect(p.date!.year).toBeGreaterThanOrEqual(1700)
+      expect(p.date!.year).toBeLessThanOrEqual(2104) // nearestLeapYear may round just past 2100
+    }
   })
 
   it('the removed `speed` stage is no longer a valid lesson stage', () => {

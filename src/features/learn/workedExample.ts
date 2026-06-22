@@ -4,12 +4,13 @@ import {
   daysInMonth,
   pick,
   warpYear,
-  generateWideDate,
+  generateDate,
   CURRENT_YEAR,
   type StepTrace,
   type Weekday,
 } from '../../engine'
 import { monthName, weekdayName, formatYear, formatCentury } from '../../lib/format'
+import { RECENT_RANGE } from '../levels/levels'
 import type { ExampleCheck } from './curriculum'
 
 export const WORKED_STAGES = ['thisyear', 'year', 'full'] as const
@@ -103,7 +104,8 @@ export function generateWorkedExample(stage: WorkedStage, rng: () => number): Ge
     }
   }
   // thisyear / full: prefer a non-zero offset so "step from the anchor, cast out 7" is visible.
-  const draw = () => (stage === 'thisyear' ? dateInYear(CURRENT_YEAR, rng) : generateWideDate(rng))
+  // `full` stays within RECENT_RANGE to match the capstone's clamped problems (no BC examples).
+  const draw = () => (stage === 'thisyear' ? dateInYear(CURRENT_YEAR, rng) : generateDate(RECENT_RANGE, rng))
   for (let tries = 0; tries < 25; tries++) {
     const d = draw()
     if (explain(d.year, d.month, d.day).offset !== 0) return datedExample(stage, d.year, d.month, d.day)
