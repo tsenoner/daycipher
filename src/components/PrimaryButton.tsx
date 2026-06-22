@@ -12,6 +12,13 @@ const base: CSSProperties = {
   fontSize: 16,
 }
 
+/** Pass to PrimaryButton's `style` for the muted, outlined secondary variant. */
+export const secondaryButtonStyle: CSSProperties = {
+  background: 'var(--card)',
+  color: 'var(--ink)',
+  border: '1px solid var(--line)',
+}
+
 /** The full-width burgundy call-to-action shared by the drill/test runners. */
 export function PrimaryButton({
   onClick,

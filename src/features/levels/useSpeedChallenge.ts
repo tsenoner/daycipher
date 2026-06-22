@@ -3,7 +3,7 @@ import type { Weekday } from '../../engine'
 import { gradeProblem, type Problem } from '../practice/drill'
 import type { Attempt } from '../../db/db'
 import { recordAttempt } from '../../db/attempts'
-import { getMeta, setMeta } from '../../db/meta'
+import { getMeta, lowerMeta, raiseMeta } from '../../db/meta'
 import { ao5, AO5_SIZE, generateForLevel, tierForAo5, type SpeedSolve, type Tier } from './levels'
 
 type Phase = 'ready' | 'solving' | 'done'
@@ -44,17 +44,12 @@ export function useSpeedChallenge(opts: SpeedChallengeOptions = {}) {
     if (state.lastAttempt) void recordAttempt(state.lastAttempt)
   }, [state.lastAttempt])
 
-  // On a completed run, persist best (lowest) Ao5 + highest tier (monotonic).
+  // On a completed run, persist best (lowest) Ao5 + highest tier — each an atomic
+  // monotonic read-modify-write (StrictMode/concurrent-writer safe).
   useEffect(() => {
     if (state.phase !== 'done' || state.result === null) return
-    const result = state.result
-    const tier = state.tier
-    void Promise.all([getMeta<number>('speedBestAo5', 0), getMeta<number>('speedBestTier', 0)]).then(
-      ([bestMs, bestTier]) => {
-        if (bestMs === 0 || result < bestMs) void setMeta('speedBestAo5', result)
-        if (tier > bestTier) void setMeta('speedBestTier', tier)
-      },
-    )
+    void lowerMeta('speedBestAo5', state.result)
+    void raiseMeta('speedBestTier', state.tier)
   }, [state.phase, state.result, state.tier])
 
   const start = useCallback(() => {
@@ -93,5 +88,36 @@ export function useSpeedChallenge(opts: SpeedChallengeOptions = {}) {
     [opts.durationMs, rng],
   )
 
-  return { ...state, count: state.solves.length, total: AO5_SIZE, start, answer }
+  // Explicit public shape (like useLevelTest) — keeps internal `solves`/`lastAttempt` private.
+  return {
+    phase: state.phase,
+    problem: state.problem,
+    count: state.solves.length,
+    total: AO5_SIZE,
+    result: state.result,
+    tier: state.tier,
+    start,
+    answer,
+  }
+}
+
+/**
+ * Loads `meta.speedBestTier` into state (re-rendering when it resolves) and
+ * returns a `raise(t)` to reflect a just-earned tier immediately — monotonic,
+ * mirroring useUnlockedLevelState. Speed is non-gating, so this only drives the
+ * badge display.
+ */
+export function useSpeedBestTier(): [Tier, (t: Tier) => void] {
+  const [tier, setTier] = useState<Tier>(0)
+  const raise = useCallback((t: Tier) => setTier((prev) => (t > prev ? t : prev)), [])
+  useEffect(() => {
+    let active = true
+    void getMeta<number>('speedBestTier', 0).then((t) => {
+      if (active) raise(t as Tier)
+    })
+    return () => {
+      active = false
+    }
+  }, [raise])
+  return [tier, raise]
 }

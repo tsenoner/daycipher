@@ -1,16 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { WeekdayPicker } from '../../components/WeekdayPicker'
-import { PrimaryButton } from '../../components/PrimaryButton'
+import { PrimaryButton, secondaryButtonStyle } from '../../components/PrimaryButton'
 import { SolveScreen } from '../../components/SolveScreen'
 import { formatDate } from '../../lib/format'
 import { useSettings } from '../../store/settings'
 import { unlockAudio } from '../../feedback/feedback'
 import { weekdayOfYMD, type Weekday } from '../../engine'
-import { getMeta } from '../../db/meta'
 import { LEVELS, nextTakeableLevel, TIER_BADGES, TIER_LABELS, type Tier } from './levels'
 import { useLevelTest } from './useLevelTest'
 import { useUnlockedLevelState } from './useUnlockedLevel'
-import { useSpeedChallenge } from './useSpeedChallenge'
+import { useSpeedChallenge, useSpeedBestTier } from './useSpeedChallenge'
 
 function LevelTest({ target, onDone }: { target: number; onDone: (unlockedTo: number | null) => void }) {
   const { problem, index, total, correctCount, phase, guessed, passed, answer, next } =
@@ -72,7 +71,7 @@ function LevelTest({ target, onDone }: { target: number; onDone: (unlockedTo: nu
   )
 }
 
-function SpeedChallenge({ onDone }: { onDone: () => void }) {
+function SpeedChallenge({ onDone }: { onDone: (earnedTier: Tier) => void }) {
   const { phase, problem, count, total, result, tier, start, answer } = useSpeedChallenge()
   const weekStart = useSettings((s) => s.weekStart)
 
@@ -93,10 +92,7 @@ function SpeedChallenge({ onDone }: { onDone: () => void }) {
         >
           Start
         </PrimaryButton>
-        <PrimaryButton
-          style={{ background: 'var(--card)', color: 'var(--ink)', border: '1px solid var(--line)' }}
-          onClick={onDone}
-        >
+        <PrimaryButton style={secondaryButtonStyle} onClick={() => onDone(tier)}>
           Back
         </PrimaryButton>
       </div>
@@ -113,10 +109,7 @@ function SpeedChallenge({ onDone }: { onDone: () => void }) {
           {tier > 0 ? `${TIER_BADGES[tier]} ${TIER_LABELS[tier]}` : 'No tier — keep going!'}
         </p>
         <PrimaryButton onClick={start}>Again</PrimaryButton>
-        <PrimaryButton
-          style={{ background: 'var(--card)', color: 'var(--ink)', border: '1px solid var(--line)' }}
-          onClick={onDone}
-        >
+        <PrimaryButton style={secondaryButtonStyle} onClick={() => onDone(tier)}>
           Done
         </PrimaryButton>
       </div>
@@ -145,17 +138,7 @@ export function LevelsScreen() {
   const [level, raiseLevel] = useUnlockedLevelState()
   const [testing, setTesting] = useState<number | null>(null)
   const [speed, setSpeed] = useState(false)
-  const [bestTier, setBestTier] = useState<Tier>(0)
-
-  useEffect(() => {
-    let active = true
-    void getMeta<number>('speedBestTier', 0).then((t) => {
-      if (active) setBestTier(t as Tier)
-    })
-    return () => {
-      active = false
-    }
-  }, [])
+  const [bestTier, raiseBestTier] = useSpeedBestTier()
 
   if (testing !== null) {
     return (
@@ -177,10 +160,11 @@ export function LevelsScreen() {
     return (
       <div className="screen">
         <SpeedChallenge
-          onDone={() => {
+          onDone={(earnedTier) => {
             setSpeed(false)
-            // Reload the best tier after a run so the overview badge updates.
-            void getMeta<number>('speedBestTier', 0).then((t) => setBestTier(t as Tier))
+            // Reflect a just-earned tier immediately — monotonic, no read-back race
+            // against useSpeedChallenge's async best-tier write.
+            raiseBestTier(earnedTier)
           }}
         />
       </div>
@@ -224,10 +208,7 @@ export function LevelsScreen() {
       ) : (
         <p style={{ marginTop: 16, fontWeight: 600 }}>Full range unlocked 🎉</p>
       )}
-      <PrimaryButton
-        style={{ background: 'var(--card)', color: 'var(--ink)', border: '1px solid var(--line)' }}
-        onClick={() => setSpeed(true)}
-      >
+      <PrimaryButton style={secondaryButtonStyle} onClick={() => setSpeed(true)}>
         {`Speed challenge${bestTier > 0 ? ` · best ${TIER_BADGES[bestTier]}` : ''} →`}
       </PrimaryButton>
     </div>
