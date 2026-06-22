@@ -5,12 +5,14 @@ import { gradeProblem, type Problem } from './drill'
 import type { Attempt } from '../../db/db'
 import { listAttempts, recordAttempt } from '../../db/attempts'
 import { getMeta, setMeta } from '../../db/meta'
+import { useUnlockedLevel } from '../levels/useUnlockedLevel'
 
 const DURATION = 60
 type Phase = 'ready' | 'running' | 'over'
 
 export function useSpeedrun() {
   const attemptsRef = useRef<Attempt[]>([])
+  const levelRef = useUnlockedLevel()
   const deadlineRef = useRef(0)
   const questionStartRef = useRef(0)
   const [phase, setPhase] = useState<Phase>('ready')
@@ -57,8 +59,10 @@ export function useSpeedrun() {
     const now = performance.now()
     deadlineRef.current = now + DURATION * 1000
     questionStartRef.current = now
-    setProblem(nextProblem(attemptsRef.current))
+    setProblem(nextProblem(attemptsRef.current, Math.random, levelRef.current))
     setPhase('running')
+  // levelRef and attemptsRef are stable ref objects — no re-render needed when they update.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const answer = useCallback(
@@ -72,8 +76,10 @@ export function useSpeedrun() {
       attemptsRef.current = [attempt, ...attemptsRef.current]
       setTotal((t) => t + 1)
       if (attempt.correct) setCorrect((c) => c + 1)
-      setProblem(nextProblem(attemptsRef.current))
+      setProblem(nextProblem(attemptsRef.current, Math.random, levelRef.current))
     },
+    // levelRef and attemptsRef are stable ref objects — no re-render needed when they update.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [phase, problem],
   )
 

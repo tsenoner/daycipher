@@ -4,6 +4,7 @@ import { gradeProblem, type Problem } from './drill'
 import type { Attempt } from '../../db/db'
 import { listAttempts, recordAttempt } from '../../db/attempts'
 import { nextProblem } from './selector'
+import { useUnlockedLevel } from '../levels/useUnlockedLevel'
 
 type Phase = 'answering' | 'graded'
 interface DrillState {
@@ -15,8 +16,9 @@ interface DrillState {
 
 export function useDrill() {
   const attemptsRef = useRef<Attempt[]>([])
+  const levelRef = useUnlockedLevel()
   const [state, setState] = useState<DrillState>(() => ({
-    problem: nextProblem([]),
+    problem: nextProblem([], Math.random, levelRef.current),
     phase: 'answering',
     guessed: null,
     attempt: null,
@@ -55,8 +57,10 @@ export function useDrill() {
   )
 
   const next = useCallback(() => {
-    setState({ problem: nextProblem(attemptsRef.current), phase: 'answering', guessed: null, attempt: null })
+    setState({ problem: nextProblem(attemptsRef.current, Math.random, levelRef.current), phase: 'answering', guessed: null, attempt: null })
     setStartedAt(performance.now())
+  // levelRef and attemptsRef are stable ref objects — no re-render needed when they update.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return { ...state, answer, next }
