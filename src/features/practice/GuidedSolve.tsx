@@ -62,7 +62,6 @@ export function GuidedSolve() {
   return (
     <SolveScreen
       className="screen"
-      minHeight="62vh"
       footerPadTop={20}
       footer={
         <>

@@ -45,7 +45,6 @@ function LevelTest({ target, onDone }: { target: number; onDone: (unlockedTo: nu
 
   return (
     <SolveScreen
-      minHeight="100%"
       footer={
         <>
           <WeekdayPicker
@@ -126,7 +125,6 @@ function SpeedChallenge({ onDone }: { onDone: (earnedTier: Tier, earnedMs: numbe
   // phase === 'solving'
   return (
     <SolveScreen
-      minHeight="100%"
       footer={<WeekdayPicker weekStart={weekStart} graded={false} onPick={(w) => answer(w)} />}
     >
       <div style={{ fontWeight: 600 }} className="tabnums">
