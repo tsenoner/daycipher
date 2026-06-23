@@ -9,7 +9,7 @@ import {
   type StepTrace,
   type Weekday,
 } from '../../engine'
-import { monthName, weekdayName, formatYear, formatCentury } from '../../lib/format'
+import { monthName, weekdayName, formatYear, formatCentury, ordinal } from '../../lib/format'
 import { RECENT_RANGE } from '../levels/levels'
 import type { ExampleCheck } from './curriculum'
 
@@ -57,7 +57,7 @@ function offsetStep(t: StepTrace, day: number): string[] {
   const gap = day - t.monthAnchorDay
   const rel = gap >= 0 ? `${gap} day(s) after` : `${-gap} day(s) before`
   return [
-    `The ${day}th is ${rel} the ${t.monthAnchorDay}th — cast out sevens to a +${forward} step`,
+    `The ${ordinal(day)} is ${rel} the ${ordinal(t.monthAnchorDay)} — cast out sevens to a +${forward} step`,
     `${weekdayName(t.monthAnchorWeekday)} + ${forward} → ${weekdayName(t.result)}`,
   ]
 }
@@ -68,14 +68,14 @@ function datedExample(stage: WorkedStage, year: number, month: number, day: numb
     stage === 'thisyear'
       ? [
           `${formatYear(year)}'s doomsday = ${weekdayName(t.yearDoomsday)}`,
-          `Nearest ${monthName(month)} anchor: the ${t.monthAnchorDay}th = ${weekdayName(t.monthAnchorWeekday)}`,
+          `Nearest ${monthName(month)} anchor: the ${ordinal(t.monthAnchorDay)} = ${weekdayName(t.monthAnchorWeekday)}`,
           ...offsetStep(t, day),
         ]
       : [
           anchorStep(year, t.centuryAnchor),
           ...oddElevenSteps(t),
           `${formatYear(year)} doomsday = ${weekdayName(t.yearDoomsday)}`,
-          `${monthName(month)} anchor: the ${t.monthAnchorDay}th = ${weekdayName(t.monthAnchorWeekday)}`,
+          `${monthName(month)} anchor: the ${ordinal(t.monthAnchorDay)} = ${weekdayName(t.monthAnchorWeekday)}`,
           ...offsetStep(t, day),
         ]
   return {
