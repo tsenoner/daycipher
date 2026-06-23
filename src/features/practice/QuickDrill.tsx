@@ -25,7 +25,7 @@ export function QuickDrill() {
   return (
     <SolveScreen
       className="screen"
-      minHeight="70vh"
+      minHeight="100%"
       footer={
         <>
           {graded && attempt && (

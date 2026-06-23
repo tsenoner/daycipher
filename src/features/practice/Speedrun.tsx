@@ -49,7 +49,7 @@ export function Speedrun() {
   return (
     <SolveScreen
       className="screen"
-      minHeight="62vh"
+      minHeight="100%"
       footer={<WeekdayPicker weekStart={weekStart} graded={false} onPick={(w: Weekday) => answer(w)} />}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
