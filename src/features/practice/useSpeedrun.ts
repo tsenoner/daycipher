@@ -3,16 +3,19 @@ import { type Weekday } from '../../engine'
 import { nextProblem } from './selector'
 import { gradeProblem, type Problem } from './drill'
 import type { Attempt } from '../../db/db'
-import { listAttempts, recordAttempt } from '../../db/attempts'
+import { recordAttempt } from '../../db/attempts'
 import { getMeta, setMeta } from '../../db/meta'
 import { useUnlockedLevel } from '../levels/useUnlockedLevel'
+import { useAttemptsRef } from './useAttemptsRef'
 
 const DURATION = 60
 type Phase = 'ready' | 'running' | 'over'
 
 export function useSpeedrun() {
-  const attemptsRef = useRef<Attempt[]>([])
-  const levelRef = useUnlockedLevel()
+  const attemptsRef = useAttemptsRef()
+  // Speedrun's first problem is generated in the user-triggered start(), which runs
+  // after the level read resolves, so it only needs the live ref (no regen).
+  const { ref: levelRef } = useUnlockedLevel()
   const deadlineRef = useRef(0)
   const questionStartRef = useRef(0)
   const [phase, setPhase] = useState<Phase>('ready')
@@ -24,9 +27,6 @@ export function useSpeedrun() {
 
   useEffect(() => {
     let active = true
-    void listAttempts().then((x) => {
-      if (active) attemptsRef.current = x
-    })
     void getMeta<number>('speedrunBest', 0).then((b) => {
       if (active) setBest(b)
     })
@@ -61,8 +61,8 @@ export function useSpeedrun() {
     questionStartRef.current = now
     setProblem(nextProblem(attemptsRef.current, levelRef.current))
     setPhase('running')
-  // levelRef and attemptsRef are stable ref objects — no re-render needed when they update.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // levelRef and attemptsRef are stable ref objects — no re-render needed when they update.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const answer = useCallback(

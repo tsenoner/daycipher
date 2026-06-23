@@ -18,7 +18,10 @@ describe('useUnlockedLevel', () => {
   it('defaults to 0, then resolves to the stored (clamped) level', async () => {
     await setMeta('unlockedLevel', 2)
     const { result } = renderHook(() => useUnlockedLevel())
-    expect(result.current.current).toBe(0) // before load
-    await waitFor(() => expect(result.current.current).toBe(2))
+    expect(result.current.ref.current).toBe(0) // before load
+    expect(result.current.loaded).toBe(false)
+    await waitFor(() => expect(result.current.level).toBe(2))
+    expect(result.current.ref.current).toBe(2)
+    expect(result.current.loaded).toBe(true)
   })
 })
