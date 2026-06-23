@@ -27,7 +27,7 @@ export async function runPracticeUnlockMigration(): Promise<void> {
 
   await setMeta('practiceUnlocked', true)
   // Seed `learnCompleted` from legacy progress so Learn shows prior stages. The
-  // latch always wins: even if the live 4-of-5 predicate would call a seeded
+  // latch always wins: even if the live mastery predicate would call a seeded
   // stage not-done, unlock/lock read `learnCompleted`, never the live window.
   if (learnDone.length) await setMeta('learnCompleted', learnDone)
 }
