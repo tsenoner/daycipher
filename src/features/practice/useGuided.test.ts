@@ -4,6 +4,7 @@ import { useGuided } from './useGuided'
 import { nextProblem } from './selector'
 import { setMeta } from '../../db/meta'
 import { resetTestDb } from '../../test/resetDb'
+import { type Weekday } from '../../engine'
 
 // Keep the real selector (so a valid Problem is produced) but spy the draw to
 // assert which level the first problem is generated at.
@@ -40,5 +41,40 @@ describe('useGuided — first problem respects the unlocked level (#21)', () => 
     // would break if the `if (level === 0) return` guard were removed.
     expect(mockNext).toHaveBeenCalledTimes(1)
     expect(result.current.problem).toBe(seeded)
+  })
+})
+
+describe('useGuided — month-anchor step machine (#10)', () => {
+  beforeEach(async () => {
+    await resetTestDb()
+    mockNext.mockClear()
+  })
+
+  it('advances 0→1→2→3→4 via pick/pickAnchor and grades at the end', async () => {
+    const { result } = renderHook(() => useGuided())
+    expect(result.current.step).toBe(0)
+
+    // pickAnchor is a no-op outside step 2.
+    act(() => result.current.pickAnchor(14))
+    expect(result.current.step).toBe(0)
+
+    act(() => result.current.pick(3 as Weekday)) // 0 → 1 (century)
+    expect(result.current.step).toBe(1)
+    expect(result.current.picks.century).toBe(3)
+
+    act(() => result.current.pick(5 as Weekday)) // 1 → 2 (year's doomsday)
+    expect(result.current.step).toBe(2)
+
+    // The number step ignores a weekday pick.
+    act(() => result.current.pick(2 as Weekday))
+    expect(result.current.step).toBe(2)
+
+    act(() => result.current.pickAnchor(14)) // 2 → 3 (month anchor)
+    expect(result.current.step).toBe(3)
+    expect(result.current.picks.monthAnchorDay).toBe(14)
+
+    act(() => result.current.pick(5 as Weekday)) // 3 → 4 (final → grade)
+    expect(result.current.step).toBe(4)
+    expect(result.current.attempt?.mode).toBe('guided')
   })
 })

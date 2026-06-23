@@ -16,6 +16,7 @@ export interface Attempt {
   mode: string
   anchorCorrect: 0 | 1 | null
   yearDoomCorrect: 0 | 1 | null
+  monthAnchorCorrect: 0 | 1 | null
   offsetCorrect: 0 | 1 | null
   timed: boolean
 }

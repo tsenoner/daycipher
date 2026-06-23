@@ -44,15 +44,19 @@ describe('GuidedSolve', () => {
     vi.mocked(playFeedback).mockClear()
   })
 
-  it('captures three steps and grades correctly', async () => {
+  it('captures four steps (incl. the month anchor) and grades correctly', async () => {
     render(<GuidedSolve />)
     const t = readTruth()
 
     await userEvent.click(screen.getByRole('button', { name: WEEKDAY_NAMES[t.centuryAnchor] }))
     await userEvent.click(screen.getByRole('button', { name: WEEKDAY_NAMES[t.yearDoomsday] }))
+    // The month-anchor step is a NumberPad — pick the anchor day-of-month.
+    expect(screen.getByText('Month anchor — which date?')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: String(t.monthAnchorDay) }))
     await userEvent.click(screen.getByRole('button', { name: WEEKDAY_NAMES[t.result] }))
 
     expect(screen.getByRole('status')).toHaveTextContent(/Correct/)
+    expect(rowValue('Month anchor')).toContain('✓')
     expect(screen.getByText('How it works')).toBeInTheDocument()
   })
 
@@ -88,24 +92,26 @@ describe('GuidedSolve', () => {
     const badYear = wrong(t.yearDoomsday)
     await userEvent.click(screen.getByRole('button', { name: WEEKDAY_NAMES[badYear] }))
 
-    // Now on the final weekday prompt; the doomsday row shows ✕ while century still shows ✓.
-    expect(screen.getByText('The weekday?')).toBeInTheDocument()
+    // Now on the month-anchor prompt; the doomsday row shows ✕ while century still shows ✓.
+    expect(screen.getByText('Month anchor — which date?')).toBeInTheDocument()
     expect(rowValue('Century anchor')).toContain('✓')
     expect(rowValue("Year's doomsday")).toContain('✕')
   })
 
-  it('fires playFeedback on every step with that step’s correctness', async () => {
+  it('fires playFeedback on every step (incl. the month anchor) with that step’s correctness', async () => {
     render(<GuidedSolve />)
     const t = readTruth()
 
     await userEvent.click(screen.getByRole('button', { name: WEEKDAY_NAMES[wrong(t.centuryAnchor)] }))
     await userEvent.click(screen.getByRole('button', { name: WEEKDAY_NAMES[t.yearDoomsday] }))
+    await userEvent.click(screen.getByRole('button', { name: String(t.monthAnchorDay) }))
     await userEvent.click(screen.getByRole('button', { name: WEEKDAY_NAMES[t.result] }))
 
-    expect(playFeedback).toHaveBeenCalledTimes(3)
-    // Step 0 wrong, steps 1 & 2 correct.
+    expect(playFeedback).toHaveBeenCalledTimes(4)
+    // Step 0 wrong; year's doomsday, month anchor, and final all correct.
     expect(vi.mocked(playFeedback).mock.calls[0][0]).toBe(false)
     expect(vi.mocked(playFeedback).mock.calls[1][0]).toBe(true)
     expect(vi.mocked(playFeedback).mock.calls[2][0]).toBe(true)
+    expect(vi.mocked(playFeedback).mock.calls[3][0]).toBe(true)
   })
 })

@@ -27,19 +27,30 @@ describe('gradeProblem', () => {
 })
 
 describe('gradeGuided', () => {
-  const p = { year: 1986, month: 3, day: 14 } // century Wed(3), year doom Fri(5), result Fri(5)
+  const p = { year: 1986, month: 3, day: 14 } // century Wed(3), year doom Fri(5), month anchor 14, result Fri(5)
   it('all steps correct', () => {
-    const a = gradeGuided(p, { century: 3, yearDoom: 5, final: 5 }, 5000, 1)
+    const a = gradeGuided(p, { century: 3, yearDoom: 5, monthAnchorDay: 14, final: 5 }, 5000, 1)
     expect(a).toMatchObject({
-      mode: 'guided', correct: true, anchorCorrect: 1, yearDoomCorrect: 1, offsetCorrect: 1, correctWeekday: 5,
+      mode: 'guided', correct: true, anchorCorrect: 1, yearDoomCorrect: 1,
+      monthAnchorCorrect: 1, offsetCorrect: 1, correctWeekday: 5,
     })
   })
   it('wrong year doomsday but correct stepping', () => {
-    const a = gradeGuided(p, { century: 3, yearDoom: 4, final: 4 }, 5000, 1)
+    const a = gradeGuided(p, { century: 3, yearDoom: 4, monthAnchorDay: 14, final: 4 }, 5000, 1)
     expect(a.correct).toBe(false)
     expect(a.anchorCorrect).toBe(1)
     expect(a.yearDoomCorrect).toBe(0)
+    expect(a.monthAnchorCorrect).toBe(1)
     expect(a.offsetCorrect).toBe(1)
+  })
+  it('grades the month anchor independently, without cascading to the final weekday', () => {
+    // Wrong anchor day (7 ≠ 14) but the final weekday is still graded against
+    // absolute engine truth, so a wrong anchor doesn't fail the whole solve.
+    const a = gradeGuided(p, { century: 3, yearDoom: 5, monthAnchorDay: 7, final: 5 }, 5000, 1)
+    expect(a.monthAnchorCorrect).toBe(0)
+    expect(a.anchorCorrect).toBe(1)
+    expect(a.yearDoomCorrect).toBe(1)
+    expect(a.correct).toBe(true)
   })
 })
 

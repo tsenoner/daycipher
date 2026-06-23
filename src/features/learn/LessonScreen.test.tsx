@@ -93,6 +93,7 @@ describe('LessonScreen', () => {
         mode: 'learn:full',
         anchorCorrect: null,
         yearDoomCorrect: null,
+        monthAnchorCorrect: null,
         offsetCorrect: null,
         timed: false,
       })

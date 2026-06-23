@@ -5,7 +5,7 @@ import type { Attempt } from '../../db/db'
 const mk = (over: Partial<Attempt>): Attempt => ({
   timestamp: 0, targetDate: '2001-01-01', correctWeekday: 1, guessedWeekday: 1,
   correct: true, durationMs: 1000, mode: 'quick',
-  anchorCorrect: null, yearDoomCorrect: null, offsetCorrect: null, timed: false, ...over,
+  anchorCorrect: null, yearDoomCorrect: null, monthAnchorCorrect: null, offsetCorrect: null, timed: false, ...over,
 })
 const many = (targetDate: string, correct: boolean, n: number) =>
   Array.from({ length: n }, () => mk({ targetDate, correct }))
