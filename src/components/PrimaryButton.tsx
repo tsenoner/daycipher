@@ -19,6 +19,16 @@ export const secondaryButtonStyle: CSSProperties = {
   border: '1px solid var(--line)',
 }
 
+/** Borderless burgundy link-button — the inline "Show another →" / "Walk me through it →" toggles. */
+export const linkButtonStyle: CSSProperties = {
+  background: 'none',
+  border: 0,
+  padding: 0,
+  color: 'var(--burg)',
+  fontWeight: 700,
+  cursor: 'pointer',
+}
+
 /** The full-width burgundy call-to-action shared by the drill/test runners. */
 export function PrimaryButton({
   onClick,
