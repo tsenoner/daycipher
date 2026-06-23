@@ -27,8 +27,8 @@ export const CURRICULUM: Stage[] = [
     n: 1,
     title: 'Think in 7s',
     goal: 'Treat weekdays as numbers 0–6 and add them by casting out sevens.',
-    k: 3,
-    m: 4,
+    k: 5,
+    m: 5,
     blocks: [
       {
         kind: 'p',
@@ -53,6 +53,8 @@ export const CURRICULUM: Stage[] = [
     n: 2,
     title: 'Leap years',
     goal: 'Decide leap-or-not at a glance, and know why it only touches Jan/Feb.',
+    k: 5,
+    m: 5,
     blocks: [
       {
         kind: 'p',
@@ -79,8 +81,8 @@ export const CURRICULUM: Stage[] = [
     n: 3,
     title: 'Month anchors',
     goal: 'Memorize one anchor date per month — they all land on the year’s doomsday.',
-    k: 3,
-    m: 4,
+    k: 5,
+    m: 5,
     blocks: [
       {
         kind: 'p',
@@ -142,6 +144,8 @@ export const CURRICULUM: Stage[] = [
     n: 5,
     title: 'Century anchors',
     goal: 'Know the anchor weekday — the doomsday of year 00 — for each century.',
+    k: 5,
+    m: 5,
     blocks: [
       {
         kind: 'p',
@@ -172,6 +176,8 @@ export const CURRICULUM: Stage[] = [
     n: 6,
     title: 'The year’s doomsday (Odd+11)',
     goal: 'Turn the century anchor into a specific year’s doomsday — with pure addition.',
+    k: 5,
+    m: 5,
     blocks: [
       {
         kind: 'p',

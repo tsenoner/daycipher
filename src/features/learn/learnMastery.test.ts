@@ -130,25 +130,28 @@ describe('stageProgress', () => {
 })
 
 describe('STAGE_RULES', () => {
-  it('on-ramp stages are K=3/M=4, the rest are K=4/M=5', () => {
-    expect(STAGE_RULES.mod7).toEqual({ K: 3, M: 4 })
-    expect(STAGE_RULES.months).toEqual({ K: 3, M: 4 })
-    for (const id of ['leap', 'thisyear', 'century', 'year', 'full']) {
+  it('atomic stages are K=5/M=5 (no slip); composites stay K=4/M=5', () => {
+    for (const id of ['mod7', 'leap', 'months', 'century', 'year']) {
+      expect(STAGE_RULES[id]).toEqual({ K: 5, M: 5 })
+    }
+    for (const id of ['thisyear', 'full']) {
       expect(STAGE_RULES[id]).toEqual({ K: 4, M: 5 })
     }
   })
 })
 
 describe('isStageDone', () => {
-  it('mod7 (K=3/M=4): done at 3 of last 4', () => {
-    expect(isStageDone(rows('mod7', [true, true, true]), 'mod7')).toBe(false) // < M
-    expect(isStageDone(rows('mod7', [false, true, true, true]), 'mod7')).toBe(true)
+  it('mod7 (K=5/M=5): done only on 5 correct in the last 5', () => {
+    expect(isStageDone(rows('mod7', [true, true, true, true]), 'mod7')).toBe(false) // < M
+    expect(isStageDone(rows('mod7', [false, true, true, true, true]), 'mod7')).toBe(false) // slip in window
+    expect(isStageDone(rows('mod7', [true, true, true, true, true]), 'mod7')).toBe(true)
+    expect(isStageDone(rows('mod7', [false, true, true, true, true, true]), 'mod7')).toBe(true) // slip slid out
   })
 
   it('only counts rows for the matching stage id', () => {
     const mixed = [
-      ...rows('mod7', [true, true, true, true]),
-      ...rows('months', [false, false, false, false]),
+      ...rows('mod7', [true, true, true, true, true]),
+      ...rows('months', [false, false, false, false, false]),
     ]
     expect(isStageDone(mixed, 'mod7')).toBe(true)
     expect(isStageDone(mixed, 'months')).toBe(false)

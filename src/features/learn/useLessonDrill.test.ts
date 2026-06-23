@@ -119,12 +119,12 @@ describe('useLessonDrill', () => {
   // leak into this test's fresh database.
   beforeEach(resetTestDb)
 
-  it('K-of-M correct answers internalize the stage (mod7: 3 of 4)', async () => {
+  it('K-of-M correct answers internalize the stage (mod7: 5 of 5)', async () => {
     const { result } = renderHook(() => useLessonDrill('mod7', { rng: makeRng(7) }))
     await waitFor(() => expect(result.current.current).not.toBeNull())
 
     expect(result.current.done).toBe(false)
-    for (let i = 0; i < 4; i++) await answerCorrect(result)
+    for (let i = 0; i < 5; i++) await answerCorrect(result)
 
     await waitFor(() => expect(result.current.done).toBe(true))
     await waitFor(async () =>
@@ -155,12 +155,10 @@ describe('useLessonDrill', () => {
     const { result } = renderHook(() => useLessonDrill('mod7', { rng: makeRng(11) }))
     await waitFor(() => expect(result.current.current).not.toBeNull())
 
-    // mod7 rule is K=3,M=4. Sequence [F,F,F,T,T,T,T] (oldest->newest) must complete:
-    // last 4 = [T,T,T,T] >= 3 correct.
+    // mod7 rule is K=5,M=5. Sequence [F,T,T,T,T,T] (oldest->newest) must complete:
+    // the slip slides out, so the last 5 = [T,T,T,T,T] = 5 correct.
     await answerWrong(result)
-    await answerWrong(result)
-    await answerWrong(result)
-    for (let i = 0; i < 4; i++) await answerCorrect(result)
+    for (let i = 0; i < 5; i++) await answerCorrect(result)
 
     await waitFor(() => expect(result.current.done).toBe(true))
   })
@@ -220,9 +218,9 @@ describe('useLessonDrill', () => {
 
     await answerCorrect(result)
     await waitFor(() => expect(result.current.progress.correctInWindow).toBe(1))
-    // mod7 is K=3,M=4. After 1 rep the M-rep gap (4-1=3) dominates the K gap (3-1=2),
-    // so remaining never understates how many reps still stand between here and done.
-    expect(result.current.progress.remaining).toBe(3)
+    // mod7 is K=5,M=5. After 1 correct rep, 4 more correct reps still stand between
+    // here and done (both the K gap and the M gap are 5-1=4).
+    expect(result.current.progress.remaining).toBe(4)
   })
 
   it('practice mode logs :practice rows, never latches completion, and credits the streak', async () => {
@@ -246,7 +244,7 @@ describe('useLessonDrill', () => {
     // Internalize mod7 the normal way first.
     const learn = renderHook(() => useLessonDrill('mod7', { rng: makeRng(22) }))
     await waitFor(() => expect(learn.result.current.current).not.toBeNull())
-    for (let i = 0; i < 4; i++) await answerCorrect(learn.result)
+    for (let i = 0; i < 5; i++) await answerCorrect(learn.result)
     await waitFor(() => expect(learn.result.current.done).toBe(true))
     learn.unmount()
 

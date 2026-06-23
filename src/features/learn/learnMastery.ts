@@ -10,9 +10,12 @@ export interface StageRule {
 const DEFAULT_RULE: StageRule = { K: 4, M: 5 }
 
 /**
- * Per-stage completion thresholds (R6), DERIVED from `CURRICULUM` so the data
- * lives in one place. `mod7` & `months` are single-fact on-ramps (3-of-4); the rest use
- * the default 4-of-5. Window slides — never resets. Built once at module load so
+ * Per-stage completion thresholds, DERIVED from `CURRICULUM` so the data lives in
+ * one place. Atomic recall/single-procedure stages (`mod7`, `leap`, `months`,
+ * `century`, `year`) require 5-of-5 — a no-slip streak, since those atoms feed
+ * every later answer. The composite stages (`thisyear`, `full`) keep the default
+ * 4-of-5: they chain all the atoms, so demanding near-perfection there is a
+ * punishing signal. Window slides — never resets. Built once at module load so
  * each rule object is reference-STABLE per stage: `useLessonDrill` depends on the
  * rule in a `useEffect` dep array, and a fresh object per render would loop it.
  */
