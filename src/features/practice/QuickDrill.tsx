@@ -1,6 +1,7 @@
 import { useDrill } from './useDrill'
 import { WeekdayPicker } from '../../components/WeekdayPicker'
 import { StepTrace } from '../../components/StepTrace'
+import { Walkthrough } from '../../components/Walkthrough'
 import { PrimaryButton } from '../../components/PrimaryButton'
 import { SolveScreen } from '../../components/SolveScreen'
 import { formatDate, weekdayName } from '../../lib/format'
@@ -55,6 +56,10 @@ export function QuickDrill() {
               trace={explain(problem.year, problem.month, problem.day)}
               defaultOpen={!attempt?.correct}
             />
+          )}
+
+          {graded && attempt && !attempt.correct && (
+            <Walkthrough year={problem.year} month={problem.month} day={problem.day} />
           )}
 
           {graded && <PrimaryButton onClick={next}>Next →</PrimaryButton>}

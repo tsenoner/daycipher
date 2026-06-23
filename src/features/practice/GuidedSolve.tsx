@@ -2,6 +2,7 @@ import { useGuided } from './useGuided'
 import { WeekdayPicker } from '../../components/WeekdayPicker'
 import { NumberPad } from '../../components/NumberPad'
 import { StepTrace } from '../../components/StepTrace'
+import { Walkthrough } from '../../components/Walkthrough'
 import { PrimaryButton } from '../../components/PrimaryButton'
 import { SolveScreen } from '../../components/SolveScreen'
 import { ANCHOR_DAYS } from '../learn/lessonGen'
@@ -102,6 +103,9 @@ export function GuidedSolve() {
                 {attempt.correct ? `✓ Correct — ${weekdayName(trace.result)}` : `✕ It's ${weekdayName(trace.result)}`}
               </p>
               <StepTrace trace={trace} defaultOpen />
+              {!attempt.correct && (
+                <Walkthrough year={problem.year} month={problem.month} day={problem.day} />
+              )}
               <PrimaryButton onClick={next}>Next →</PrimaryButton>
             </>
           )}

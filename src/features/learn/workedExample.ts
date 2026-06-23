@@ -86,6 +86,17 @@ function datedExample(stage: WorkedStage, year: number, month: number, day: numb
   }
 }
 
+/**
+ * The full step-by-step walkthrough for a SPECIFIC date — the same engine-derived
+ * `full`-stage narrative (century anchor → Odd+11 → year's doomsday → month anchor →
+ * cast-out-sevens offset → answer). Used to explain the exact date a learner just
+ * missed in Practice. Every value comes from `explain()`, so it always matches the
+ * engine for any proleptic date (incl. leap-Feb and BC/exotic centuries).
+ */
+export function walkthroughFor(year: number, month: number, day: number): GeneratedExample {
+  return datedExample('full', year, month, day)
+}
+
 /** Generate a fresh, illustrative, engine-correct worked example for the stage. */
 export function generateWorkedExample(stage: WorkedStage, rng: () => number): GeneratedExample {
   if (stage === 'year') {

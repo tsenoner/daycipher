@@ -8,7 +8,9 @@ import {
 
 type Hero = Extract<Block, { kind: 'example' }>
 
-function Card({ date, steps, answer }: { date: string; steps: string[]; answer: string }) {
+/** The engine-derived step card (date · ordered steps · green answer). Shared with
+ *  the Practice "Walk me through it" walkthrough. */
+export function WorkedExampleCard({ date, steps, answer }: { date: string; steps: string[]; answer: string }) {
   return (
     <div
       style={{
@@ -47,7 +49,7 @@ export function WorkedExample({
   const shown = extra ?? hero
   return (
     <div>
-      <Card date={shown.date} steps={shown.steps} answer={shown.answer} />
+      <WorkedExampleCard date={shown.date} steps={shown.steps} answer={shown.answer} />
       {supported && (
         <div style={{ display: 'flex', gap: 16 }}>
           <button

@@ -58,6 +58,25 @@ describe('GuidedSolve', () => {
     expect(screen.getByRole('status')).toHaveTextContent(/Correct/)
     expect(rowValue('Month anchor')).toContain('✓')
     expect(screen.getByText('How it works')).toBeInTheDocument()
+    // Correct answer → no walkthrough prompt.
+    expect(screen.queryByRole('button', { name: /Walk me through it/ })).toBeNull()
+  })
+
+  it('offers a walkthrough for the missed date after a wrong final answer (#11)', async () => {
+    render(<GuidedSolve />)
+    const t = readTruth()
+
+    await userEvent.click(screen.getByRole('button', { name: WEEKDAY_NAMES[t.centuryAnchor] }))
+    await userEvent.click(screen.getByRole('button', { name: WEEKDAY_NAMES[t.yearDoomsday] }))
+    await userEvent.click(screen.getByRole('button', { name: String(t.monthAnchorDay) }))
+    await userEvent.click(screen.getByRole('button', { name: WEEKDAY_NAMES[wrong(t.result)] }))
+
+    const btn = await screen.findByRole('button', { name: /Walk me through it/ })
+    await userEvent.click(btn)
+    // The cast-out-sevens substep is unique to the walkthrough card, and the answer
+    // div's exact "→ <weekday>" text proves the card is built for the missed date.
+    expect(screen.getByText(/cast out sevens/i)).toBeInTheDocument()
+    expect(screen.getByText(`→ ${WEEKDAY_NAMES[t.result]}`)).toBeInTheDocument()
   })
 
   it('immediately flags a wrong century anchor with ✕ before the next step is answered', async () => {

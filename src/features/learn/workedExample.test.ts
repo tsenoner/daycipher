@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { generateWorkedExample, WORKED_STAGES } from './workedExample'
+import { generateWorkedExample, walkthroughFor, WORKED_STAGES } from './workedExample'
 import { makeRng, weekdayOfYMD, yearDoomsdayOddEleven, centuryOf } from '../../engine'
 import { weekdayName } from '../../lib/format'
 
@@ -26,6 +26,22 @@ describe('generateWorkedExample', () => {
       const c = e.check as { kind: 'yearDoom'; year: number }
       expect(c.kind).toBe('yearDoom')
       expect(e.answer.startsWith(weekdayName(yearDoomsdayOddEleven(c.year)))).toBe(true)
+    }
+  })
+
+  it('walkthroughFor matches the engine across normal, leap-Feb, BC and max-year dates', () => {
+    const dates: [number, number, number][] = [
+      [1933, 4, 4], // normal taught century
+      [2024, 2, 29], // leap-year Feb 29
+      [2000, 1, 1], // leap-century, Jan
+      [-44, 3, 15], // BC / exotic century (computed anchor branch)
+      [9999, 12, 31], // max proleptic year
+    ]
+    for (const [y, m, d] of dates) {
+      const w = walkthroughFor(y, m, d)
+      expect(w.answer).toBe(weekdayName(weekdayOfYMD(y, m, d)))
+      expect(w.steps.length).toBeGreaterThan(0)
+      expect(w.check).toEqual({ kind: 'ymd', year: y, month: m, day: d })
     }
   })
 
