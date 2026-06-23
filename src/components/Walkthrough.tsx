@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { WorkedExampleCard } from './WorkedExample'
 import { walkthroughFor } from '../features/learn/workedExample'
+import { linkButtonStyle } from './PrimaryButton'
 
 /**
  * Opt-in "Walk me through it" deep-dive for a drilled date: a toggle that reveals
@@ -10,28 +11,18 @@ import { walkthroughFor } from '../features/learn/workedExample'
  */
 export function Walkthrough({ year, month, day }: { year: number; month: number; day: number }) {
   const [open, setOpen] = useState(false)
+  const w = open ? walkthroughFor(year, month, day) : null
   return (
     <div>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        style={{
-          background: 'none',
-          border: 0,
-          padding: 0,
-          color: 'var(--burg)',
-          fontWeight: 700,
-          cursor: 'pointer',
-        }}
+        style={linkButtonStyle}
       >
         {open ? 'Hide walkthrough' : 'Walk me through it →'}
       </button>
-      {open &&
-        (() => {
-          const w = walkthroughFor(year, month, day)
-          return <WorkedExampleCard date={w.date} steps={w.steps} answer={w.answer} />
-        })()}
+      {w && <WorkedExampleCard date={w.date} steps={w.steps} answer={w.answer} />}
     </div>
   )
 }

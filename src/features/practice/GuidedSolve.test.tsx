@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { GuidedSolve } from './GuidedSolve'
 import { explain, WEEKDAY_NAMES, type Weekday } from '../../engine'
 import { playFeedback } from '../../feedback/feedback'
+import { resetTestDb } from '../../test/resetDb'
 
 vi.mock('../../feedback/feedback', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../feedback/feedback')>()
@@ -40,7 +41,10 @@ function rowValue(label: string): string {
 const wrong = (w: Weekday): Weekday => ((w + 1) % 7) as Weekday
 
 describe('GuidedSolve', () => {
-  beforeEach(() => {
+  // GuidedSolve persists attempts via useGuided → recordAttempt; reset between
+  // tests so DB state can't leak across cases (matches the other DB-touching suites).
+  beforeEach(async () => {
+    await resetTestDb()
     vi.mocked(playFeedback).mockClear()
   })
 

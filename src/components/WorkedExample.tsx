@@ -5,6 +5,7 @@ import {
   isWorkedStage,
   type GeneratedExample,
 } from '../features/learn/workedExample'
+import { linkButtonStyle } from './PrimaryButton'
 
 type Hero = Extract<Block, { kind: 'example' }>
 
@@ -57,14 +58,7 @@ export function WorkedExample({
             onClick={() => {
               if (isWorkedStage(stageId)) setExtra(generateWorkedExample(stageId, rng))
             }}
-            style={{
-              background: 'none',
-              border: 0,
-              padding: 0,
-              color: 'var(--burg)',
-              fontWeight: 700,
-              cursor: 'pointer',
-            }}
+            style={linkButtonStyle}
           >
             Show another →
           </button>
