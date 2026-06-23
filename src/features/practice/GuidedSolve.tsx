@@ -5,7 +5,7 @@ import { StepTrace } from '../../components/StepTrace'
 import { PrimaryButton } from '../../components/PrimaryButton'
 import { SolveScreen } from '../../components/SolveScreen'
 import { ANCHOR_DAYS } from '../learn/lessonGen'
-import { formatDate, weekdayName } from '../../lib/format'
+import { formatDate, weekdayName, ordinal } from '../../lib/format'
 import { explain, type Weekday } from '../../engine'
 import { useSettings } from '../../store/settings'
 import { unlockAudio, playFeedback } from '../../feedback/feedback'
@@ -15,16 +15,16 @@ import { unlockAudio, playFeedback } from '../../feedback/feedback'
 // weekday is the year's doomsday already picked.
 const PROMPTS = ['Century anchor?', "Year's doomsday?", 'Month anchor — which date?', 'The weekday?']
 
-function PickRow({
+function PickRow<T>({
   label,
   value,
   truth,
   format,
 }: {
   label: string
-  value?: number
-  truth: number
-  format: (n: number) => string
+  value?: T
+  truth: T
+  format: (v: T) => string
 }) {
   // Each row reveals its own ✓/✕ the instant it has a value, comparing that
   // pick to its engine truth — so a wrong intermediate step turns red before
@@ -55,7 +55,6 @@ export function GuidedSolve() {
   const soundEnabled = useSettings((s) => s.soundEnabled)
   const graded = step === 4
   const trace = explain(problem.year, problem.month, problem.day)
-  const wd = (n: number) => weekdayName(n as Weekday) // row values are numbers; weekday rows hold 0..6
   // Per-step weekday truth for the active prompt (the month-anchor step 2 is a
   // number, handled separately): century anchor, year's doomsday, _, final.
   const weekdayTruth: Record<number, Weekday> = {
@@ -119,15 +118,15 @@ export function GuidedSolve() {
       </div>
 
       <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13 }}>
-        <PickRow label="Century anchor" value={picks.century} truth={trace.centuryAnchor} format={wd} />
-        <PickRow label="Year's doomsday" value={picks.yearDoom} truth={trace.yearDoomsday} format={wd} />
+        <PickRow label="Century anchor" value={picks.century} truth={trace.centuryAnchor} format={weekdayName} />
+        <PickRow label="Year's doomsday" value={picks.yearDoom} truth={trace.yearDoomsday} format={weekdayName} />
         <PickRow
           label="Month anchor"
           value={picks.monthAnchorDay}
           truth={trace.monthAnchorDay}
-          format={(n) => `the ${n}th`}
+          format={(n) => `the ${ordinal(n)}`}
         />
-        <PickRow label="Weekday" value={picks.final} truth={trace.result} format={wd} />
+        <PickRow label="Weekday" value={picks.final} truth={trace.result} format={weekdayName} />
       </div>
     </SolveScreen>
   )

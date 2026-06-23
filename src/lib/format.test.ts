@@ -7,6 +7,7 @@ import {
   weekdayName,
   orderedWeekdays,
   monthName,
+  ordinal,
 } from './format'
 
 describe('format', () => {
@@ -26,6 +27,17 @@ describe('format', () => {
   it('monthName', () => {
     expect(monthName(3)).toBe('March')
     expect(monthName(12)).toBe('December')
+  })
+  it('ordinal handles the rd/st/nd cases and the teen exception', () => {
+    expect(ordinal(1)).toBe('1st')
+    expect(ordinal(2)).toBe('2nd')
+    expect(ordinal(3)).toBe('3rd') // the anchor day that "3th" got wrong
+    expect(ordinal(4)).toBe('4th')
+    expect(ordinal(11)).toBe('11th')
+    expect(ordinal(12)).toBe('12th')
+    expect(ordinal(13)).toBe('13th')
+    expect(ordinal(21)).toBe('21st')
+    expect(ordinal(29)).toBe('29th')
   })
 })
 
