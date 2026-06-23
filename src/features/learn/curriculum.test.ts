@@ -23,6 +23,26 @@ describe('curriculum', () => {
     expect(text).toContain('last two digits')
     expect(text).toContain('unless they are 00') // the xx00 carve-out is still called out
   })
+  it('Stage 3 labels Jan/Feb anchors common-year vs leap, leaving others unqualified (#8)', () => {
+    const items = (getStage('months')?.blocks ?? [])
+      .filter((b): b is Extract<Block, { kind: 'list' }> => b.kind === 'list')
+      .flatMap((b) => b.items)
+    const jan = items.find((i) => /january/i.test(i)) ?? ''
+    const feb = items.find((i) => /february/i.test(i)) ?? ''
+    for (const item of [jan, feb]) {
+      expect(item).toMatch(/common year/i) // lead value labeled non-leap
+      expect(item).toMatch(/leap year/i) // secondary value labeled leap
+    }
+    expect(jan).toContain('3')
+    expect(jan).toContain('4')
+    expect(feb).toContain('28')
+    expect(feb).toContain('29')
+    // Even-month doubles (4/4 … 12/12) are leap-invariant — they must NOT gain a
+    // leap qualifier. Match same-number-both-sides so March's "3/14" is excluded.
+    const doubles = items.filter((i) => /\b(\d+)\/\1\b/.test(i))
+    expect(doubles.length).toBeGreaterThan(0)
+    for (const d of doubles) expect(d).not.toMatch(/leap/i)
+  })
   it('every stage has content', () => {
     for (const s of CURRICULUM) expect(s.blocks.length).toBeGreaterThan(0)
   })
