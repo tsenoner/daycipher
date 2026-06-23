@@ -9,7 +9,7 @@ import {
 } from './learnGate'
 import { CURRICULUM } from './curriculum'
 import { getMeta } from '../../db/meta'
-import { _resetDbForTests } from '../../db/db'
+import { resetTestDb } from '../../test/resetDb'
 
 const ALL = CURRICULUM.map((s) => s.id)
 
@@ -66,10 +66,7 @@ describe('nextStageId', () => {
 })
 
 describe('markStageComplete', () => {
-  beforeEach(() => {
-    _resetDbForTests()
-    indexedDB.deleteDatabase('daycipher')
-  })
+  beforeEach(resetTestDb)
 
   it('unions a stage id into learnCompleted, idempotently', async () => {
     expect(await markStageComplete('mod7')).toEqual(['mod7'])
@@ -90,10 +87,7 @@ describe('markStageComplete', () => {
 })
 
 describe('getCompleted / getPracticeUnlocked readers', () => {
-  beforeEach(() => {
-    _resetDbForTests()
-    indexedDB.deleteDatabase('daycipher')
-  })
+  beforeEach(resetTestDb)
 
   it('default to empty / false before anything is recorded', async () => {
     expect(await getCompleted()).toEqual([])

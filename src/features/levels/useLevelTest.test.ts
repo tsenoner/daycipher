@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { useLevelTest } from './useLevelTest'
 import { LEVEL_TEST_SIZE } from './levels'
-import { _resetDbForTests } from '../../db/db'
+import { resetTestDb } from '../../test/resetDb'
 import { getMeta } from '../../db/meta'
 import { weekdayOfYMD, type Weekday } from '../../engine'
 
@@ -18,15 +18,7 @@ function play(result: { current: ReturnType<typeof useLevelTest> }, correct: boo
 }
 
 describe('useLevelTest', () => {
-  beforeEach(async () => {
-    // Await the close, then the delete, so a prior test's unlock write can't
-    // leak into the next test (the un-awaited form races, per _resetDbForTests).
-    await _resetDbForTests()
-    await new Promise<void>((resolve) => {
-      const req = indexedDB.deleteDatabase('daycipher')
-      req.onsuccess = req.onerror = req.onblocked = () => resolve()
-    })
-  })
+  beforeEach(resetTestDb)
 
   it('unlocks the target level on 9/10', async () => {
     const { result } = renderHook(() => useLevelTest(1, { rng, durationMs: 10 }))

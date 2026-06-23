@@ -10,7 +10,7 @@ import {
 import { makeRng } from '../../engine'
 import { listAttempts } from '../../db/attempts'
 import { getMeta } from '../../db/meta'
-import { _resetDbForTests } from '../../db/db'
+import { resetTestDb } from '../../test/resetDb'
 import { stageOutcomes } from './learnMastery'
 
 type DrillResult = {
@@ -115,15 +115,9 @@ describe('gradeLesson', () => {
 })
 
 describe('useLessonDrill', () => {
-  beforeEach(async () => {
-    _resetDbForTests()
-    // Await the delete so a late write from a prior test's in-flight effect can't
-    // leak into this test's fresh database.
-    await new Promise<void>((resolve) => {
-      const req = indexedDB.deleteDatabase('daycipher')
-      req.onsuccess = req.onerror = req.onblocked = () => resolve()
-    })
-  })
+  // Await the delete so a late write from a prior test's in-flight effect can't
+  // leak into this test's fresh database.
+  beforeEach(resetTestDb)
 
   it('K-of-M correct answers internalize the stage (mod7: 3 of 4)', async () => {
     const { result } = renderHook(() => useLessonDrill('mod7', { rng: makeRng(7) }))

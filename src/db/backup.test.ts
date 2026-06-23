@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { exportAll, importAll, BackupFormatError, type Backup } from './backup'
 import { addAttempt, listAttempts } from './attempts'
 import { setMeta, getMeta } from './meta'
-import { _resetDbForTests } from './db'
+import { resetTestDb } from '../test/resetDb'
 
 const base = {
   targetDate: '1986-03-14',
@@ -18,10 +18,7 @@ const base = {
 } as const
 
 describe('backup', () => {
-  beforeEach(async () => {
-    _resetDbForTests()
-    indexedDB.deleteDatabase('daycipher')
-  })
+  beforeEach(resetTestDb)
 
   it('exports then re-imports all data', async () => {
     await addAttempt({ ...base, timestamp: 111 })
@@ -30,8 +27,7 @@ describe('backup', () => {
     expect(dump.version).toBe(1)
     expect(dump.attempts).toHaveLength(1)
 
-    _resetDbForTests()
-    indexedDB.deleteDatabase('daycipher')
+    await resetTestDb()
     await importAll(dump)
     expect(await listAttempts()).toHaveLength(1)
     expect(await getMeta('theme', 'system')).toBe('dark')

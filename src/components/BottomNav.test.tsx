@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { BottomNav } from './BottomNav'
-import { _resetDbForTests } from '../db/db'
+import { resetTestDb } from '../test/resetDb'
 import { setMeta } from '../db/meta'
 
 /** The Practice NavLink, found by its label regardless of the trailing lock glyph. */
@@ -12,10 +12,7 @@ function practiceLink(): HTMLAnchorElement {
 }
 
 describe('BottomNav', () => {
-  beforeEach(() => {
-    _resetDbForTests()
-    indexedDB.deleteDatabase('daycipher')
-  })
+  beforeEach(resetTestDb)
 
   it('shows the Practice lock glyph on a fresh (gated) install', async () => {
     render(

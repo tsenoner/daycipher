@@ -1,12 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { getMeta, setMeta, recordPracticeDay, raiseMeta } from './meta'
-import { _resetDbForTests } from './db'
+import { resetTestDb } from '../test/resetDb'
 
 describe('meta', () => {
-  beforeEach(async () => {
-    _resetDbForTests()
-    indexedDB.deleteDatabase('daycipher')
-  })
+  beforeEach(resetTestDb)
 
   it('round-trips values with a default', async () => {
     expect(await getMeta('theme', 'system')).toBe('system')

@@ -9,7 +9,8 @@ import {
   recordAttempt,
 } from './attempts'
 import { getMeta } from './meta'
-import { _resetDbForTests, type Attempt } from './db'
+import { type Attempt } from './db'
+import { resetTestDb } from '../test/resetDb'
 
 const base = {
   targetDate: '1986-03-14',
@@ -27,10 +28,7 @@ const base = {
 const mk = (mode: string): Attempt => ({ ...base, timestamp: 1, mode })
 
 describe('attempts', () => {
-  beforeEach(async () => {
-    _resetDbForTests()
-    indexedDB.deleteDatabase('daycipher')
-  })
+  beforeEach(resetTestDb)
 
   it('adds and lists attempts ordered by timestamp desc', async () => {
     await addAttempt({ ...base, timestamp: 100 })
@@ -75,10 +73,7 @@ describe('challenge attempts are excluded from practice stats', () => {
 })
 
 describe('recordAttempt credits the streak only on a correct answer', () => {
-  beforeEach(async () => {
-    _resetDbForTests()
-    indexedDB.deleteDatabase('daycipher')
-  })
+  beforeEach(resetTestDb)
 
   it('a wrong attempt is stored but does not keep the streak alive; a correct one does', async () => {
     await recordAttempt({ ...mk('quick'), correct: false })

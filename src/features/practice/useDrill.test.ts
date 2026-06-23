@@ -3,7 +3,7 @@ import { renderHook, waitFor, act } from '@testing-library/react'
 import { useDrill } from './useDrill'
 import { nextProblem } from './selector'
 import { setMeta } from '../../db/meta'
-import { _resetDbForTests } from '../../db/db'
+import { resetTestDb } from '../../test/resetDb'
 
 // Keep the real selector (so a valid Problem is produced) but spy the draw to
 // assert which level the first problem is generated at.
@@ -13,17 +13,9 @@ vi.mock('./selector', async (importOriginal) => {
 })
 const mockNext = vi.mocked(nextProblem)
 
-async function resetDb() {
-  await _resetDbForTests()
-  await new Promise<void>((resolve) => {
-    const req = indexedDB.deleteDatabase('daycipher')
-    req.onsuccess = req.onerror = req.onblocked = () => resolve()
-  })
-}
-
 describe('useDrill — first problem respects the unlocked level (#21)', () => {
   beforeEach(async () => {
-    await resetDb()
+    await resetTestDb()
     mockNext.mockClear()
   })
 
