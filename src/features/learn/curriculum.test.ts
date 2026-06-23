@@ -37,8 +37,9 @@ describe('curriculum', () => {
     expect(jan).toContain('4')
     expect(feb).toContain('28')
     expect(feb).toContain('29')
-    // Even-month doubles are leap-invariant — they must NOT gain a leap qualifier.
-    const doubles = items.filter((i) => /\d\/\d/.test(i) && !/jan|feb/i.test(i))
+    // Even-month doubles (4/4 … 12/12) are leap-invariant — they must NOT gain a
+    // leap qualifier. Match same-number-both-sides so March's "3/14" is excluded.
+    const doubles = items.filter((i) => /\b(\d+)\/\1\b/.test(i))
     expect(doubles.length).toBeGreaterThan(0)
     for (const d of doubles) expect(d).not.toMatch(/leap/i)
   })

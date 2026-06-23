@@ -105,7 +105,7 @@ export const CURRICULUM: Stage[] = [
       },
       {
         kind: 'p',
-        text: 'Only Jan and Feb change in leap years — the trap that catches everyone. Every other anchor is the same all years.',
+        text: 'Only Jan and Feb change in leap years — the trap that catches everyone.',
       },
     ],
   },
