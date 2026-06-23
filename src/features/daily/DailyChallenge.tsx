@@ -98,7 +98,6 @@ export function DailyChallenge() {
   return (
     <SolveScreen
       className="screen"
-      minHeight="100%"
       footer={<WeekdayPicker weekStart={weekStart} graded={false} onPick={(w: Weekday) => answer(w)} />}
     >
       <Link to="/" style={{ color: 'var(--muted)', textDecoration: 'none' }}>
