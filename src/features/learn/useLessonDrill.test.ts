@@ -218,8 +218,8 @@ describe('useLessonDrill', () => {
 
     await answerCorrect(result)
     await waitFor(() => expect(result.current.progress.correctInWindow).toBe(1))
-    // mod7 is K=5,M=5. After 1 correct rep, 4 more correct reps still stand between
-    // here and done (both the K gap and the M gap are 5-1=4).
+    // mod7 is K=5,M=5. After 1 correct rep, 4 more correct reps still stand
+    // between here and done.
     expect(result.current.progress.remaining).toBe(4)
   })
 
