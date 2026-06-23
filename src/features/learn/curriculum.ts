@@ -65,8 +65,9 @@ export const CURRICULUM: Stage[] = [
       },
       {
         kind: 'p',
-        text: 'For everyday dates in 2001–2099, just ask: divisible by 4?',
+        text: 'Faster: for any year not ending in 00, only the last two digits matter — divisible by 4 means leap. The hundreds always end in 00, and 100 is a multiple of 4, so they never change the answer. 1968 → 68 ✓, 2008 → 08 ✓.',
       },
+      { kind: 'mnemonic', text: 'Last two digits ÷4 — unless they are 00, then ÷400.' },
       {
         kind: 'p',
         text: 'Feb 29 falls before every anchor from March on, so a leap year shifts only the two earliest anchors: Jan 3 → 4, Feb 28 → 29. Every later month is untouched.',
