@@ -99,13 +99,13 @@ export const CURRICULUM: Stage[] = [
         kind: 'list',
         items: [
           'March: Pi Day, 3/14',
-          'January: the 3rd (the 4th in leap years)',
-          'February: the last day — 28th (29th in leap years)',
+          'January: the 3rd in common years, the 4th in leap years',
+          'February: the last day — the 28th in common years, the 29th in leap years',
         ],
       },
       {
         kind: 'p',
-        text: 'In leap years Jan and Feb shift by one — the trap that catches everyone.',
+        text: 'Only Jan and Feb change in leap years — the trap that catches everyone. Every other anchor is the same all years.',
       },
     ],
   },

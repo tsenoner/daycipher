@@ -40,6 +40,9 @@ export function CheatSheet() {
       <p>÷4 yes · ÷100 no · ÷400 yes again. (Non-century year: last two digits ÷4.)</p>
 
       <h3>Month anchors</h3>
+      <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>
+        Jan/Feb shown for common years; each is +1 in a leap year.
+      </p>
       <table style={{ borderCollapse: 'collapse', width: '100%' }}>
         <tbody>
           {months.map(([m, a]) => (
