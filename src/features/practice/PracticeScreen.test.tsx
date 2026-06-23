@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { PracticeScreen } from './PracticeScreen'
 import { weekdayOfYMD, WEEKDAY_NAMES } from '../../engine'
-import { _resetDbForTests } from '../../db/db'
+import { resetTestDb } from '../../test/resetDb'
 import { setMeta } from '../../db/meta'
 
 const MONTHS = [
@@ -31,10 +31,7 @@ function renderScreen() {
 }
 
 describe('PracticeScreen', () => {
-  beforeEach(() => {
-    _resetDbForTests()
-    indexedDB.deleteDatabase('daycipher')
-  })
+  beforeEach(resetTestDb)
 
   it('renders the locked screen on a fresh (gated) install', async () => {
     renderScreen()

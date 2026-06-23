@@ -7,20 +7,14 @@ import { listAttempts, recordAttempt } from '../../db/attempts'
 import { getMeta, setMeta } from '../../db/meta'
 import { weekdayOfYMD } from '../../engine'
 import { localDayKey } from '../../lib/datekey'
-import { _resetDbForTests } from '../../db/db'
+import { resetTestDb } from '../../test/resetDb'
 import { markStageComplete } from '../learn/learnGate'
 import { CURRICULUM } from '../learn/curriculum'
 
 describe('useDaily', () => {
-  beforeEach(async () => {
-    // Await the close, then the delete, so a fully-answered prior test can't
-    // leak its daily:<key> result into the next test's resume path.
-    await _resetDbForTests()
-    await new Promise<void>((resolve) => {
-      const req = indexedDB.deleteDatabase('daycipher')
-      req.onsuccess = req.onerror = req.onblocked = () => resolve()
-    })
-  })
+  // Await the close, then the delete, so a fully-answered prior test can't
+  // leak its daily:<key> result into the next test's resume path.
+  beforeEach(resetTestDb)
 
   it('counts partial answers and resumes a reload without re-recording them', async () => {
     const key = localDayKey()

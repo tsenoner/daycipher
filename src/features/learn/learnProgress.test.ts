@@ -1,13 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { getDone, isDone } from './learnProgress'
 import { markStageComplete } from './learnGate'
-import { _resetDbForTests } from '../../db/db'
+import { resetTestDb } from '../../test/resetDb'
 
 describe('learnProgress', () => {
-  beforeEach(() => {
-    _resetDbForTests()
-    indexedDB.deleteDatabase('daycipher')
-  })
+  beforeEach(resetTestDb)
   it('starts empty', async () => {
     expect(await getDone()).toEqual([])
   })

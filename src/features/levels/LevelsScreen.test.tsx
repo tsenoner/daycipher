@@ -3,19 +3,13 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { LevelsScreen } from './LevelsScreen'
-import { _resetDbForTests } from '../../db/db'
+import { resetTestDb } from '../../test/resetDb'
 import { setMeta } from '../../db/meta'
 
 describe('LevelsScreen', () => {
-  beforeEach(async () => {
-    // Await the close, then the delete, so a prior test's meta writes can't
-    // leak into the next test (the un-awaited form races, per _resetDbForTests).
-    await _resetDbForTests()
-    await new Promise<void>((resolve) => {
-      const req = indexedDB.deleteDatabase('daycipher')
-      req.onsuccess = req.onerror = req.onblocked = () => resolve()
-    })
-  })
+  // Await the close, then the delete, so a prior test's meta writes can't
+  // leak into the next test (the un-awaited form races).
+  beforeEach(resetTestDb)
 
   it('offers the Level 1 test at base level', async () => {
     render(

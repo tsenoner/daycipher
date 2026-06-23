@@ -1,11 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { getDb, STORES, _resetDbForTests } from './db'
+import { getDb, STORES } from './db'
+import { resetTestDb } from '../test/resetDb'
 
 describe('getDb', () => {
-  beforeEach(async () => {
-    _resetDbForTests()
-    indexedDB.deleteDatabase('daycipher')
-  })
+  beforeEach(resetTestDb)
   it('creates all object stores', async () => {
     const db = await getDb()
     for (const s of Object.values(STORES)) expect(db.objectStoreNames.contains(s)).toBe(true)

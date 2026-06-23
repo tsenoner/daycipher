@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { LessonScreen } from './LessonScreen'
-import { _resetDbForTests } from '../../db/db'
+import { resetTestDb } from '../../test/resetDb'
 
 function renderAt(path: string) {
   render(
@@ -17,13 +17,7 @@ function renderAt(path: string) {
 }
 
 describe('LessonScreen', () => {
-  beforeEach(async () => {
-    _resetDbForTests()
-    await new Promise<void>((resolve) => {
-      const req = indexedDB.deleteDatabase('daycipher')
-      req.onsuccess = req.onerror = req.onblocked = () => resolve()
-    })
-  })
+  beforeEach(resetTestDb)
 
   it('renders the first (always unlocked) stage without a Mark complete button', async () => {
     renderAt('/learn/mod7')

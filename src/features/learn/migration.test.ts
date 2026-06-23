@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { runPracticeUnlockMigration } from './migration'
 import { addAttempt } from '../../db/attempts'
 import { getMeta, setMeta } from '../../db/meta'
-import { _resetDbForTests, type Attempt } from '../../db/db'
+import { type Attempt } from '../../db/db'
+import { resetTestDb } from '../../test/resetDb'
 
 const base = {
   targetDate: '1986-03-14',
@@ -21,10 +22,7 @@ const mk = (mode: string, timestamp = 1): Attempt => ({ ...base, mode, timestamp
 const unlocked = () => getMeta<boolean>('practiceUnlocked', false)
 
 describe('runPracticeUnlockMigration', () => {
-  beforeEach(async () => {
-    _resetDbForTests()
-    indexedDB.deleteDatabase('daycipher')
-  })
+  beforeEach(resetTestDb)
 
   // State F — brand-new install: no learnDone, no attempts -> gated.
   it('leaves a brand-new install gated', async () => {

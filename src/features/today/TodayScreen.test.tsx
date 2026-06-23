@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { TodayScreen } from './TodayScreen'
-import { _resetDbForTests } from '../../db/db'
+import { resetTestDb } from '../../test/resetDb'
 import { setMeta } from '../../db/meta'
 
 function renderScreen() {
@@ -14,10 +14,7 @@ function renderScreen() {
 }
 
 describe('TodayScreen', () => {
-  beforeEach(() => {
-    _resetDbForTests()
-    indexedDB.deleteDatabase('daycipher')
-  })
+  beforeEach(resetTestDb)
 
   it("shows this year's doomsday and, while locked, a Continue learning CTA", async () => {
     renderScreen()

@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { ProgressScreen } from './ProgressScreen'
-import { _resetDbForTests, type Attempt } from '../../db/db'
+import { type Attempt } from '../../db/db'
+import { resetTestDb } from '../../test/resetDb'
 import { addAttempt } from '../../db/attempts'
 import { setMeta } from '../../db/meta'
 
@@ -21,10 +22,7 @@ const base = {
 const mk = (mode: string): Attempt => ({ ...base, mode })
 
 describe('ProgressScreen', () => {
-  beforeEach(() => {
-    _resetDbForTests()
-    indexedDB.deleteDatabase('daycipher')
-  })
+  beforeEach(resetTestDb)
   it('empty state links to Learn while Practice is locked', async () => {
     render(
       <MemoryRouter>

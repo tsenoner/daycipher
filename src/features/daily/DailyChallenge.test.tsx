@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { DailyChallenge } from './DailyChallenge'
 import { weekdayOfYMD, WEEKDAY_NAMES } from '../../engine'
-import { _resetDbForTests } from '../../db/db'
+import { resetTestDb } from '../../test/resetDb'
 
 const MONTHS = [
   'January',
@@ -22,10 +22,7 @@ const MONTHS = [
 ]
 
 describe('DailyChallenge', () => {
-  beforeEach(() => {
-    _resetDbForTests()
-    indexedDB.deleteDatabase('daycipher')
-  })
+  beforeEach(resetTestDb)
   it('runs the 5-date challenge to a perfect score', async () => {
     render(
       <MemoryRouter>

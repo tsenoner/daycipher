@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { useSpeedChallenge } from './useSpeedChallenge'
 import { AO5_SIZE } from './levels'
-import { _resetDbForTests } from '../../db/db'
+import { resetTestDb } from '../../test/resetDb'
 import { getMeta } from '../../db/meta'
 import { weekdayOfYMD, type Weekday } from '../../engine'
 
@@ -16,15 +16,7 @@ function solve(result: { current: ReturnType<typeof useSpeedChallenge> }, correc
 }
 
 describe('useSpeedChallenge', () => {
-  beforeEach(async () => {
-    // Await the close, then the delete, so a prior test's best-tier write can't
-    // leak into the next test (the un-awaited form races, per _resetDbForTests).
-    await _resetDbForTests()
-    await new Promise<void>((resolve) => {
-      const req = indexedDB.deleteDatabase('daycipher')
-      req.onsuccess = req.onerror = req.onblocked = () => resolve()
-    })
-  })
+  beforeEach(resetTestDb)
 
   it('computes a silver Ao5 and stores the best tier', async () => {
     // durationMs fixed at 3000 → Ao5 3000 → silver (tier 2)
