@@ -1,4 +1,4 @@
-import { monthName, weekdayName, formatYear, formatCentury } from '../lib/format'
+import { monthName, weekdayName, formatYear, formatCentury, ordinal } from '../lib/format'
 import { centuryOf, type StepTrace as Trace } from '../engine'
 
 interface StepTraceProps {
@@ -11,7 +11,7 @@ export function StepTrace({ trace, defaultOpen = false }: StepTraceProps) {
     { k: `${formatCentury(centuryOf(trace.year))} anchor`, v: weekdayName(trace.centuryAnchor) },
     { k: `${formatYear(trace.year)} doomsday (Odd+11)`, v: weekdayName(trace.yearDoomsday) },
     {
-      k: `${monthName(trace.month)} anchor → the ${trace.monthAnchorDay}th`,
+      k: `${monthName(trace.month)} anchor → the ${ordinal(trace.monthAnchorDay)}`,
       v: weekdayName(trace.monthAnchorWeekday),
     },
     { k: 'Result', v: weekdayName(trace.result), good: true },

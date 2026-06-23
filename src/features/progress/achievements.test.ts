@@ -12,6 +12,7 @@ const mk = (over: Partial<Attempt>): Attempt => ({
   mode: 'quick',
   anchorCorrect: null,
   yearDoomCorrect: null,
+  monthAnchorCorrect: null,
   offsetCorrect: null,
   timed: false,
   ...over,

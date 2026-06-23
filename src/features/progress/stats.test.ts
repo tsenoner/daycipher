@@ -6,7 +6,7 @@ import type { Attempt } from '../../db/db'
 const mk = (over: Partial<Attempt>): Attempt => ({
   timestamp: 0, targetDate: '2001-01-01', correctWeekday: 1, guessedWeekday: 1,
   correct: true, durationMs: 1000, mode: 'quick',
-  anchorCorrect: null, yearDoomCorrect: null, offsetCorrect: null, timed: false,
+  anchorCorrect: null, yearDoomCorrect: null, monthAnchorCorrect: null, offsetCorrect: null, timed: false,
   ...over,
 })
 

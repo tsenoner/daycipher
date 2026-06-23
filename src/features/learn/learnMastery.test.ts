@@ -18,6 +18,7 @@ const mk = (over: Partial<Attempt>): Attempt => ({
   mode: 'learn:mod7',
   anchorCorrect: null,
   yearDoomCorrect: null,
+  monthAnchorCorrect: null,
   offsetCorrect: null,
   timed: false,
   ...over,

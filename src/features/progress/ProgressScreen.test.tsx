@@ -16,6 +16,7 @@ const base = {
   durationMs: 4200,
   anchorCorrect: null,
   yearDoomCorrect: null,
+  monthAnchorCorrect: null,
   offsetCorrect: null,
   timed: false,
 } as const

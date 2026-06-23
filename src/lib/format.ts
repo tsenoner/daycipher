@@ -35,6 +35,14 @@ export const weekdayShort = (w: Weekday): string => WEEKDAY_NAMES[w].slice(0, 3)
 
 export const monthName = (m: number): string => MONTHS[m - 1]
 
+/** English ordinal for a day-of-month: 1 → "1st", 3 → "3rd", 11 → "11th", 22 → "22nd". */
+export function ordinal(n: number): string {
+  const mod100 = n % 100
+  if (mod100 >= 11 && mod100 <= 13) return `${n}th`
+  const suffix = { 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] ?? 'th'
+  return `${n}${suffix}`
+}
+
 /** Label for a boolean (yes/no) drill answer: 0 → "No", 1 → "Yes". */
 export const booleanLabel = (v: 0 | 1): string => (v === 1 ? 'Yes' : 'No')
 

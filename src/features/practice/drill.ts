@@ -27,6 +27,7 @@ export function gradeProblem(
     mode,
     anchorCorrect: null,
     yearDoomCorrect: null,
+    monthAnchorCorrect: null,
     offsetCorrect: null,
     timed: false,
   }
@@ -35,6 +36,8 @@ export function gradeProblem(
 export interface GuidedAnswers {
   century: Weekday
   yearDoom: Weekday
+  /** Day-of-month of the month's anchor (e.g. Apr → 4, leap Feb → 29). */
+  monthAnchorDay: number
   final: Weekday
 }
 
@@ -56,6 +59,7 @@ export function gradeGuided(
     mode: 'guided',
     anchorCorrect: g.century === t.centuryAnchor ? 1 : 0,
     yearDoomCorrect: g.yearDoom === t.yearDoomsday ? 1 : 0,
+    monthAnchorCorrect: g.monthAnchorDay === t.monthAnchorDay ? 1 : 0,
     offsetCorrect: mod7(g.final - g.yearDoom) === mod7(t.result - t.yearDoomsday) ? 1 : 0,
     timed: false,
   }
@@ -84,6 +88,7 @@ export function gradeNumber(
     mode,
     anchorCorrect: null,
     yearDoomCorrect: null,
+    monthAnchorCorrect: null,
     offsetCorrect: null,
     timed: false,
   }
@@ -113,6 +118,7 @@ export function gradeWeekday(
     mode,
     anchorCorrect: dimension === 'anchor' ? (correct ? 1 : 0) : null,
     yearDoomCorrect: dimension === 'yearDoom' ? (correct ? 1 : 0) : null,
+    monthAnchorCorrect: null,
     offsetCorrect: null,
     timed: false,
   }

@@ -8,7 +8,8 @@ import { useUnlockedLevel } from '../levels/useUnlockedLevel'
 import { useAttemptsRef } from './useAttemptsRef'
 import { useFirstProblemAtLevel } from './useFirstProblemAtLevel'
 
-type Step = 0 | 1 | 2 | 3
+// 0 century · 1 year's doomsday · 2 month anchor (day-of-month) · 3 final weekday · 4 graded
+type Step = 0 | 1 | 2 | 3 | 4
 interface GuidedState {
   problem: Problem
   step: Step
@@ -47,21 +48,28 @@ export function useGuided() {
     void recordAttempt(a)
   }, [state.attempt, attemptsRef])
 
+  // Weekday picks: century (0), year's doomsday (1), final weekday (3 → grade).
   const pick = useCallback(
     (w: Weekday) => {
       setState((s) => {
         if (s.step === 0) return { ...s, step: 1, picks: { ...s.picks, century: w } }
         if (s.step === 1) return { ...s, step: 2, picks: { ...s.picks, yearDoom: w } }
-        if (s.step === 2) {
+        if (s.step === 3) {
           const picks = { ...s.picks, final: w } as GuidedAnswers
           const durationMs = Math.round(performance.now() - startedAt)
-          return { ...s, step: 3, picks, attempt: gradeGuided(s.problem, picks, durationMs) }
+          return { ...s, step: 4, picks, attempt: gradeGuided(s.problem, picks, durationMs) }
         }
         return s
       })
     },
     [startedAt],
   )
+
+  // Number pick: the month anchor's day-of-month (step 2). Its weekday is the
+  // year's doomsday already picked, so we ask for the date, not another weekday.
+  const pickAnchor = useCallback((n: number) => {
+    setState((s) => (s.step === 2 ? { ...s, step: 3, picks: { ...s.picks, monthAnchorDay: n } } : s))
+  }, [])
 
   const next = useCallback(() => {
     setState({
@@ -75,5 +83,5 @@ export function useGuided() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  return { ...state, pick, next }
+  return { ...state, pick, pickAnchor, next }
 }

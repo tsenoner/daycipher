@@ -82,16 +82,18 @@ export function weakest(buckets: Bucket[], minCount = 3): Bucket | null {
 }
 
 export interface StepStat {
-  step: 'anchor' | 'year' | 'offset'
+  step: 'anchor' | 'year' | 'monthAnchor' | 'offset'
   label: string
   wrong: number
   total: number
 }
 
 export function stepStats(attempts: Attempt[]): StepStat[] {
+  // Solve order: century anchor → year's doomsday → month anchor → final offset.
   const defs: [keyof Attempt, StepStat['step'], string][] = [
     ['anchorCorrect', 'anchor', 'Century anchor'],
     ['yearDoomCorrect', 'year', 'Year doomsday'],
+    ['monthAnchorCorrect', 'monthAnchor', 'Month anchor'],
     ['offsetCorrect', 'offset', 'Final offset'],
   ]
   return defs.map(([field, step, label]) => {

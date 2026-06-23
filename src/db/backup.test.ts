@@ -13,6 +13,7 @@ const base = {
   mode: 'quick',
   anchorCorrect: null,
   yearDoomCorrect: null,
+  monthAnchorCorrect: null,
   offsetCorrect: null,
   timed: false,
 } as const
