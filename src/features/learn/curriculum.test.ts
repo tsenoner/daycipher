@@ -18,6 +18,11 @@ describe('curriculum', () => {
     expect(getStage('leap')?.title).toBe('Leap years')
     expect(CURRICULUM.findIndex((s) => s.id === 'leap')).toBe(1) // right after mod7
   })
+  it('Stage 2 teaches the last-two-digits ÷4 shortcut (#7)', () => {
+    const text = JSON.stringify(getStage('leap')?.blocks).toLowerCase()
+    expect(text).toContain('last two digits')
+    expect(text).toContain('unless they are 00') // the xx00 carve-out is still called out
+  })
   it('every stage has content', () => {
     for (const s of CURRICULUM) expect(s.blocks.length).toBeGreaterThan(0)
   })

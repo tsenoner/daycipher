@@ -37,7 +37,7 @@ export function CheatSheet() {
       <p>Sun 0 · Mon 1 · Tue 2 · Wed 3 · Thu 4 · Fri 5 · Sat 6</p>
 
       <h3>Leap years</h3>
-      <p>÷4 yes · ÷100 no · ÷400 yes again. (2001–2099: just ÷4.)</p>
+      <p>÷4 yes · ÷100 no · ÷400 yes again. (Non-century year: last two digits ÷4.)</p>
 
       <h3>Month anchors</h3>
       <table style={{ borderCollapse: 'collapse', width: '100%' }}>
